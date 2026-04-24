@@ -12,7 +12,10 @@
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
+  "scripts": {
+  "db:migrate": "node sql/migrate.js"
+}
+,  "dependencies": {
     "bcrypt": "^5.1.1",
     "connect-pg-simple": "^10.0.0",
     "dotenv": "^16.4.5",
@@ -21,4 +24,5 @@
     "express-session": "^1.18.1",
     "pg": "^8.12.0"
   }
+  
 }
