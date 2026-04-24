@@ -9,9 +9,10 @@ if (current_user()) {
 }
 
 $error = null;
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verify_csrf();
+    // On vérifie le jeton AVANT de traiter les données
+    verify_csrf(); 
+    
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
@@ -29,43 +30,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         redirect('/index.php');
     }
-    $error = 'Identifiants incorrects ou compte inexistant.';
+    $error = 'Identifiants incorrects.';
 }
 ?>
 <!doctype html>
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Connexion · ÉlevagePro</title>
+    <title>Connexion ElevagePro</title>
     <link rel="stylesheet" href="/assets/css/app.css">
-    <style>
-        body.login-page { background: #1a202c; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; color: #fff; font-family: sans-serif; }
-        .login-card { background: #2d3748; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 100%; max-width: 400px; }
-        .login-card h1 { margin-top: 0; font-size: 1.5rem; text-align: center; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; color: #a0aec0; }
-        input { width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid #4a5568; background: #1a202c; color: #fff; box-sizing: border-box; }
-        .btn-login { width: 100%; padding: 0.75rem; border: none; border-radius: 4px; background: #4299e1; color: white; font-weight: bold; cursor: pointer; margin-top: 1rem; }
-        .error-msg { background: #f56565; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; }
-    </style>
 </head>
-<body class="login-page">
-    <div class="login-card">
-        <h1>Élevage<span>Pro</span></h1>
-        <?php if($error): ?>
-            <div class="error-msg"><?= e($error) ?></div>
-        <?php endif; ?>
-        <form method="post">
+<body class="login">
+    <div class="card">
+        <h1>Connexion</h1>
+        <?php if($error): ?><p class="danger"><?= e($error) ?></p><?php endif; ?>
+        
+        <form method="post" action="/login.php">
             <input type="hidden" name="_csrf" value="<?= csrf_token() ?>">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" required autofocus>
-            </div>
-            <div class="form-group">
-                <label>Mot de passe</label>
-                <input type="password" name="password" required>
-            </div>
-            <button type="submit" class="btn-login">Se connecter</button>
+            
+            <label>Email<input name="email" type="email" required autofocus></label>
+            <label>Mot de passe<input name="password" type="password" required></label>
+            <button class="btn">Entrer</button>
         </form>
     </div>
 </body>

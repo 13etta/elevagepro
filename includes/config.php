@@ -3,10 +3,13 @@
  * includes/config.php
  */
 if (session_status() === PHP_SESSION_NONE) {
-    session_save_path('/tmp');
+    // Indispensable sur Render pour maintenir la session
+    if (!is_dir('/tmp/sessions')) { mkdir('/tmp/sessions', 0777, true); }
+    session_save_path('/tmp/sessions');
     session_start();
 }
 
+// Récupération de l'URL de la base de données
 $databaseUrl = getenv('DATABASE_URL');
 
 if ($databaseUrl) {
@@ -39,6 +42,9 @@ function e(?string $value): string {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Génère ou récupère le jeton CSRF
+ */
 function csrf_token(): string {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -46,12 +52,17 @@ function csrf_token(): string {
     return $_SESSION['csrf_token'];
 }
 
+/**
+ * Vérifie le jeton CSRF lors des requêtes POST
+ */
 function verify_csrf(): void {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $token = $_POST['_csrf'] ?? '';
-        if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+        if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            // Debug: Décommenter pour voir le souci si besoin
+            // exit("CSRF Erreur: Attendu " . ($_SESSION['csrf_token'] ?? 'vide') . " Reçu " . $token);
             http_response_code(419);
-            exit('CSRF invalide.');
+            exit('CSRF invalide. Veuillez rafraîchir la page.');
         }
     }
 }
