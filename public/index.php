@@ -37,3 +37,5 @@ if (!isset($routes[$page])) {
 include '../src/layout_top.php';
 include $routes[$page];
 include '../src/layout_bottom.php';
+
+ob_end_flush(); // Envoie tout le HTML généré au navigateur à la toute fin
