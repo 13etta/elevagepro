@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/auth.php';
+// Le layout charge les helpers, qui eux-mêmes chargent auth.php et config.php
+require_once __DIR__ . '/helpers.php';
 
 function render_header(string $title): void
 {
@@ -37,7 +38,7 @@ function render_header(string $title): void
                 <h1><?= e($title) ?></h1>
             </div>
             <div class="userbox">
-                <?= $user ? e($user['name']) . ' · ' . e($user['breeder_name']) : '' ?>
+                <?= $user ? e($user['name']) . ' · Élevage #' . e($user['breeder_id']) : '' ?>
                 <?php if ($user): ?><a href="/logout.php">Déconnexion</a><?php endif; ?>
             </div>
         </header>

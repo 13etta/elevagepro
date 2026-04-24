@@ -1,7 +1,6 @@
 <?php
 require_once '../includes/helpers.php';
 
-// Si déjà connecté, on va à l'accueil
 if (current_user()) redirect('/');
 
 $error = null;
@@ -11,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
     
     if ($user && password_verify($_POST['password'] ?? '', $user['password_hash'])) {
-        // Stockage complet de l'utilisateur pour le SaaS
+        // CORRECTION CRITIQUE : Restauration du tableau complet en session
         $_SESSION['user'] = [
             'id' => (int)$user['id'],
             'breeder_id' => (int)$user['breeder_id'],
@@ -23,20 +22,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $error = 'Identifiants incorrects.';
 }
-
-// Le reste du fichier (HTML) ne change pas
-include '../includes/layout.php'; // Pour charger le CSS et le début du HTML
 ?>
-<main class="login-main">
-    <section class="login-card">
-        <h1>Connexion élevage</h1>
-        <p>Accès sécurisé à votre registre d’élevage.</p>
-        <?php if ($error): ?><div class="alert"><?= e($error) ?></div><?php endif; ?>
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Connexion ElevagePro</title>
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body class="login">
+    <section class="card">
+        <p class="eyebrow">ElevagePro</p>
+        <h1>Connexion</h1>
+        <p class="muted">Compte par défaut : admin@elevage.local / Admin123!</p>
+        
+        <?php if($error): ?><p class="danger"><?= e($error) ?></p><?php endif; ?>
+        
         <form method="post">
             <input type="hidden" name="_csrf" value="<?= csrf_token() ?>">
-            <label>Email<input name="email" type="email" required></label>
+            <label>Email<input name="email" type="email" required></label><br>
             <label>Mot de passe<input name="password" type="password" required></label>
-            <button>Se connecter</button>
+            <div class="actions">
+                <button class="btn">Entrer</button>
+            </div>
         </form>
     </section>
-</main>
+</body>
+</html>

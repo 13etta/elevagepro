@@ -1,25 +1,17 @@
 <?php
-require_once __DIR__ . '/config.php'; // Charge la base de données
-require_once __DIR__ . '/layout.php'; // Charge l'auth et le layout
+// On charge la base de données et l'authentification
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/auth.php';
 
-/**
- * Redirection simplifiée
- */
 function redirect(string $url): void {
     header("Location: $url");
     exit;
 }
 
-/**
- * Raccourci pour la vérification CSRF
- */
 function csrf_check(): void {
     verify_csrf();
 }
 
-/**
- * Génère les options du select pour les chiens
- */
 function dogs_options(?int $selected = null): string {
     $stmt = db()->prepare('SELECT id, name FROM dogs WHERE breeder_id = :bid ORDER BY name');
     $stmt->execute(['bid' => breeder_id()]);
@@ -31,11 +23,8 @@ function dogs_options(?int $selected = null): string {
     return $html;
 }
 
-/**
- * Compte les entrées d'une table pour le dashboard
- */
 function count_table(string $table): int {
-    $allowed = ['dogs','puppies','litters','sales','reminders','soins','weights','disinfections'];
+    $allowed = ['dogs','puppies','litters','sales','reminders','soins','weights','disinfections','health_protocols'];
     if (!in_array($table, $allowed, true)) return 0;
     $stmt = db()->prepare("SELECT COUNT(*) FROM {$table} WHERE breeder_id = :bid");
     $stmt->execute(['bid' => breeder_id()]);
