@@ -1,4 +1,5 @@
 <?php
+ob_start(); // Active la temporisation de sortie (mise en cache) du HTML
 require '../includes/auth.php'; // Vérifie la session
 require '../includes/config.php'; // Connexion à la base de données
 
