@@ -9,4 +9,5 @@ echo "Nombre d'utilisateurs en base : " . $count;
 $stmt = $pdo->query("SELECT email FROM users");
 while ($row = $stmt->fetch()) {
     echo "<br>Email présent : " . $row['email'];
+
 }

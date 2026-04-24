@@ -3,7 +3,7 @@ require '../includes/auth.php'; // Vérifie la session
 require '../includes/config.php'; // Connexion à la base de données
 
 $page = $_GET['page'] ?? 'dashboard';
-$publicPages = ['login'];
+$publicPages = ['login','register'];
 
 if (!in_array($page, $publicPages, true)) {
     require_login();
@@ -13,6 +13,7 @@ verify_csrf();
 
 $routes = [
     'login' => '../src/login.php',
+    'register' => '../src/register.php',
     'logout' => '../src/logout.php',
     'dashboard' => '../src/dashboard.php',
     'dogs' => '../src/dogs.php',
