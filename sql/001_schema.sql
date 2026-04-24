@@ -8,8 +8,22 @@ CREATE TABLE IF NOT EXISTS "session" (
   "expire" timestamp(6) NOT NULL
 );
 
--- 1. ELEVEURS (Compte principal)
--- (La suite de ton fichier reste identique à partir d'ici...)
+-- ==========================================
+-- NETTOYAGE DE DEVELOPPEMENT (A retirer en production)
+-- ==========================================
+DROP TABLE IF EXISTS sales CASCADE;
+DROP TABLE IF EXISTS reminders CASCADE;
+DROP TABLE IF EXISTS soins CASCADE;
+DROP TABLE IF EXISTS puppies CASCADE;
+DROP TABLE IF EXISTS litters CASCADE;
+DROP TABLE IF EXISTS pregnancies CASCADE;
+DROP TABLE IF EXISTS matings CASCADE;
+DROP TABLE IF EXISTS heats CASCADE;
+DROP TABLE IF EXISTS dogs CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS breeder CASCADE;
+-- ==========================================
+
 -- 1. ELEVEURS (Compte principal)
 CREATE TABLE IF NOT EXISTS breeder (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
