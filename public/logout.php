@@ -1,4 +1,5 @@
 <?php
-require_once '../includes/helpers.php';
+session_start();
 session_destroy();
-redirect('/login.php');
+header('Location: /login.php');
+exit;
