@@ -28,4 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label>Mot de passe<input name="password" type="password" required></label>
         <button>Se connecter</button>
     </form>
+    <p style="text-align:center; margin-top:18px; font-size:14px;">
+    <a href="/?page=register" style="color:var(--bronze); text-decoration:none;">Pas encore de compte ? S'inscrire</a>
+</p>
 </section>
