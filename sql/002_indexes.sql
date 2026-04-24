@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_users_breeder ON users(breeder_id);
+CREATE INDEX IF NOT EXISTS idx_dogs_breeder ON dogs(breeder_id);
+CREATE INDEX IF NOT EXISTS idx_heats_breeder_female_start ON heats(breeder_id, female_id, start_date DESC);
+CREATE INDEX IF NOT EXISTS idx_matings_breeder_date ON matings(breeder_id, mating_date DESC);
+CREATE INDEX IF NOT EXISTS idx_pregnancies_breeder_status ON pregnancies(breeder_id, status);
+CREATE INDEX IF NOT EXISTS idx_litters_breeder_birth ON litters(breeder_id, birth_date DESC);
+CREATE INDEX IF NOT EXISTS idx_puppies_breeder_status ON puppies(breeder_id, status);
+CREATE INDEX IF NOT EXISTS idx_soins_breeder_event ON soins(breeder_id, event_date DESC);
+CREATE INDEX IF NOT EXISTS idx_reminders_breeder_due ON reminders(breeder_id, due_date ASC);
+CREATE INDEX IF NOT EXISTS idx_sales_breeder_sale_date ON sales(breeder_id, sale_date DESC);

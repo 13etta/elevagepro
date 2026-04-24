@@ -1,0 +1,24 @@
+{
+  "name": "elevage-pro",
+  "version": "0.1.0",
+  "description": "ERP web d'élevage canin professionnel",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:migrate": "psql \"$DATABASE_URL\" -f sql/001_schema.sql && psql \"$DATABASE_URL\" -f sql/002_indexes.sql && psql \"$DATABASE_URL\" -f sql/003_seed.sql"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "connect-pg-simple": "^10.0.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.1",
+    "pg": "^8.12.0"
+  }
+}
