@@ -64,9 +64,10 @@ app.use((req, res, next) => {
 app.use(csrfToken);
 
 app.get('/', (req, res) => {
-  if (req.session.user) {
+  if (req.session?.user) {
     return res.redirect('/dashboard');
   }
+
   return res.redirect('/auth/login');
 });
 
@@ -91,18 +92,20 @@ app.use('/site', websiteRoutes);
 app.use((req, res) => {
   res.status(404).render('errors/404', {
     title: 'Page introuvable',
-    user: req.session.user,
+    user: req.session?.user || null,
   });
 });
 
 app.use((error, req, res, next) => {
   console.error(error);
+
   if (res.headersSent) {
     return next(error);
   }
+
   return res.status(500).render('errors/500', {
     title: 'Erreur serveur',
-    user: req.session.user,
+    user: req.session?.user || null,
   });
 });
 
