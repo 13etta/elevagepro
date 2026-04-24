@@ -1,40 +1,26 @@
-# Logiciel Élevage — version complète
-
-Application PHP 8.2 + PostgreSQL pour la gestion d’un élevage canin.
+# ElevagePro — Reconstruction complète PostgreSQL / Render
 
 ## Modules inclus
-- Authentification utilisateur
-- Tableau de bord élevage
+- Tableau de bord
 - Gestion des chiens
-- Chaleurs
-- Saillies
-- Gestations
-- Portées
+- Chaleurs, saillies, gestations/portées
 - Chiots
-- Soins
 - Ventes
-- Rappels
-- Fiche élevage
+- Vaccins, Milbemax, Bravecto, soins sanitaires
+- Désinfections du chenil / maternité / boxes
+- Suivi du poids avec courbe
+- Rappels automatiques
+- Générateur de site web public
 
-## Installation rapide
-1. Créer une base PostgreSQL.
-2. Importer `sql/schema.sql`.
-3. Copier `.env.example` vers `.env` et renseigner les accès DB.
-4. Pointer Apache/Nginx vers `/public`.
-5. Lancer avec PHP :
+## Déploiement Render
+1. Créer un dépôt GitHub avec ces fichiers.
+2. Sur Render : New > Blueprint, sélectionner le dépôt.
+3. Render créera le service Docker et la base PostgreSQL.
+4. Après le premier déploiement, lancer le SQL `database/schema.sql` dans la base Render.
 
-```bash
-php -S localhost:8000 -t public
-```
+## Identifiants démo
+- Email : `admin@elevagepro.fr`
+- Mot de passe : `admin123`
 
-Compte de test après import SQL :
-- email : admin@elevage.local
-- mot de passe : Admin123!
-
-## Structure
-- `public/index.php` : routeur principal
-- `includes/config.php` : connexion PostgreSQL PDO
-- `includes/auth.php` : session + contrôle d’accès
-- `src/` : vues et logique applicative
-- `assets/css/app.css` : interface premium sombre
-- `sql/schema.sql` : schéma complet
+## Note technique
+Le `Dockerfile` utilise PHP 8.2 Apache avec `pdo_pgsql`. L'application lit `DATABASE_URL`, standard Render PostgreSQL.

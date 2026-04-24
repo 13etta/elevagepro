@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: elevagepro
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: postgresql://elevagepro_user:0uKrFB3fK6P8lnVIMFYvmmWgF2zqlddw@dpg-d7linuugvqtc73f54fj0-a/elevagepro
+        fromDatabase:
+          name: elevagepro_db
+          property: connectionString
+
+databases:
+  - name: elevagepro_db
+    plan: free
