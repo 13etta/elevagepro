@@ -1,26 +1,32 @@
-# ElevagePro — Reconstruction complète PostgreSQL / Render
+# ElevagePro (Node.js + Express + PostgreSQL)
 
-## Modules inclus
-- Tableau de bord
-- Gestion des chiens
-- Chaleurs, saillies, gestations/portées
-- Chiots
-- Ventes
-- Vaccins, Milbemax, Bravecto, soins sanitaires
-- Désinfections du chenil / maternité / boxes
-- Suivi du poids avec courbe
-- Rappels automatiques
-- Générateur de site web public
+Socle ERP d'élevage canin professionnel.
 
-## Déploiement Render
-1. Créer un dépôt GitHub avec ces fichiers.
-2. Sur Render : New > Blueprint, sélectionner le dépôt.
-3. Render créera le service Docker et la base PostgreSQL.
-4. Après le premier déploiement, lancer le SQL `database/schema.sql` dans la base Render.
+## Démarrage local
 
-## Identifiants démo
-- Email : `admin@elevagepro.fr`
-- Mot de passe : `admin123`
+1. Copier `.env.example` vers `.env` et renseigner `DATABASE_URL`.
+2. Installer les dépendances :
+   ```bash
+   npm install
+   ```
+3. Appliquer le schéma SQL :
+   ```bash
+   npm run db:migrate
+   ```
+4. Lancer le serveur :
+   ```bash
+   npm run dev
+   ```
 
-## Note technique
-Le `Dockerfile` utilise PHP 8.2 Apache avec `pdo_pgsql`. L'application lit `DATABASE_URL`, standard Render PostgreSQL.
+## Modules disponibles (lot 1)
+- Auth (login/register/logout)
+- Dashboard protégé
+- Routes modules (placeholders protégés)
+
+## Stack
+- Node.js
+- Express
+- PostgreSQL
+- EJS
+- express-session + connect-pg-simple
+- bcrypt

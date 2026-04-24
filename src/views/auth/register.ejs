@@ -1,0 +1,21 @@
+<%- include('../partials/head') %>
+<main class="auth-shell">
+  <section class="auth-card wide">
+    <h1>Créer votre espace éleveur</h1>
+    <% if (error) { %><div class="alert"><%= error %></div><% } %>
+    <form method="post" action="/auth/register" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <label>Nom de l'élevage</label>
+      <input type="text" name="kennel_name" required />
+      <label>Nom complet</label>
+      <input type="text" name="full_name" required />
+      <label>Email</label>
+      <input type="email" name="email" required />
+      <label>Mot de passe</label>
+      <input type="password" name="password" required minlength="8" />
+      <button type="submit">Créer mon compte</button>
+    </form>
+    <p class="muted">Déjà inscrit ? <a href="/auth/login">Connexion</a></p>
+  </section>
+</main>
+<%- include('../partials/foot') %>

@@ -1,0 +1,18 @@
+<%- include('../partials/head') %>
+<main class="auth-shell">
+  <section class="auth-card">
+    <h1>Connexion éleveur</h1>
+    <p>Accédez à votre tableau de bord professionnel.</p>
+    <% if (error) { %><div class="alert"><%= error %></div><% } %>
+    <form method="post" action="/auth/login" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <label>Email</label>
+      <input type="email" name="email" required />
+      <label>Mot de passe</label>
+      <input type="password" name="password" required minlength="8" />
+      <button type="submit">Se connecter</button>
+    </form>
+    <p class="muted">Nouveau ? <a href="/auth/register">Créer mon compte</a></p>
+  </section>
+</main>
+<%- include('../partials/foot') %>

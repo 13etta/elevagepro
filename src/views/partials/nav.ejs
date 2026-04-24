@@ -1,0 +1,21 @@
+<% if (user) { %>
+<header class="topbar">
+  <div class="brand">ElevagePro</div>
+  <nav>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/dogs">Chiens</a>
+    <a href="/soins">Soins</a>
+    <a href="/reminders">Rappels</a>
+    <a href="/heats">Chaleurs</a>
+    <a href="/matings">Saillies</a>
+    <a href="/pregnancies">Gestations</a>
+    <a href="/litters">Portées</a>
+    <a href="/puppies">Chiots</a>
+    <a href="/sales">Ventes</a>
+  </nav>
+  <form action="/auth/logout" method="post" class="logout-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <button type="submit">Déconnexion</button>
+  </form>
+</header>
+<% } %>
