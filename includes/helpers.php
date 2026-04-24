@@ -1,36 +1,62 @@
 <?php
-// On charge la base de données et l'authentification
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/auth.php';
-
-function redirect(string $url): void {
-    header("Location: $url");
-    exit;
+/**
+* includes/helpers.php
+*/
+function db(): PDO {
+global $pdo;
+return $pdo;
 }
-
-function csrf_check(): void {
-    verify_csrf();
+function e($string): string {
+return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
-
-function dogs_options(?int $selected = null): string {
-    $stmt = db()->prepare('SELECT id, name FROM dogs WHERE breeder_id = :bid ORDER BY name');
-    $stmt->execute(['bid' => breeder_id()]);
-    $html = '<option value="">—</option>';
-    foreach ($stmt as $dog) {
-        $sel = ((int)$dog['id'] === (int)$selected) ? ' selected' : '';
-        $html .= '<option value="' . (int)$dog['id'] . '"' . $sel . '>' . e($dog['name']) . '</option>';
-    }
-    return $html;
+function redirect($url) {
+header("Location: $url");
+exit;
 }
-
-function count_table(string $table): int {
-    $allowed = ['dogs','puppies','litters','sales','reminders','soins','weights','disinfections','health_protocols'];
-    if (!in_array($table, $allowed, true)) return 0;
-    $stmt = db()->prepare("SELECT COUNT(*) FROM {$table} WHERE breeder_id = :bid");
-    $stmt->execute(['bid' => breeder_id()]);
-    return (int)$stmt->fetchColumn();
+function breeder_id(): int {
+return $_SESSION['breeder_id'] ?? 0;
 }
+function post_value($key, $default = null) {
+return $_POST[$key] ?? $default;
+}
+/**
+* Génère les options d'un select pour les chiens avec filtre
+optionnel
+*/
+function dogs_options(?int $selected = null, ?string $filterSex =
+null): string
+{
+$sql = 'SELECT id, name FROM dogs WHERE breeder_id = :bid';
 
-function post_value(string $key, $default = null) {
-    return $_POST[$key] ?? $default;
+$params = ['bid' => breeder_id()];
+if ($filterSex) {
+$sql .= ' AND sex = :sex';
+$params['sex'] = $filterSex;
+}
+$sql .= ' ORDER BY name';
+$stmt = db()->prepare($sql);
+$stmt->execute($params);
+$html = '<option value="">—</option>';
+while ($dog = $stmt->fetch()) {
+$sel = ((int)$dog['id'] === (int)$selected) ? ' selected' :
+
+'';
+
+$html .= '<option value="' . (int)$dog['id'] . '"' . $sel .
+
+'>' . e($dog['name']) . '</option>';
+}
+return $html;
+}
+function count_table($table): int {
+$stmt = db()->prepare("SELECT COUNT(*) FROM $table WHERE
+breeder_id = :bid");
+$stmt->execute(['bid' => breeder_id()]);
+return (int)$stmt->fetchColumn();
+}
+function flash() {
+if (isset($_SESSION['flash'])) {
+echo '<div class="alert">' . e($_SESSION['flash']) . '</div>';
+unset($_SESSION['flash']);
+}
 }
