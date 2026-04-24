@@ -6,9 +6,9 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is required');
 }
 
-const ssl = process.env.DATABASE_SSL === 'true'
-  ? { rejectUnauthorized: false }
-  : false;
+const ssl = process.env.DATABASE_SSL === 'false'
+  ? false
+  : { rejectUnauthorized: false };
 
 const pool = new Pool({
   connectionString,
