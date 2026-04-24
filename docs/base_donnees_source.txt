@@ -1,0 +1,21 @@
+breeder → id, name, logo, first_name, last_name, siret, producer_number, created_at, theme
+
+dogs → id, name, sex, breed, lof, chip, id_scc, status, father_id, mother_id, birth_date, pedigree, notes, created_at, chip_number, breeder_id
+
+heats → id, breeder_id, dog_id, female_id, start_date, end_date, start_at, end_at, stage, notes
+
+litters → id, breeder_id, pregnancy_id, mating_id, female_id, puppies_count, birth_date, status, nb_puppies, notes
+
+matings → id, male_id, female_id, date, mating_date, method, place, notes
+
+pregnancies → id, breeder_id, mating_id, female_id, start_date, expected_date, due_date, start_at, end_at, result, notes
+
+puppies → id, breeder_id, litter_id, name, chip_number, color, sale_price, notes, created_at, sex, birth_date, status, is_sold, owner_name, owner_firstname, owner_address
+
+reminders → id, breeder_id, title, due_date, type, dog_id, notes, created_at
+
+sales → id, puppy_id, breeder_id, buyer_name, buyer_firstname, buyer_address, buyer_company, sale_date, delivery_date, price, payment_method, documents_given, guarantees, created_at, invoice_number
+
+soins → id, breeder_id, dog_id, label, event_date, type, date, next_due, notes, created_at
+
+users → id, breeder_id, name, email, password_hash, role, created_at
