@@ -4,7 +4,6 @@ const app = require('./src/app');
 
 const port = Number(process.env.PORT || 3000);
 
-app.listen(port, () => {
-  // eslint-disable-next-line no-console
+app.listen(port, '0.0.0.0', () => {
   console.log(`ElevagePro listening on port ${port}`);
 });
