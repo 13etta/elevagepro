@@ -1,20 +1,13 @@
-FROM php:8.2-apache
+FROM node:20-alpine
 
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    zip \
-    unzip \
-    git \
-    && docker-php-ext-install pdo pdo_pgsql pgsql \
-    && a2enmod rewrite headers
+WORKDIR /app
 
-COPY . /var/www/html/
+COPY package.json ./
+RUN npm install --omit=dev
 
-RUN chown -R www-data:www-data /var/www/html/storage || true \
-    && chmod -R 775 /var/www/html/storage || true
+COPY . .
 
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+ENV NODE_ENV=production
+EXPOSE 3000
 
-EXPOSE 80
+CMD ["npm", "start"]
