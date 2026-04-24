@@ -21,6 +21,7 @@ const breederRoutes = require('./routes/breeder.routes');
 const websiteRoutes = require('./routes/website.routes');
 
 const app = express();
+app.set('trust proxy', 1);
 const PgSession = connectPgSimple(session);
 
 app.set('view engine', 'ejs');
@@ -39,6 +40,7 @@ app.use(
     secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
