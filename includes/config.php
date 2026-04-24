@@ -76,3 +76,7 @@ function verify_csrf(): void {
         }
     }
 }
+function db(): PDO {
+    global $pdo;
+    return $pdo;
+}
