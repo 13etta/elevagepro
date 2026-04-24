@@ -1,87 +1,57 @@
 <?php
 /**
  * public/login.php
- * Gestion de l'authentification sécurisée
  */
-
-// On charge la configuration (qui lance la session) et les outils
-require_once '../includes/config.php';
 require_once '../includes/helpers.php';
 
-// Si l'utilisateur est déjà connecté, on le redirige vers l'accueil
-if (isset($_SESSION['breeder_id'])) {
+if (current_user()) {
     redirect('/index.php');
 }
 
 $error = null;
-
-// Traitement du formulaire de connexion
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim(post_value('email'));
-    $password = post_value('password');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    if ($email && $password) {
-        $stmt = db()->prepare("SELECT id, password_hash FROM breeders WHERE email = :email");
-        $stmt->execute(['email' => $email]);
-        $user = $stmt->fetch();
-
-        if ($user && password_verify($password, $user['password_hash'])) {
-            // Régénération de l'ID de session pour prévenir la fixation de session
-            session_regenerate_id(true);
-            
-            $_SESSION['breeder_id'] = $user['id'];
-            
-            // Redirection vers le tableau de bord avec un chemin absolu
-            redirect('/index.php');
-        } else {
-            $error = "Identifiants invalides. Veuillez réessayer.";
-        }
-    } else {
-        $error = "Veuillez remplir tous les champs.";
+    $stmt = db()->prepare('SELECT * FROM users WHERE email = :email LIMIT 1');
+    $stmt->execute(['email' => $email]);
+    $user = $stmt->fetch();
+    
+    if ($user && password_verify($password, $user['password_hash'])) {
+        session_regenerate_id(true);
+        $_SESSION['user'] = [
+            'id' => (int)$user['id'],
+            'breeder_id' => (int)$user['breeder_id'],
+            'name' => $user['name'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+        ];
+        redirect('/index.php');
     }
+    $error = 'Identifiants incorrects.';
 }
-
-// Début de l'affichage (on n'utilise pas render_header ici car le menu ne doit pas s'afficher)
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - ÉlevagePro</title>
-    <link rel="stylesheet" href="assets/css/app.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Connexion ElevagePro</title>
+    <link rel="stylesheet" href="/assets/css/app.css">
 </head>
-<body class="auth-page">
-    <main class="auth-container">
-        <div class="auth-card">
-            <h1>ÉlevagePro</h1>
-            <p class="subtitle">Connectez-vous à votre espace gestion</p>
-
-            <?php if ($error): ?>
-                <div class="alert alert-danger">
-                    <?= e($error) ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" action="login.php">
-                <div class="form-group">
-                    <label for="email">Email professionnel</label>
-                    <input type="email" name="email" id="email" required autofocus 
-                           value="<?= e(post_value('email')) ?>">
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" name="password" id="password" required>
-                </div>
-
-                <button type="submit" class="btn-primary">Se connecter</button>
-            </form>
-
-            <div class="auth-footer">
-                <p>Pas encore de compte ? <a href="register.php">Créer un accès</a></p>
+<body class="login">
+    <section class="card">
+        <p class="eyebrow">ElevagePro</p>
+        <h1>Connexion</h1>
+        <?php if($error): ?><p class="danger"><?= e($error) ?></p><?php endif; ?>
+        <form method="post">
+            <input type="hidden" name="_csrf" value="<?= csrf_token() ?>">
+            <label>Email<input name="email" type="email" required autofocus></label>
+            <label>Mot de passe<input name="password" type="password" required></label>
+            <div class="actions">
+                <button class="btn">Entrer</button>
             </div>
-        </div>
-    </main>
+        </form>
+    </section>
 </body>
 </html>
