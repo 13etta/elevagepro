@@ -3,13 +3,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Table requise par connect-pg-simple pour les sessions persistantes
 CREATE TABLE IF NOT EXISTS "session" (
-  "sid" varchar NOT NULL COLLATE "default",
+  "sid" varchar NOT NULL COLLATE "default" PRIMARY KEY,
   "sess" json NOT NULL,
   "expire" timestamp(6) NOT NULL
-)
-WITH (OIDS=FALSE);
-ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+);
 
+-- 1. ELEVEURS (Compte principal)
+-- (La suite de ton fichier reste identique à partir d'ici...)
 -- 1. ELEVEURS (Compte principal)
 CREATE TABLE IF NOT EXISTS breeder (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
