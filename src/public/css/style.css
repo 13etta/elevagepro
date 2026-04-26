@@ -1,0 +1,147 @@
+/* Variables de couleurs Premium */
+:root {
+  --primary-color: #1a252f;      /* Bleu nuit professionnel */
+  --secondary-color: #2c3e50;    /* Bleu ardoise */
+  --accent-color: #c0392b;       /* Rouge alerte */
+  --bg-color: #f4f7f6;           /* Gris très clair (fond) */
+  --text-color: #333333;
+  --card-bg: #ffffff;
+  --border-color: #e0e0e0;
+}
+
+/* Base et Reset */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- Layout Principal --- */
+.sidebar {
+  width: 260px;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar .logo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  text-align: center;
+  letter-spacing: 2px;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 1rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.sidebar ul li { margin-bottom: 0.5rem; }
+
+.sidebar ul li a {
+  color: #bdc3c7;
+  text-decoration: none;
+  display: block;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.sidebar ul li a:hover {
+  background-color: rgba(255,255,255,0.1);
+  color: #ffffff;
+}
+
+.user-info { margin-top: auto; text-align: center; }
+.user-info a { color: #e74c3c; text-decoration: none; font-size: 0.9rem; font-weight: bold; }
+.user-info a:hover { color: #c0392b; }
+
+.container {
+  flex-grow: 1;
+  padding: 2.5rem 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+h1 { color: var(--primary-color); margin-top: 0; margin-bottom: 2rem; font-size: 2rem; }
+
+/* --- Dashboard : Cartes KPI --- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card h2 {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card strong {
+  font-size: 2.5rem;
+  color: var(--secondary-color);
+  line-height: 1;
+}
+
+/* --- Dashboard : Tableaux --- */
+.table-block {
+  background: var(--card-bg);
+  padding: 1.5rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+  margin-bottom: 2rem;
+}
+
+.table-block h3 {
+  margin-top: 0;
+  border-bottom: 2px solid var(--bg-color);
+  padding-bottom: 1rem;
+  color: var(--secondary-color);
+  font-size: 1.2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th, td {
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid var(--bg-color);
+}
+
+th { font-weight: 600; color: #7f8c8d; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background-color: #fafafa; }
+
+/* Rappels en retard */
+tr.late td { color: var(--accent-color); font-weight: 600; }
