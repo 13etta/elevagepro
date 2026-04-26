@@ -1,0 +1,41 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <div class="header-actions">
+      <h1>Mes Chiens</h1>
+      <a href="/dogs/new" class="btn btn-primary">+ Ajouter un chien</a>
+  </div>
+
+  <section class="table-block">
+    <table>
+      <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Race</th>
+            <th>Sexe</th>
+            <th>Puce</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (dogs.length === 0) { %>
+            <tr><td colspan="6">Aucun chien enregistré pour le moment.</td></tr>
+        <% } %>
+        <% dogs.forEach((dog) => { %>
+          <tr>
+            <td><strong><%= dog.name %></strong></td>
+            <td><%= dog.breed || '-' %></td>
+            <td><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></td>
+            <td><%= dog.chip_number || '-' %></td>
+            <td><span class="badge <%= dog.status %>"><%= dog.status %></span></td>
+            <td>
+                <a href="#" class="action-link">Voir fiche</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+<%- include('../partials/foot') %>

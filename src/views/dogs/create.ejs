@@ -1,0 +1,80 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <h1>Ajouter un nouveau chien</h1>
+
+  <section class="form-block card">
+    <form action="/dogs/new" method="POST">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="name">Nom du chien *</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="sex">Sexe *</label>
+                <select id="sex" name="sex" required>
+                    <option value="F">Femelle</option>
+                    <option value="M">Mâle</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="breed">Race</label>
+                <input type="text" id="breed" name="breed">
+            </div>
+
+            <div class="form-group">
+                <label for="birth_date">Date de naissance</label>
+                <input type="date" id="birth_date" name="birth_date">
+            </div>
+
+            <div class="form-group">
+                <label for="chip_number">Numéro de puce</label>
+                <input type="text" id="chip_number" name="chip_number">
+            </div>
+
+            <div class="form-group">
+                <label for="id_scc">Identifiant SCC</label>
+                <input type="text" id="id_scc" name="id_scc">
+            </div>
+
+            <div class="form-group">
+                <label for="pedigree_number">Numéro de Pedigree / LOF</label>
+                <input type="text" id="pedigree_number" name="pedigree_number">
+            </div>
+
+            <div class="form-group">
+                <label for="mother_id">Mère (sélectionner dans l'élevage)</label>
+                <select id="mother_id" name="mother_id">
+                    <option value="">-- Inconnue / Externe --</option>
+                    <% dogs.filter(d => d.sex === 'F').forEach(f => { %>
+                        <option value="<%= f.id %>"><%= f.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="father_id">Père (sélectionner dans l'élevage)</label>
+                <select id="father_id" name="father_id">
+                    <option value="">-- Inconnu / Externe --</option>
+                    <% dogs.filter(d => d.sex === 'M').forEach(m => { %>
+                        <option value="<%= m.id %>"><%= m.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group full-width">
+            <label for="notes">Notes / Particularités</label>
+            <textarea id="notes" name="notes" rows="4"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/dogs" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">Enregistrer le chien</button>
+        </div>
+    </form>
+  </section>
+</main>
+<%- include('../partials/foot') %>
