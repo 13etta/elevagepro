@@ -38,8 +38,6 @@ exports.updateSettings = async (req, res) => {
         res.status(500).send('Erreur lors de la sauvegarde.');
     }
 };
-const { pool } = require('../db');
-const supabase = require('../utils/supabase'); // À ajouter en haut
 
 // ... (tes fonctions getSettings et updateSettings existantes)
 
