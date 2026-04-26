@@ -63,3 +63,40 @@ exports.createDog = async (req, res) => {
         res.status(500).send('Erreur lors de la création du chien.');
     }
 };
+// Afficher la fiche détaillée d'un chien
+exports.getDogDetails = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const dogId = req.params.id;
+
+        // 1. Récupération des informations du chien et du nom de ses parents
+        const dogRes = await pool.query(`
+            SELECT d.*, 
+                   f.name AS father_name, 
+                   m.name AS mother_name
+            FROM dogs d
+            LEFT JOIN dogs f ON d.father_id = f.id
+            LEFT JOIN dogs m ON d.mother_id = m.id
+            WHERE d.id = $1 AND d.breeder_id = $2
+        `, [dogId, breederId]);
+
+        if (dogRes.rows.length === 0) {
+            return res.status(404).send('Chien introuvable ou accès refusé.');
+        }
+
+        // 2. Récupération de son historique de santé (5 derniers soins)
+        const soinsRes = await pool.query(`
+            SELECT * FROM soins 
+            WHERE dog_id = $1 AND breeder_id = $2 
+            ORDER BY event_date DESC LIMIT 5
+        `, [dogId, breederId]);
+
+        res.render('dogs/show', {
+            dog: dogRes.rows[0],
+            soins: soinsRes.rows
+        });
+    } catch (error) {
+        console.error('Erreur détail chien:', error);
+        res.status(500).send('Erreur lors du chargement de la fiche du chien.');
+    }
+};

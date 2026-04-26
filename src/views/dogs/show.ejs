@@ -1,0 +1,77 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <div class="header-actions">
+      <h1>Fiche : <%= dog.name %></h1>
+      <a href="/dogs" class="btn btn-secondary">Retour à la meute</a>
+  </div>
+
+  <div class="form-grid" style="align-items: start;">
+      
+      <section class="card">
+          <h3 style="color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Identité & Origines</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+              <div>
+                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Sexe</strong>
+                  <p style="margin: 0.2rem 0 1rem 0;"><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></p>
+              </div>
+              <div>
+                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Statut</strong>
+                  <p style="margin: 0.2rem 0 1rem 0;"><span class="badge <%= dog.status %>"><%= dog.status %></span></p>
+              </div>
+              <div>
+                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Race</strong>
+                  <p style="margin: 0.2rem 0 1rem 0;"><%= dog.breed || 'Non renseignée' %></p>
+              </div>
+              <div>
+                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Date de naissance</strong>
+                  <p style="margin: 0.2rem 0 1rem 0;"><%= dog.birth_date ? new Date(dog.birth_date).toLocaleDateString('fr-FR') : 'Inconnue' %></p>
+              </div>
+          </div>
+
+          <h4 style="color: var(--secondary-color); margin-top: 1.5rem;">Identification</h4>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>Puce :</strong> <%= dog.chip_number || '-' %></li>
+              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>LOF / Pedigree :</strong> <%= dog.pedigree_number || '-' %></li>
+              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>SCC :</strong> <%= dog.id_scc || '-' %></li>
+          </ul>
+
+          <h4 style="color: var(--secondary-color); margin-top: 1.5rem;">Généalogie</h4>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>Père :</strong> <%= dog.father_name || 'Inconnu / Externe' %></li>
+              <li style="padding: 0.5rem 0;"><strong>Mère :</strong> <%= dog.mother_name || 'Inconnue / Externe' %></li>
+          </ul>
+      </section>
+
+      <section class="card">
+          <h3 style="color: var(--accent-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Carnet de santé récent</h3>
+          
+          <% if (soins.length === 0) { %>
+              <p style="color: #7f8c8d; font-style: italic; margin-top: 1rem;">Aucun soin enregistré pour ce chien.</p>
+          <% } else { %>
+              <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                  <% soins.forEach(soin => { %>
+                      <li style="padding: 0.8rem; border: 1px solid #eee; border-radius: 5px; margin-bottom: 0.5rem; background: #fafafa;">
+                          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                              <strong style="color: var(--primary-color);"><%= soin.label %></strong>
+                              <span style="font-size: 0.8rem; color: #7f8c8d;"><%= new Date(soin.event_date).toLocaleDateString('fr-FR') %></span>
+                          </div>
+                          <div style="font-size: 0.85rem;">
+                              <span style="background: #e0e0e0; padding: 0.1rem 0.4rem; border-radius: 3px;"><%= soin.type %></span>
+                              <% if (soin.next_due) { %>
+                                  <span style="color: var(--accent-color); margin-left: 0.5rem;">Prochain : <%= new Date(soin.next_due).toLocaleDateString('fr-FR') %></span>
+                              <% } %>
+                          </div>
+                      </li>
+                  <% }) %>
+              </ul>
+          <% } %>
+          <div style="margin-top: 1.5rem; text-align: center;">
+              <a href="/soins" class="btn btn-primary" style="font-size: 0.8rem;">Ajouter un soin</a>
+          </div>
+      </section>
+
+  </div>
+</main>
+<%- include('../partials/foot') %>
