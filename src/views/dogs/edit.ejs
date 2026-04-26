@@ -1,11 +1,55 @@
-<div class="form-group">
-    <label for="status">Statut actuel dans l'élevage *</label>
-    <select id="status" name="status" class="form-control" required>
-        <option value="Actif" <%= dog.status === 'Actif' ? 'selected' : '' %>>Actif (Reproduction)</option>
-        <option value="En pause" <%= dog.status === 'En pause' ? 'selected' : '' %>>En pause</option>
-        <option value="Réforme" <%= dog.status === 'Réforme' ? 'selected' : '' %>>Réforme (Stérilisé(e) / Non reproducteur)</option>
-        <option value="Retraite" <%= dog.status === 'Retraite' ? 'selected' : '' %>>Retraite (Reste à l'élevage)</option>
-        <option value="Placé" <%= dog.status === 'Placé' ? 'selected' : '' %>>Placé / Cédé</option>
-        <option value="Décédé" <%= dog.status === 'Décédé' ? 'selected' : '' %>>Décédé</option>
-    </select>
-</div>
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+    <div class="header-actions">
+        <h1>Modifier la fiche de <%= dog.name %></h1>
+        <a href="/dogs" class="btn btn-secondary">Annuler</a>
+    </div>
+
+    <form action="/dogs/<%= dog.id %>/edit" method="POST" class="card form-block">
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="name">Nom du chien *</label>
+                <input type="text" id="name" name="name" value="<%= dog.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Statut *</label>
+                <select id="status" name="status" required>
+                    <option value="Actif" <%= dog.status === 'Actif' ? 'selected' : '' %>>Actif</option>
+                    <option value="En pause" <%= dog.status === 'En pause' ? 'selected' : '' %>>En pause</option>
+                    <option value="Réforme" <%= dog.status === 'Réforme' ? 'selected' : '' %>>Réforme</option>
+                    <option value="Retraite" <%= dog.status === 'Retraite' ? 'selected' : '' %>>Retraite</option>
+                    <option value="Placé" <%= dog.status === 'Placé' ? 'selected' : '' %>>Placé / Cédé</option>
+                    <option value="Décédé" <%= dog.status === 'Décédé' ? 'selected' : '' %>>Décédé</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem;">
+            <div class="form-group">
+                <label for="chip_number">Numéro de Puce / Tatouage</label>
+                <input type="text" id="chip_number" name="chip_number" value="<%= dog.chip_number || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="birth_date">Date de naissance</label>
+                <input type="date" id="birth_date" name="birth_date" value="<%= dog.birth_date ? new Date(dog.birth_date).toISOString().split('T')[0] : '' %>">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="notes">Notes particulières</label>
+            <textarea id="notes" name="notes" rows="4"><%= dog.notes || '' %></textarea>
+        </div>
+
+        <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                Sauvegarder les modifications
+            </button>
+        </div>
+
+    </form>
+</main>
+<%- include('../partials/foot') %>
