@@ -1,0 +1,57 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <div class="header-actions">
+      <h1>Registre des Entrées et Sorties</h1>
+      <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimer le registre</button>
+  </div>
+
+  <p style="color: #7f8c8d; margin-top: -1rem; margin-bottom: 2rem;">
+      Document conforme aux exigences de la DDPP. Ce registre retrace l'historique complet de votre cheptel.
+  </p>
+
+  <section class="table-block">
+    <table class="registry-table">
+      <thead>
+        <tr>
+            <th>Date</th>
+            <th>Mouvement</th>
+            <th>Motif</th>
+            <th>Nom de l'animal</th>
+            <th>Identification (Puce)</th>
+            <th>Provenance / Destination</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (movements.length === 0) { %>
+            <tr><td colspan="6">Aucun mouvement enregistré.</td></tr>
+        <% } %>
+        <% movements.forEach((mov) => { %>
+          <tr style="background-color: <%= mov.movement_type === 'entree' ? '#f4fdf8' : '#fdf4f4' %>;">
+            <td><strong><%= new Date(mov.movement_date).toLocaleDateString('fr-FR') %></strong></td>
+            <td>
+                <span style="font-weight: bold; color: <%= mov.movement_type === 'entree' ? '#27ae60' : '#c0392b' %>;">
+                    <%= mov.movement_type === 'entree' ? 'ENTRÉE' : 'SORTIE' %>
+                </span>
+            </td>
+            <td style="text-transform: capitalize;"><%= mov.reason %></td>
+            <td><%= mov.animal_name %> <small>(<%= mov.animal_type %>)</small></td>
+            <td><%= mov.chip_number || '-' %></td>
+            <td><%= mov.provenance_destination || '-' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<style>
+/* Style spécifique pour masquer le menu lors de l'impression du registre pour la DDPP */
+@media print {
+    .sidebar, .header-actions button { display: none; }
+    .container { margin: 0; padding: 0; max-width: 100%; }
+    table { border: 1px solid #000; }
+    th, td { border: 1px solid #ccc; }
+}
+</style>
+<%- include('../partials/foot') %>

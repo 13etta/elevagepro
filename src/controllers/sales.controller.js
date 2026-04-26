@@ -43,8 +43,16 @@ exports.createSale = async (req, res) => {
         // 2. Mise à jour automatique du statut du chiot
         await client.query(`
             UPDATE puppies SET status = 'vendu' 
+            
             WHERE id = $1 AND breeder_id = $2
         `, [puppy_id, breederId]);
+        
+        // Écriture automatique dans le registre légal des sorties
+await client.query(`
+    INSERT INTO movements (breeder_id, animal_type, animal_name, chip_number, movement_type, reason, movement_date, provenance_destination)
+    SELECT $1, 'chiot', name, chip_number, 'sortie', 'vente', $2, $3
+    FROM puppies WHERE id = $4
+`, [breederId, sale_date, buyer_name, puppy_id]);
 
         await client.query('COMMIT');
         res.redirect('/sales');
