@@ -41,8 +41,9 @@ CREATE TABLE IF NOT EXISTS users (
     breeder_id UUID REFERENCES breeder(id) ON DELETE CASCADE,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    full_name VARCHAR(255), -- Ajout de la colonne requise par le code
+    full_name VARCHAR(255),
     role VARCHAR(50) DEFAULT 'admin',
+    is_active BOOLEAN DEFAULT TRUE, -- Ajout de la colonne de vérification
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
