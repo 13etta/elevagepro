@@ -1,0 +1,153 @@
+/* === Base générale === */
+body {
+  background-color: #f5f6fa;
+  color: #2f3640;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+/* === Dashboard & Tuiles === */
+.dashboard-tile {
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.dashboard-tile:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+.tile-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  display: block;
+}
+.tile-value {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* Couleurs des tuiles */
+.tile-blue   { background: linear-gradient(135deg, #1e90ff, #4682b4); }
+.tile-orange { background: linear-gradient(135deg, #ff7f50, #ff6347); }
+.tile-green  { background: linear-gradient(135deg, #28a745, #218838); }
+.tile-purple { background: linear-gradient(135deg, #6f42c1, #563d7c); }
+.tile-red    { background: linear-gradient(135deg, #dc3545, #a71d2a); }
+.tile-pink   { background: linear-gradient(135deg, #ff69b4, #ff1493); }
+
+/* Forcer la lisibilité sur toutes les tuiles */
+.dashboard-tile h4,
+.dashboard-tile .tile-value,
+.dashboard-tile i {
+  color: #fff !important;
+}
+
+/* === Cartes (Rappels, autres) === */
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 14px rgba(0,0,0,0.15);
+}
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  font-size: 14px;
+}
+
+/* Couleurs de header de cartes */
+.bg-blue   { background-color: #1e90ff !important; }
+.bg-orange { background-color: #ff7f50 !important; }
+.bg-red    { background-color: #dc3545 !important; }
+
+/* === Puppies (Chiots) === */
+.puppy-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+.puppy-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+.puppy-card .card-header {
+  background: linear-gradient(90deg, #1e90ff, #ff7f50);
+  color: #ffffff !important;
+  border-radius: 12px 12px 0 0;
+  font-weight: bold;
+  text-align: center;
+  font-size: 14px;
+  padding: 8px;
+}
+
+/* Badge puce */
+.badge-chip {
+  display: inline-block;
+  background: #2f3640;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* Badge statut */
+.badge-status {
+  display: inline-block;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.badge-status.available { background: #1e90ff; color: white; }
+.badge-status.reserved  { background: #ff7f50; color: white; }
+.badge-status.sold      { background: #2f3640; color: white; }
+
+/* === Boutons === */
+.btn {
+  transition: all 0.2s ease;
+}
+.btn:hover {
+  transform: scale(1.05);
+}
+.btn-primary {
+  background-color: #1e90ff;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #0f62a3;
+}
+.btn-warning {
+  background-color: #ff7f50;
+  border: none;
+  color: white;
+}
+.btn-warning:hover {
+  background-color: #e96d3f;
+}
+
+/* === Navbar ergonomique === */
+.navbar-light .navbar-nav .nav-link {
+  color: #2f3640;       /* Texte foncé pour lisibilité */
+  font-weight: 600;     /* Plus épais que normal */
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+  color: #1e90ff;       /* Bleu au survol */
+}
+
+.navbar-light .navbar-brand {
+  color: #1e90ff;       /* Nom élevage en bleu */
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.navbar-light .navbar-brand:hover {
+  color: #0f62a3;
+}

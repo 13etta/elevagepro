@@ -1,0 +1,133 @@
+/* === Dashboard & Cards === */
+body {
+  background-color: #f5f6fa;
+  color: #2f3640;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 14px rgba(0,0,0,0.15);
+}
+
+/* Header des cartes */
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  font-size: 14px;
+}
+
+/* === Couleurs personnalisées === */
+.bg-primary {
+  background-color: #1e90ff !important;
+}
+
+.bg-info {
+  background-color: #ff7f50 !important; /* orange pour header chiots */
+}
+
+.btn-primary {
+  background-color: #1e90ff;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #0f62a3;
+}
+
+.btn-warning {
+  background-color: #ff7f50;
+  border: none;
+  color: white;
+}
+
+.btn-warning:hover {
+  background-color: #e96d3f;
+}
+
+/* === Animations des boutons === */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+}
+
+/* === Dashboard Layout === */
+.dashboard-tile {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.dashboard-tile:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+/* === Badge pour le numéro de puce === */
+.badge-chip {
+  display: inline-block;
+  background: #1e90ff;
+  color: white;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+/* === Chiots Cards Modernes === */
+.puppy-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+
+.puppy-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* Header coloré */
+.puppy-card .card-header {
+  background: linear-gradient(90deg, #1e90ff, #ff7f50);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Badge numéro de puce */
+.badge-chip {
+  display: inline-block;
+  background: #2f3640;
+  color: white;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* Texte de la carte */
+.puppy-card .card-body {
+  font-size: 13px;
+  color: #2f3640;
+}
+
+/* Boutons actions */
+.puppy-card .btn {
+  transition: all 0.2s ease;
+}
+.puppy-card .btn:hover {
+  transform: scale(1.1);
+}
