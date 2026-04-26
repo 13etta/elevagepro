@@ -1,9 +1,9 @@
 const express = require('express');
-const dashboardController = require('../controllers/dashboard.controller');
-const { requireAuth } = require('../middleware/auth');
-
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
+const dashboardController = require('../controllers/dashboard.controller.js');
 
-router.get('/', requireAuth, dashboardController.showDashboard);
+// La route est protégée par le middleware et déléguée au contrôleur
+router.get('/', requireAuth, dashboardController.getDashboard);
 
 module.exports = router;
