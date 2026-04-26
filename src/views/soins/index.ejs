@@ -1,0 +1,89 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <h1>Soins & Registre de Santé</h1>
+
+  <div class="form-grid" style="align-items: start;">
+      <section class="form-block card">
+        <h3>Enregistrer un nouveau soin</h3>
+        <form action="/soins/new" method="POST">
+            <div class="form-group">
+                <label for="dog_id">Chien concerné (laisser vide si général)</label>
+                <select id="dog_id" name="dog_id">
+                    <option value="">-- Soin d'élevage / Général --</option>
+                    <% dogs.forEach(d => { %>
+                        <option value="<%= d.id %>"><%= d.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="type">Catégorie *</label>
+                <select id="type" name="type" required>
+                    <option value="vaccin">Vaccin</option>
+                    <option value="vermifuge">Vermifuge</option>
+                    <option value="antiparasitaire">Antiparasitaire</option>
+                    <option value="veterinaire">Consultation vétérinaire</option>
+                    <option value="desinfection">Désinfection locaux</option>
+                    <option value="autre">Autre</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="label">Libellé du soin * (ex: CHPPI2L, Milbemax...)</label>
+                <input type="text" id="label" name="label" required>
+            </div>
+
+            <div class="form-group">
+                <label for="event_date">Date de l'acte *</label>
+                <input type="date" id="event_date" name="event_date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="next_due">Prochaine échéance (génère un rappel automatique)</label>
+                <input type="date" id="next_due" name="next_due">
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Observations éventuelles</label>
+                <textarea id="notes" name="notes" rows="2"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ajouter au registre</button>
+        </form>
+      </section>
+
+      <section class="table-block">
+        <h3>Historique récent</h3>
+        <table>
+          <thead>
+            <tr>
+                <th>Date</th>
+                <th>Chien</th>
+                <th>Acte</th>
+                <th>Prochaine échéance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (soins.length === 0) { %>
+                <tr><td colspan="4">Aucun soin enregistré.</td></tr>
+            <% } %>
+            <% soins.forEach((soin) => { %>
+              <tr>
+                <td><strong><%= new Date(soin.event_date).toLocaleDateString('fr-FR') %></strong></td>
+                <td><%= soin.dog_name || 'Général' %></td>
+                <td>
+                    <span class="badge" style="background: #eee; color: #333;"><%= soin.type %></span>
+                    <%= soin.label %>
+                </td>
+                <td>
+                    <%= soin.next_due ? new Date(soin.next_due).toLocaleDateString('fr-FR') : '-' %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </section>
+  </div>
+</main>
+<%- include('../partials/foot') %>
