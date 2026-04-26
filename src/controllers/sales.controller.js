@@ -56,39 +56,44 @@ exports.createSale = async (req, res) => {
     const client = await pool.connect();
     try {
         const breederId = req.session.user.breeder_id;
-        const { puppy_id, buyer_name, sale_date, price, payment_method, notes } = req.body;
+        const { puppy_id, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount } = req.body;
+
+        const isResa = is_reservation === 'true';
+        const deposit = deposit_amount ? parseFloat(deposit_amount) : 0;
+        const targetStatus = isResa ? 'réservé' : 'vendu';
 
         await client.query('BEGIN');
 
-        // 1. Enregistrement de la vente
-        const saleInsert = await client.query(`
-            INSERT INTO sales (breeder_id, puppy_id, buyer_name, sale_date, price, payment_method, notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id
-        `, [breederId, puppy_id, buyer_name, sale_date, price, payment_method, notes]);
+        // 1. Enregistrement avec les nouvelles colonnes
+        await client.query(`
+            INSERT INTO sales (breeder_id, puppy_id, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, [breederId, puppy_id, buyer_name, sale_date, price, payment_method, notes, isResa, deposit]);
 
-        // 2. Mise à jour du statut du chiot
+        // 2. Mise à jour dynamique du statut du chiot (réservé OU vendu)
         await client.query(`
-            UPDATE puppies SET status = 'vendu' 
-            WHERE id = $1 AND breeder_id = $2
-        `, [puppy_id, breederId]);
+            UPDATE puppies SET status = $1 
+            WHERE id = $2 AND breeder_id = $3
+        `, [targetStatus, puppy_id, breederId]);
         
-        // 3. Inscription automatique au registre légal des mouvements (Sortie)
-        await client.query(`
-            INSERT INTO movements (
-                breeder_id, animal_type, animal_name, chip_number, 
-                movement_type, reason, movement_date, provenance_destination
-            )
-            SELECT $1, 'chiot', name, chip_number, 'sortie', 'vente', $2, $3
-            FROM puppies WHERE id = $4
-        `, [breederId, sale_date, buyer_name, puppy_id]);
+        // 3. Inscription au registre légal UNIQUEMENT si c'est un départ définitif
+        if (!isResa) {
+            await client.query(`
+                INSERT INTO movements (
+                    breeder_id, animal_type, animal_name, chip_number, 
+                    movement_type, reason, movement_date, provenance_destination
+                )
+                SELECT $1, 'chiot', name, chip_number, 'sortie', 'vente', $2, $3
+                FROM puppies WHERE id = $4
+            `, [breederId, sale_date, buyer_name, puppy_id]);
+        }
 
         await client.query('COMMIT');
         res.redirect('/sales');
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Erreur enregistrement vente:', error);
-        res.status(500).send('Erreur lors de la finalisation de la vente.');
+        console.error('Erreur enregistrement vente/réservation:', error);
+        res.status(500).send('Erreur lors de la finalisation de la transaction.');
     } finally {
         client.release();
     }

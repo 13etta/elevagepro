@@ -43,7 +43,7 @@ exports.generateDocument = async (docType, breeder, sale, puppy) => {
             // --- 2. CONTENU SPÉCIFIQUE SELON LE TYPE DEMANDÉ ---
             switch (docType) {
                 
-                case 'facture':
+               case 'facture':
                     doc.fontSize(16).font('Helvetica-Bold').text('FACTURE DE VENTE', 50, doc.y, { align: 'center' });
                     doc.fontSize(10).font('Helvetica').text(`N° ${generateInvoiceNumber(sale.id, sale.sale_date)}`, { align: 'center' });
                     doc.moveDown(2);
@@ -51,20 +51,32 @@ exports.generateDocument = async (docType, breeder, sale, puppy) => {
                     doc.text(`Date de facturation : ${new Date(sale.sale_date).toLocaleDateString('fr-FR')}`);
                     doc.moveDown();
                     
-                    // Tableau de facturation basique
                     doc.rect(50, doc.y, 495, 20).fillAndStroke('#f0f0f0', '#000');
                     doc.fillColor('#000').font('Helvetica-Bold').text('Désignation', 60, doc.y - 15);
                     doc.text('Montant TTC', 450, doc.y - 15);
                     
                     doc.moveDown(1);
                     doc.font('Helvetica').text(`Chiot ${puppy?.sex === 'M'?'mâle':'femelle'} - Nom : ${puppy?.name}`, 60, doc.y);
-                    doc.text(`Identification : ${puppy?.chip_number}`, 60, doc.y + 15);
-                    doc.font('Helvetica-Bold').text(`${sale.price} €`, 450, doc.y - 15);
+                    doc.text(`Identification : ${puppy?.chip_number || 'En attente'}`, 60, doc.y + 15);
+                    
+                    const totalPrice = parseFloat(sale.price || 0);
+                    const depositPaid = parseFloat(sale.deposit_amount || 0);
+                    const amountDue = totalPrice - depositPaid;
+
+                    doc.font('Helvetica-Bold').text(`${totalPrice.toFixed(2)} €`, 450, doc.y - 15);
                     doc.moveDown(3);
 
+                    if (depositPaid > 0) {
+                        doc.font('Helvetica').text(`Acompte déjà versé : - ${depositPaid.toFixed(2)} €`, 300, doc.y, { align: 'right' });
+                        doc.moveDown(0.5);
+                        doc.font('Helvetica-Bold').fontSize(12).text(`RESTE À PAYER : ${amountDue.toFixed(2)} €`, 200, doc.y, { align: 'right' });
+                    }
+
+                    doc.moveDown(3);
                     doc.font('Helvetica').fontSize(9).text(`Moyen de paiement : ${sale.payment_method}`);
-                    doc.text("TVA non applicable, art. 293 B du CGI. (À modifier si vous êtes assujetti).");
+                    doc.text("TVA non applicable, art. 293 B du CGI.");
                     break;
+
 
                 case 'cession':
                     doc.fontSize(16).font('Helvetica-Bold').text('ATTESTATION DE CESSION', 50, doc.y, { align: 'center' });
@@ -92,12 +104,33 @@ exports.generateDocument = async (docType, breeder, sale, puppy) => {
                     doc.text("Signature de l'Acquéreur", 350, doc.y - 10);
                     break;
 
-                case 'reservation':
-                    // À implémenter : Ajouter la gestion d'acompte dans la base de données
+               case 'reservation':
                     doc.fontSize(16).font('Helvetica-Bold').text('CONTRAT DE RÉSERVATION', 50, doc.y, { align: 'center' });
                     doc.moveDown(2);
-                    doc.font('Helvetica').fontSize(10).text("Ce document atteste de la réservation du chiot...");
-                    // ...
+
+                    doc.fontSize(11).font('Helvetica-Bold').text("OBJET DE LA RÉSERVATION :");
+                    doc.font('Helvetica').fontSize(10);
+                    doc.text(`Nom provisoire : ${puppy?.name} | Sexe : ${puppy?.sex === 'M' ? 'Mâle' : 'Femelle'}`);
+                    if (puppy?.color) doc.text(`Robe / Signes particuliers : ${puppy.color}`);
+                    doc.moveDown();
+
+                    doc.fontSize(11).font('Helvetica-Bold').text("CONDITIONS FINANCIÈRES :");
+                    doc.font('Helvetica').fontSize(10);
+                    doc.text(`Prix total convenu : ${sale?.price} €`);
+                    doc.text(`Acompte versé ce jour : ${sale?.deposit_amount || 0} €`);
+                    doc.font('Helvetica-Bold').text(`Solde à régler au départ du chiot : ${parseFloat(sale.price || 0) - parseFloat(sale.deposit_amount || 0)} €`);
+                    doc.moveDown();
+
+                    doc.fontSize(11).font('Helvetica-Bold').text("CONDITIONS LÉGALES :");
+                    doc.font('Helvetica').fontSize(9);
+                    doc.text("- Cet acompte constitue un engagement ferme. En cas de désistement de l'acquéreur, l'accompte reste acquis à l'éleveur à titre de dédommagement.");
+                    doc.text("- Si l'animal venait à décéder ou développer un défaut non acceptable avant la cession, l'éleveur s'engage à restituer l'intégralité de l'acompte.");
+                    doc.moveDown(4);
+
+                    doc.font('Helvetica-Bold').fontSize(10);
+                    doc.text("Signature de l'Éleveur", 50, doc.y);
+                    doc.text("Signature de l'Acquéreur", 350, doc.y - 10);
+                    doc.font('Helvetica-Oblique').fontSize(8).text("(Faire précéder de la mention 'Bon pour accord')", 350, doc.y + 15);
                     break;
 
                 default:
