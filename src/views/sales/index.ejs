@@ -33,7 +33,10 @@
                             <td><%= sale.buyer_name %></td>
                             <td><%= sale.price %> €</td>
                             <td>
-                                <a href="/sales/<%= sale.id %>/pdf" class="btn btn-secondary btn-sm" target="_blank">Attestation PDF</a>
+                               <div class="btn-group">
+    <a href="/sales/<%= sale.id %>/document/cession" class="btn btn-primary btn-sm" target="_blank" style="margin-right: 5px;">Attestation</a>
+    <a href="/sales/<%= sale.id %>/document/facture" class="btn btn-secondary btn-sm" target="_blank">Facture</a>
+</div>
                             </td>
                         </tr>
                     <% }) %>
