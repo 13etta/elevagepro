@@ -54,7 +54,26 @@
                 <label style="font-size: 0.8rem; font-weight: bold;">Prix de vente (€)</label>
                 <input type="number" step="0.01" name="sale_price" value="<%= puppy.sale_price || '' %>" style="width: 100%; padding: 0.3rem; margin-top: 0.2rem;">
             </div>
+<% if (puppy.status === 'reserve') { %>
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #ccc;">
+        <button type="button" class="btn btn-primary" style="background: #27ae60; width: 100%;" onclick="document.getElementById('sale-form-<%= puppy.id %>').style.display='block'">Finaliser la vente</button>
+    </div>
 
+    <div id="sale-form-<%= puppy.id %>" style="display:none; margin-top: 1rem; background: #eee; padding: 1rem; border-radius: 5px;">
+        <form action="/sales/new" method="POST">
+            <input type="hidden" name="puppy_id" value="<%= puppy.id %>">
+            <input type="text" name="buyer_name" placeholder="Nom de l'acheteur" required style="width:100%; margin-bottom: 0.5rem;">
+            <input type="date" name="sale_date" required style="width:100%; margin-bottom: 0.5rem;">
+            <input type="number" name="price" placeholder="Prix final" value="<%= puppy.sale_price %>" required style="width:100%; margin-bottom: 0.5rem;">
+            <select name="payment_method" style="width:100%; margin-bottom: 0.5rem;">
+                <option value="Virement">Virement</option>
+                <option value="Chèque">Chèque</option>
+                <option value="Espèces">Espèces</option>
+            </select>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Valider la vente</button>
+        </form>
+    </div>
+<% } %>
             <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 0.8rem; padding: 0.4rem;">Sauvegarder</button>
         </form>
       </article>

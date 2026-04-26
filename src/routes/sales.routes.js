@@ -1,14 +1,11 @@
 const express = require('express');
-const { requireAuth } = require('../middleware/auth');
-
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
+const salesController = require('../controllers/sales.controller');
 
-router.get('/', requireAuth, (req, res) => {
-  res.status(501).render('coming-soon', {
-    title: 'Module en préparation',
-    user: req.session.user,
-    moduleName: req.baseUrl.replace('/', ''),
-  });
-});
+router.use(requireAuth);
+
+router.get('/', salesController.listSales);
+router.post('/new', salesController.createSale);
 
 module.exports = router;
