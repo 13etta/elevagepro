@@ -8,4 +8,5 @@ router.use(requireAuth);
 router.get('/', salesController.listSales);
 router.post('/new', salesController.createSale);
 router.get('/:id/pdf', salesController.downloadCessionPdf);
+router.get('/new', salesController.getSaleForm);
 module.exports = router;

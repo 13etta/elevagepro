@@ -1,50 +1,45 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
 <main class="container">
-  <h1>Ventes & Comptabilité</h1>
+    <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Registre des Ventes</h1>
+        <a href="/sales/new" class="btn btn-primary">Déclarer une vente</a>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <span style="color: #7f8c8d;">Chiffre d'affaires totalisé :</span>
+        <h2 style="color: var(--accent-color); margin: 0;"><%= totalRevenue %> €</h2>
+    </div>
 
-  <section class="kpi-grid" style="margin-bottom: 2rem;">
-      <article class="card">
-          <h2>Chiffre d'affaires total</h2>
-          <strong><%= totalRevenue %> €</strong>
-      </article>
-      <article class="card">
-          <h2>Ventes conclues</h2>
-          <strong><%= sales.length %></strong>
-      </article>
-  </section>
-
-  <section class="table-block">
-    <h3>Historique des cessions</h3>
-    <table>
-      <thead>
-        <tr>
-            <th>Date</th>
-            <th>Chiot</th>
-            <th>Acheteur</th>
-            <th>Prix</th>
-            <th>Méthode</th>
-            <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+    <section class="card">
         <% if (sales.length === 0) { %>
-            <tr><td colspan="6">Aucune vente enregistrée pour le moment.</td></tr>
+            <p style="text-align: center; color: #7f8c8d;">Aucune vente enregistrée pour le moment.</p>
+        <% } else { %>
+            <table class="table" style="width: 100%; text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Chiot</th>
+                        <th>Acquéreur</th>
+                        <th>Prix</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% sales.forEach(sale => { %>
+                        <tr>
+                            <td><%= new Date(sale.sale_date).toLocaleDateString('fr-FR') %></td>
+                            <td><strong><%= sale.puppy_name %></strong></td>
+                            <td><%= sale.buyer_name %></td>
+                            <td><%= sale.price %> €</td>
+                            <td>
+                                <a href="/sales/<%= sale.id %>/pdf" class="btn btn-secondary btn-sm" target="_blank">Attestation PDF</a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
         <% } %>
-        <% sales.forEach((sale) => { %>
-          <tr>
-            <td><%= new Date(sale.sale_date).toLocaleDateString('fr-FR') %></td>
-            <td><strong><%= sale.puppy_name %></strong></td>
-            <td><%= sale.buyer_name %></td>
-            <td><%= sale.price %> €</td>
-            <td><%= sale.payment_method %></td>
-            <td>
-                <a href="/sales/<%= sale.id %>/pdf" class="btn btn-secondary btn-sm" target="_blank">Générer Attestation (PDF)</a>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </section>
+    </section>
 </main>
 <%- include('../partials/foot') %>

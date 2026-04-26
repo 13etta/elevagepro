@@ -27,6 +27,24 @@ exports.listSales = async (req, res) => {
     }
 };
 
+exports.getSaleForm = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        
+        // On ne va chercher que les chiots qui ont le statut 'disponible'
+        const puppies = await pool.query(`
+            SELECT id, name, chip_number, sale_price 
+            FROM puppies 
+            WHERE breeder_id = $1 AND status = 'disponible' OR status = 'Disponible'
+            ORDER BY name ASC
+        `, [breederId]);
+
+        res.render('sales/new', { puppies: puppies.rows });
+    } catch (error) {
+        console.error('Erreur chargement formulaire vente:', error);
+        res.status(500).send('Erreur lors de l\'ouverture du formulaire.');
+    }
+};
 exports.createSale = async (req, res) => {
     const client = await pool.connect();
     try {
