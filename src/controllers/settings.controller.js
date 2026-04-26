@@ -1,4 +1,5 @@
 const { pool } = require('../db');
+const supabase = require('../utils/supabase'); // C'est cette ligne qui manque
 
 exports.getSettings = async (req, res) => {
     try {
