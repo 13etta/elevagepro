@@ -1,7 +1,8 @@
 const PDFDocument = require('pdfkit');
 
 exports.generateCessionDocument = async (breeder, sale, puppy) => {
-    return new Promise((resolve, reject) => {
+    // Attention : la fonction interne de la Promesse devient "async"
+    return new Promise(async (resolve, reject) => {
         try {
             const doc = new PDFDocument({ size: 'A4', margin: 50 });
             const buffers = [];
@@ -12,7 +13,31 @@ exports.generateCessionDocument = async (breeder, sale, puppy) => {
                 resolve(pdfData);
             });
 
-            // En-tête
+            // 1. INJECTION DU LOGO DEPUIS SUPABASE
+            if (breeder?.logo_url) {
+                try {
+                    // Téléchargement de l'image en mémoire vive
+                    const response = await fetch(breeder.logo_url);
+                    if (response.ok) {
+                        const arrayBuffer = await response.arrayBuffer();
+                        const logoBuffer = Buffer.from(arrayBuffer);
+                        
+                        // Placement de l'image centrée en haut de page (largeur max 100px)
+                        doc.image(logoBuffer, (doc.page.width - 100) / 2, 40, { 
+                            fit: [100, 100], 
+                            align: 'center' 
+                        });
+                        
+                        // On force le curseur de texte à descendre sous l'image
+                        doc.y = 160; 
+                    }
+                } catch (imgError) {
+                    console.error('Avertissement: Impossible d\'intégrer le logo au PDF:', imgError);
+                    // En cas de problème réseau, on ne fait pas crasher le contrat, on l'imprime sans logo.
+                }
+            }
+
+            // 2. ÉCRITURE DU DOCUMENT
             doc.fontSize(20).font('Helvetica-Bold').text('ATTESTATION DE CESSION', { align: 'center' });
             doc.moveDown(2);
 
@@ -57,6 +82,7 @@ exports.generateCessionDocument = async (breeder, sale, puppy) => {
             doc.moveDown(3);
             doc.font('Helvetica-Bold').text("Signatures", { align: 'center' });
 
+            // Finalisation
             doc.end();
         } catch (error) {
             reject(error);
