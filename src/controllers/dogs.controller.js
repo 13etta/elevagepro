@@ -127,3 +127,26 @@ exports.updateDog = async (req, res) => {
         res.status(500).send('Erreur lors de la sauvegarde du profil.');
     }
 };
+exports.getEditForm = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const dogId = req.params.id;
+
+        // Récupération stricte : on vérifie l'ID du chien ET l'ID de l'éleveur
+        const dogResult = await pool.query(`
+            SELECT * FROM dogs 
+            WHERE id = $1 AND breeder_id = $2
+        `, [dogId, breederId]);
+
+        if (dogResult.rows.length === 0) {
+            return res.status(404).send('Chien introuvable ou accès non autorisé.');
+        }
+
+        // On renvoie la vue d'édition avec les données du chien
+        res.render('dogs/edit', { dog: dogResult.rows[0] });
+        
+    } catch (error) {
+        console.error('Erreur lors du chargement du formulaire d\'édition :', error);
+        res.status(500).send('Erreur interne du serveur.');
+    }
+};
