@@ -89,7 +89,6 @@ exports.downloadCessionPdf = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const saleId = req.params.id;
 
-        // 1. Récupération croisée des données (Vente + Chiot)
         const saleRes = await pool.query(`
             SELECT s.*, p.name, p.sex, p.chip_number, p.color 
             FROM sales s
@@ -97,29 +96,23 @@ exports.downloadCessionPdf = async (req, res) => {
             WHERE s.id = $1 AND s.breeder_id = $2
         `, [saleId, breederId]);
 
-        if (saleRes.rows.length === 0) {
-            return res.status(404).send('Vente introuvable.');
-        }
-
-        // 2. Récupération des informations légales de l'élevage
         const breederRes = await pool.query('SELECT * FROM breeder WHERE id = $1', [breederId]);
 
-        const saleData = saleRes.rows[0];
-        const puppyData = saleRes.rows[0]; // Les infos du chiot sont jointes dans la même requête
-        const breederData = breederRes.rows[0];
+        if (saleRes.rows.length === 0 || breederRes.rows.length === 0) {
+            return res.status(404).send('Données de vente ou d\'élevage introuvables.');
+        }
 
-        // 3. Appel du service de génération PDF
-        const pdfBuffer = await pdfService.generateCessionDocument(breederData, saleData, puppyData);
+        const pdfBuffer = await pdfService.generateCessionDocument(
+            breederRes.rows[0], 
+            saleRes.rows[0], 
+            saleRes.rows[0]
+        );
 
-        // 4. Configuration HTTP pour forcer le navigateur à télécharger le fichier
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=Attestation_Cession_${puppyData.name || 'Chiot'}.pdf`);
-        
-        // 5. Envoi binaire au client
+        res.setHeader('Content-Disposition', `attachment; filename=Cession_${saleRes.rows[0].name}.pdf`);
         res.send(pdfBuffer);
-
     } catch (error) {
-        console.error('Erreur génération PDF de cession:', error);
+        console.error('Détail de l\'erreur PDF:', error); // Pour voir la cause réelle dans tes logs
         res.status(500).send('Erreur lors de la création du document légal.');
     }
 };
