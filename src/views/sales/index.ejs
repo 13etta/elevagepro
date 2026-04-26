@@ -39,7 +39,7 @@
             <td><%= sale.price %> €</td>
             <td><%= sale.payment_method %></td>
             <td>
-                <a href="#" class="action-link">Contrat (PDF)</a>
+                <a href="/sales/<%= sale.id %>/pdf" class="btn btn-secondary btn-sm" target="_blank">Générer Attestation (PDF)</a>
             </td>
           </tr>
         <% }) %>
