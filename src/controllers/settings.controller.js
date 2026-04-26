@@ -38,3 +38,47 @@ exports.updateSettings = async (req, res) => {
         res.status(500).send('Erreur lors de la sauvegarde.');
     }
 };
+const { pool } = require('../db');
+const supabase = require('../utils/supabase'); // À ajouter en haut
+
+// ... (tes fonctions getSettings et updateSettings existantes)
+
+exports.uploadLogo = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).send('Aucun fichier détecté.');
+        }
+
+        // 1. Création d'un nom de fichier unique et sécurisé
+        const fileExtension = file.originalname.split('.').pop();
+        const fileName = `${breederId}-${Date.now()}.${fileExtension}`;
+
+        // 2. Envoi du fichier depuis la mémoire vive vers Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('logos')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+                upsert: true
+            });
+
+        if (error) throw error;
+
+        // 3. Récupération du lien public de l'image
+        const { data: publicUrlData } = supabase.storage
+            .from('logos')
+            .getPublicUrl(fileName);
+
+        const logoUrl = publicUrlData.publicUrl;
+
+        // 4. Enregistrement du lien dans la fiche de l'élevage
+        await pool.query('UPDATE breeder SET logo_url = $1 WHERE id = $2', [logoUrl, breederId]);
+
+        res.redirect('/settings');
+    } catch (error) {
+        console.error('Erreur upload logo:', error);
+        res.status(500).send('Erreur lors de la sauvegarde du logo.');
+    }
+};
