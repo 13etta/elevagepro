@@ -1,0 +1,78 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <h1>Gestion des Portées (Naissances)</h1>
+
+  <div class="form-grid" style="align-items: start;">
+      
+      <section class="form-block card">
+        <h3>Déclarer une mise bas</h3>
+        <form action="/litters/new" method="POST">
+            <div class="form-group">
+                <label for="mother_id">Mère *</label>
+                <select id="mother_id" name="mother_id" required>
+                    <option value="">Sélectionner la lice</option>
+                    <% females.forEach(f => { %>
+                        <option value="<%= f.id %>"><%= f.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="birth_date">Date de naissance *</label>
+                <input type="date" id="birth_date" name="birth_date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="puppies_count_total">Nombre de chiots nés vivants *</label>
+                <input type="number" id="puppies_count_total" name="puppies_count_total" min="1" max="20" required>
+                <small style="color: #7f8c8d; margin-top: 5px;">Le système générera automatiquement les fiches pour chaque chiot.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes sur la mise bas</label>
+                <textarea id="notes" name="notes" rows="2"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Enregistrer la portée</button>
+        </form>
+      </section>
+
+      <section class="table-block">
+        <h3>Mes Portées</h3>
+        <table>
+          <thead>
+            <tr>
+                <th>Date de naissance</th>
+                <th>Mère</th>
+                <th>Total Chiots</th>
+                <th>Disponibles à la vente</th>
+                <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (litters.length === 0) { %>
+                <tr><td colspan="5">Aucune portée enregistrée.</td></tr>
+            <% } %>
+            <% litters.forEach((litter) => { %>
+              <tr>
+                <td><strong><%= new Date(litter.birth_date).toLocaleDateString('fr-FR') %></strong></td>
+                <td><%= litter.mother_name %></td>
+                <td><%= litter.puppies_count_total %></td>
+                <td>
+                    <span class="badge" style="background: <%= litter.available_puppies > 0 ? '#e8f8f5' : '#f9ebea' %>; color: <%= litter.available_puppies > 0 ? '#1abc9c' : '#e74c3c' %>;">
+                        <%= litter.available_puppies %>
+                    </span>
+                </td>
+                <td>
+                    <a href="#" class="action-link" style="color: var(--secondary-color); font-weight: bold; text-decoration: none;">Voir les chiots</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </section>
+
+  </div>
+</main>
+<%- include('../partials/foot') %>

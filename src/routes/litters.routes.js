@@ -1,14 +1,11 @@
 const express = require('express');
-const { requireAuth } = require('../middleware/auth');
-
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
+const littersController = require('../controllers/litters.controller');
 
-router.get('/', requireAuth, (req, res) => {
-  res.status(501).render('coming-soon', {
-    title: 'Module en préparation',
-    user: req.session.user,
-    moduleName: req.baseUrl.replace('/', ''),
-  });
-});
+router.use(requireAuth);
+
+router.get('/', littersController.listLitters);
+router.post('/new', littersController.createLitter);
 
 module.exports = router;

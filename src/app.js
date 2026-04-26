@@ -84,7 +84,7 @@ app.use('/reminders', remindersRoutes);
 app.use('/heats', heatsRoutes);
 app.use('/matings', matingsRoutes);
 app.use('/pregnancies', pregnanciesRoutes);
-app.use('/litters', littersRoutes);
+app.use('/litters', require('./routes/litters.routes'));
 app.use('/puppies', puppiesRoutes);
 app.use('/sales', salesRoutes);
 app.use('/breeder', breederRoutes);
