@@ -1,4 +1,5 @@
 const { pool } = require('../db');
+const pdfService = require('../utils/pdf.service'); // Importation obligatoire de l'usine à PDF
 
 exports.listSales = async (req, res) => {
     try {
@@ -43,16 +44,15 @@ exports.createSale = async (req, res) => {
         // 2. Mise à jour automatique du statut du chiot
         await client.query(`
             UPDATE puppies SET status = 'vendu' 
-            
             WHERE id = $1 AND breeder_id = $2
         `, [puppy_id, breederId]);
         
-        // Écriture automatique dans le registre légal des sorties
-await client.query(`
-    INSERT INTO movements (breeder_id, animal_type, animal_name, chip_number, movement_type, reason, movement_date, provenance_destination)
-    SELECT $1, 'chiot', name, chip_number, 'sortie', 'vente', $2, $3
-    FROM puppies WHERE id = $4
-`, [breederId, sale_date, buyer_name, puppy_id]);
+        // 3. Écriture automatique dans le registre légal des sorties
+        await client.query(`
+            INSERT INTO movements (breeder_id, animal_type, animal_name, chip_number, movement_type, reason, movement_date, provenance_destination)
+            SELECT $1, 'chiot', name, chip_number, 'sortie', 'vente', $2, $3
+            FROM puppies WHERE id = $4
+        `, [breederId, sale_date, buyer_name, puppy_id]);
 
         await client.query('COMMIT');
         res.redirect('/sales');
@@ -64,8 +64,44 @@ await client.query(`
         client.release();
     }
 };
-module.exports = {
-    getSales,
-    createSale,
-    downloadCessionPdf 
+
+// Nouvelle fonction qui génère le PDF
+exports.downloadCessionPdf = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const saleId = req.params.id;
+
+        // 1. Récupération croisée des données (Vente + Chiot)
+        const saleRes = await pool.query(`
+            SELECT s.*, p.name, p.sex, p.chip_number, p.color 
+            FROM sales s
+            JOIN puppies p ON s.puppy_id = p.id
+            WHERE s.id = $1 AND s.breeder_id = $2
+        `, [saleId, breederId]);
+
+        if (saleRes.rows.length === 0) {
+            return res.status(404).send('Vente introuvable.');
+        }
+
+        // 2. Récupération des informations légales de l'élevage
+        const breederRes = await pool.query('SELECT * FROM breeder WHERE id = $1', [breederId]);
+
+        const saleData = saleRes.rows[0];
+        const puppyData = saleRes.rows[0]; // Les infos du chiot sont jointes dans la même requête
+        const breederData = breederRes.rows[0];
+
+        // 3. Appel du service de génération PDF
+        const pdfBuffer = await pdfService.generateCessionDocument(breederData, saleData, puppyData);
+
+        // 4. Configuration HTTP pour forcer le navigateur à télécharger le fichier
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Attestation_Cession_${puppyData.name || 'Chiot'}.pdf`);
+        
+        // 5. Envoi binaire au client
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Erreur génération PDF de cession:', error);
+        res.status(500).send('Erreur lors de la création du document légal.');
+    }
 };
