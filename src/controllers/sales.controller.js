@@ -64,3 +64,8 @@ await client.query(`
         client.release();
     }
 };
+module.exports = {
+    getSales,
+    createSale,
+    downloadCessionPdf 
+};
