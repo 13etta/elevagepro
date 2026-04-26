@@ -77,3 +77,55 @@ exports.createLitter = async (req, res) => {
         client.release();
     }
 };
+// Afficher le détail d'une portée et la liste de ses chiots
+exports.getLitterDetails = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const litterId = req.params.id;
+
+        // 1. Récupération des infos de la portée
+        const litterRes = await pool.query(`
+            SELECT l.*, d.name AS mother_name
+            FROM litters l JOIN dogs d ON l.mother_id = d.id
+            WHERE l.id = $1 AND l.breeder_id = $2
+        `, [litterId, breederId]);
+
+        if (litterRes.rows.length === 0) {
+            return res.status(404).send('Portée introuvable ou accès refusé.');
+        }
+
+        // 2. Récupération des chiots de cette portée
+        const puppiesRes = await pool.query(`
+            SELECT * FROM puppies WHERE litter_id = $1 ORDER BY name ASC
+        `, [litterId]);
+
+        res.render('litters/show', {
+            litter: litterRes.rows[0],
+            puppies: puppiesRes.rows
+        });
+    } catch (error) {
+        console.error('Erreur détail portée:', error);
+        res.status(500).send('Erreur lors du chargement des détails.');
+    }
+};
+
+// Mettre à jour les informations d'un chiot spécifique
+exports.updatePuppy = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const puppyId = req.params.puppyId;
+        const { name, sex, color, chip_number, sale_price, status } = req.body;
+
+        await pool.query(`
+            UPDATE puppies 
+            SET name = $1, sex = $2, color = $3, chip_number = $4, sale_price = $5, status = $6
+            WHERE id = $7 AND breeder_id = $8
+        `, [name, sex || null, color, chip_number, sale_price || null, status, puppyId, breederId]);
+
+        // On redirige vers la page de la portée (on récupère le litter_id via le referer ou le body, ici on simplifie avec un redirect back)
+        res.redirect('back');
+    } catch (error) {
+        console.error('Erreur mise à jour chiot:', error);
+        res.status(500).send('Erreur lors de la sauvegarde du chiot.');
+    }
+};
