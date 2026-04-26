@@ -90,6 +90,7 @@ app.use('/sales', require('./routes/sales.routes'));
 app.use('/breeder', breederRoutes);
 app.use('/site', websiteRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
+app.use('/genetics', require('./routes/genetics.routes'));
 
 app.use((req, res) => {
   res.status(404).render('errors/404', {
