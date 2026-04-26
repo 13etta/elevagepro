@@ -91,6 +91,7 @@ app.use('/breeder', breederRoutes);
 app.use('/site', websiteRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
 app.use('/genetics', require('./routes/genetics.routes'));
+app.use('/settings', require('./routes/settings.routes'));
 
 app.use((req, res) => {
   res.status(404).render('errors/404', {

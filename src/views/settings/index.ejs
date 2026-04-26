@@ -1,0 +1,53 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <div class="header-actions">
+      <h1>Paramètres de l'élevage</h1>
+  </div>
+  <p style="color: #7f8c8d; margin-top:-1rem; margin-bottom: 2rem;">
+      Ces informations apparaîtront automatiquement sur les contrats, factures et attestations de cession.
+  </p>
+
+  <div class="form-grid" style="align-items: start;">
+      
+      <section class="form-block card">
+          <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Informations Légales</h3>
+          <form action="/settings" method="POST">
+              <div class="form-group">
+                  <label for="company_name">Nom de l'entreprise / Élevage *</label>
+                  <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name %>" required>
+              </div>
+              
+              <div class="form-group">
+                  <label for="affix_name">Nom d'Affixe (FCI/SCC)</label>
+                  <input type="text" id="affix_name" name="affix_name" value="<%= breeder.affix_name || '' %>">
+              </div>
+
+              <div class="form-group">
+                  <label for="siret">Numéro de SIRET</label>
+                  <input type="text" id="siret" name="siret" value="<%= breeder.siret || '' %>">
+              </div>
+
+              <div class="form-group">
+                  <label for="address">Adresse postale complète</label>
+                  <textarea id="address" name="address" rows="3" required><%= breeder.address || '' %></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Enregistrer les informations</button>
+          </form>
+      </section>
+
+      <section class="form-block card" style="background-color: #fdfdfd;">
+          <h3 style="color: var(--accent-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Identité Visuelle</h3>
+          <p style="font-size: 0.9rem; color: #7f8c8d;">Téléchargez votre logo pour personnaliser vos PDF.</p>
+          
+          <div style="text-align: center; padding: 2rem; border: 2px dashed #bdc3c7; border-radius: 8px; margin-bottom: 1rem;">
+              <span style="font-size: 2rem;">🖼️</span>
+              <p>Module d'importation de logo à configurer avec Supabase Storage.</p>
+          </div>
+          <button class="btn btn-secondary" disabled>Uploader un logo (Bientôt)</button>
+      </section>
+
+  </div>
+</main>
+<%- include('../partials/foot') %>
