@@ -11,5 +11,5 @@ router.get('/new', dogsController.getCreateForm);
 router.post('/new', dogsController.createDog);
 router.get('/:id/edit', dogsController.getEditForm);
 router.get('/:id', dogsController.getDogDetails);
-
+router.post('/:id/edit', dogsController.updateDog);
 module.exports = router;
