@@ -1,17 +1,17 @@
 const { pool } = require('../db');
 const pdfService = require('../utils/pdf.service');
 
-/**
- * Affiche la liste de toutes les ventes et le chiffre d'affaires global
- */
 exports.listSales = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
 
+        // COALESCE permet de prendre le nom du chiot, et s'il n'existe pas, de prendre le nom du chien adulte
         const sales = await pool.query(`
-            SELECT s.*, p.name AS puppy_name
+            SELECT s.*, 
+                   COALESCE(p.name, d.name) AS animal_name
             FROM sales s
-            JOIN puppies p ON s.puppy_id = p.id
+            LEFT JOIN puppies p ON s.puppy_id = p.id
+            LEFT JOIN dogs d ON s.dog_id = d.id
             WHERE s.breeder_id = $1
             ORDER BY s.sale_date DESC
         `, [breederId]);
@@ -28,115 +28,106 @@ exports.listSales = async (req, res) => {
     }
 };
 
-/**
- * Affiche le formulaire de création d'une vente en récupérant les chiots disponibles
- */
 exports.getSaleForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         
-        const puppies = await pool.query(`
-            SELECT id, name, chip_number, sale_price 
-            FROM puppies 
-            WHERE breeder_id = $1 AND (status = 'disponible' OR status = 'Disponible')
-            ORDER BY name ASC
-        `, [breederId]);
+        // On récupère les deux listes d'animaux disponibles
+        const puppies = await pool.query(`SELECT id, name, chip_number FROM puppies WHERE breeder_id = $1 AND lower(status) = 'disponible' ORDER BY name ASC`, [breederId]);
+        const dogs = await pool.query(`SELECT id, name, chip_number FROM dogs WHERE breeder_id = $1 AND lower(status) = 'disponible' ORDER BY name ASC`, [breederId]);
 
-        res.render('sales/new', { puppies: puppies.rows });
+        res.render('sales/new', { puppies: puppies.rows, dogs: dogs.rows });
     } catch (error) {
         console.error('Erreur chargement formulaire vente:', error);
-        res.status(500).send('Erreur lors de l\'ouverture du formulaire.');
+        res.status(500).send('Erreur d\'ouverture du formulaire.');
     }
 };
 
-/**
- * Enregistre une vente (Transaction : Vente + Statut Chiot + Registre des mouvements)
- */
 exports.createSale = async (req, res) => {
     const client = await pool.connect();
     try {
         const breederId = req.session.user.breeder_id;
-        const { puppy_id, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount } = req.body;
+        const { animal_selection, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount } = req.body;
 
         const isResa = is_reservation === 'true';
         const deposit = deposit_amount ? parseFloat(deposit_amount) : 0;
         const targetStatus = isResa ? 'réservé' : 'vendu';
 
+        // Extraction du type (puppy ou dog) et de l'ID depuis le menu déroulant
+        const [animalType, animalId] = animal_selection.split('|');
+        const puppyId = animalType === 'puppy' ? animalId : null;
+        const dogId = animalType === 'dog' ? animalId : null;
+
         await client.query('BEGIN');
 
-        // 1. Enregistrement avec les nouvelles colonnes
         await client.query(`
-            INSERT INTO sales (breeder_id, puppy_id, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, [breederId, puppy_id, buyer_name, sale_date, price, payment_method, notes, isResa, deposit]);
+            INSERT INTO sales (breeder_id, puppy_id, dog_id, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `, [breederId, puppyId, dogId, buyer_name, sale_date, price, payment_method, notes, isResa, deposit]);
 
-        // 2. Mise à jour dynamique du statut du chiot (réservé OU vendu)
-        await client.query(`
-            UPDATE puppies SET status = $1 
-            WHERE id = $2 AND breeder_id = $3
-        `, [targetStatus, puppy_id, breederId]);
+        // Récupération des infos de l'animal pour le registre légal
+        const table = animalType === 'puppy' ? 'puppies' : 'dogs';
+        const animalDataRes = await client.query(`SELECT name, chip_number FROM ${table} WHERE id = $1`, [animalId]);
+        const animalName = animalDataRes.rows[0].name;
+        const animalChip = animalDataRes.rows[0].chip_number;
+
+        // Mise à jour du statut de l'animal
+        await client.query(`UPDATE ${table} SET status = $1 WHERE id = $2 AND breeder_id = $3`, [targetStatus, animalId, breederId]);
         
-        // 3. Inscription au registre légal UNIQUEMENT si c'est un départ définitif
+        // Inscription au registre UNIQUEMENT si c'est un départ définitif
         if (!isResa) {
             await client.query(`
-                INSERT INTO movements (
-                    breeder_id, animal_type, animal_name, chip_number, 
-                    movement_type, reason, movement_date, provenance_destination
-                )
-                SELECT $1, 'chiot', name, chip_number, 'sortie', 'vente', $2, $3
-                FROM puppies WHERE id = $4
-            `, [breederId, sale_date, buyer_name, puppy_id]);
+                INSERT INTO movements (breeder_id, animal_type, animal_name, chip_number, movement_type, reason, movement_date, provenance_destination)
+                VALUES ($1, $2, $3, $4, 'sortie', 'vente', $5, $6)
+            `, [breederId, animalType === 'puppy' ? 'chiot' : 'adulte', animalName, animalChip, sale_date, buyer_name]);
         }
 
         await client.query('COMMIT');
         res.redirect('/sales');
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Erreur enregistrement vente/réservation:', error);
-        res.status(500).send('Erreur lors de la finalisation de la transaction.');
+        console.error('Erreur enregistrement transaction:', error);
+        res.status(500).send('Erreur lors de la finalisation.');
     } finally {
         client.release();
     }
 };
 
-/**
- * Génère et envoie le document PDF demandé (cession, facture, etc.)
- */
 exports.downloadDocument = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const saleId = req.params.id;
         const docType = req.params.type;
 
-        // Récupération des données de la vente et du chiot
         const saleRes = await pool.query(`
-            SELECT s.*, p.name, p.sex, p.chip_number, p.color 
+            SELECT s.*, 
+                   COALESCE(p.name, d.name) AS name,
+                   COALESCE(p.sex, d.sex) AS sex,
+                   COALESCE(p.chip_number, d.chip_number) AS chip_number,
+                   p.color AS color
             FROM sales s
-            JOIN puppies p ON s.puppy_id = p.id
+            LEFT JOIN puppies p ON s.puppy_id = p.id
+            LEFT JOIN dogs d ON s.dog_id = d.id
             WHERE s.id = $1 AND s.breeder_id = $2
         `, [saleId, breederId]);
 
-        // Récupération des informations de l'éleveur (pour le logo et l'en-tête)
         const breederRes = await pool.query('SELECT * FROM breeder WHERE id = $1', [breederId]);
 
         if (saleRes.rows.length === 0 || breederRes.rows.length === 0) {
-            return res.status(404).send('Données de vente ou d\'élevage introuvables.');
+            return res.status(404).send('Données introuvables.');
         }
 
         const saleData = saleRes.rows[0];
-        const puppyData = saleRes.rows[0]; 
+        const animalData = saleRes.rows[0]; 
         const breederData = breederRes.rows[0];
 
-        // Génération du flux PDF via le service
-        const pdfBuffer = await pdfService.generateDocument(docType, breederData, saleData, puppyData);
+        const pdfBuffer = await pdfService.generateDocument(docType, breederData, saleData, animalData);
 
-        // Configuration de la réponse HTTP
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=${docType}_${puppyData.name || 'document'}.pdf`);
-        
+        res.setHeader('Content-Disposition', `attachment; filename=${docType}_${animalData.name}.pdf`);
         res.send(pdfBuffer);
     } catch (error) {
-        console.error('Erreur génération documentaire PDF:', error);
+        console.error('Erreur génération PDF:', error);
         res.status(500).send('Erreur lors de la création du document légal.');
     }
 };
