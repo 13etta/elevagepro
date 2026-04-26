@@ -1,0 +1,73 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <h1>Reproduction & Maternité</h1>
+
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+      
+      <section class="card">
+          <h3 style="color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">Chaleurs en cours</h3>
+          <ul style="list-style: none; padding: 0;">
+              <% if (heats.length === 0) { %> <li>Aucune chaleur déclarée.</li> <% } %>
+              <% heats.forEach(h => { %>
+                  <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                      <strong><%= h.dog_name %></strong> <br>
+                      <small>Début : <%= new Date(h.start_date).toLocaleDateString('fr-FR') %> - <%= h.stage %></small>
+                  </li>
+              <% }) %>
+          </ul>
+      </section>
+
+      <section class="card">
+          <h3 style="color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 0.5rem;">Saillies à confirmer</h3>
+          
+          <form action="/reproduction/matings/new" method="POST" style="background: #f9f9f9; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+              <select name="female_id" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;">
+                  <option value="">Sélectionner Femelle</option>
+                  <% females.forEach(f => { %> <option value="<%= f.id %>"><%= f.name %></option> <% }) %>
+              </select>
+              <select name="male_id" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;">
+                  <option value="">Sélectionner Étalon</option>
+                  <% males.forEach(m => { %> <option value="<%= m.id %>"><%= m.name %></option> <% }) %>
+              </select>
+              <input type="date" name="mating_date" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;" title="Date de saillie">
+              <select name="method" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;">
+                  <option value="naturelle">Naturelle</option>
+                  <option value="insémination">Insémination artificielle</option>
+              </select>
+              <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 0.85rem;">Enregistrer Saillie</button>
+          </form>
+
+          <ul style="list-style: none; padding: 0;">
+              <% if (matings.length === 0) { %> <li>Aucune saillie en attente.</li> <% } %>
+              <% matings.forEach(m => { %>
+                  <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                      <strong><%= m.female_name %> x <%= m.male_name %></strong><br>
+                      <small>Le <%= new Date(m.mating_date).toLocaleDateString('fr-FR') %> (<%= m.method %>)</small>
+                  </li>
+              <% }) %>
+          </ul>
+      </section>
+
+      <section class="card">
+          <h3 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 0.5rem;">Gestations confirmées</h3>
+          <ul style="list-style: none; padding: 0;">
+              <% if (pregnancies.length === 0) { %> <li>Aucune gestation en cours.</li> <% } %>
+              <% pregnancies.forEach(p => { %>
+                  <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                      <strong><%= p.female_name %></strong><br>
+                      <% 
+                          const today = new Date();
+                          const delivery = new Date(p.expected_delivery_date);
+                          const diffTime = Math.abs(delivery - today);
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      %>
+                      <small>Terme prévu : <%= delivery.toLocaleDateString('fr-FR') %> (J-<%= diffDays %>)</small>
+                  </li>
+              <% }) %>
+          </ul>
+      </section>
+
+  </div>
+</main>
+<%- include('../partials/foot') %>
