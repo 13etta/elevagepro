@@ -1,0 +1,11 @@
+<div class="form-group">
+    <label for="status">Statut actuel dans l'élevage *</label>
+    <select id="status" name="status" class="form-control" required>
+        <option value="Actif" <%= dog.status === 'Actif' ? 'selected' : '' %>>Actif (Reproduction)</option>
+        <option value="En pause" <%= dog.status === 'En pause' ? 'selected' : '' %>>En pause</option>
+        <option value="Réforme" <%= dog.status === 'Réforme' ? 'selected' : '' %>>Réforme (Stérilisé(e) / Non reproducteur)</option>
+        <option value="Retraite" <%= dog.status === 'Retraite' ? 'selected' : '' %>>Retraite (Reste à l'élevage)</option>
+        <option value="Placé" <%= dog.status === 'Placé' ? 'selected' : '' %>>Placé / Cédé</option>
+        <option value="Décédé" <%= dog.status === 'Décédé' ? 'selected' : '' %>>Décédé</option>
+    </select>
+</div>
