@@ -89,6 +89,7 @@ app.use('/puppies', puppiesRoutes);
 app.use('/sales', salesRoutes);
 app.use('/breeder', breederRoutes);
 app.use('/site', websiteRoutes);
+app.use('/reproduction', require('./routes/reproduction.routes'));
 
 app.use((req, res) => {
   res.status(404).render('errors/404', {
