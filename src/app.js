@@ -29,7 +29,6 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: false }));
-app.use('/soins', require('./routes/soins.routes'));
 app.use(
   session({
     store: new PgSession({
@@ -80,7 +79,7 @@ app.get('/healthz', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/dogs', dogsRoutes);
-app.use('/soins', soinsRoutes);
+app.use('/soins', require('./routes/soins.routes'))
 app.use('/reminders', remindersRoutes);
 app.use('/heats', heatsRoutes);
 app.use('/matings', matingsRoutes);
