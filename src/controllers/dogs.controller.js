@@ -132,21 +132,39 @@ exports.getEditForm = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
 
-        // Récupération stricte : on vérifie l'ID du chien ET l'ID de l'éleveur
+        // 1. Récupération de la fiche du chien
         const dogResult = await pool.query(`
             SELECT * FROM dogs 
             WHERE id = $1 AND breeder_id = $2
         `, [dogId, breederId]);
 
         if (dogResult.rows.length === 0) {
-            return res.status(404).send('Chien introuvable ou accès non autorisé.');
+            return res.status(404).send('Chien introuvable.');
         }
 
-        // On renvoie la vue d'édition avec les données du chien
-        res.render('dogs/edit', { dog: dogResult.rows[0] });
+        // 2. Récupération des pères potentiels (Mâles)
+        const fathers = await pool.query(`
+            SELECT id, name FROM dogs 
+            WHERE breeder_id = $1 AND sex = 'M' AND id != $2
+            ORDER BY name ASC
+        `, [breederId, dogId]);
+
+        // 3. Récupération des mères potentielles (Femelles)
+        const mothers = await pool.query(`
+            SELECT id, name FROM dogs 
+            WHERE breeder_id = $1 AND sex = 'F' AND id != $2
+            ORDER BY name ASC
+        `, [breederId, dogId]);
+
+        // 4. Envoi de toutes les données à la vue
+        res.render('dogs/edit', { 
+            dog: dogResult.rows[0],
+            fathers: fathers.rows,
+            mothers: mothers.rows
+        });
         
     } catch (error) {
-        console.error('Erreur lors du chargement du formulaire d\'édition :', error);
-        res.status(500).send('Erreur interne du serveur.');
+        console.error('Erreur édition chien:', error);
+        res.status(500).send('Erreur serveur.');
     }
 };

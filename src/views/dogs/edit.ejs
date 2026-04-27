@@ -1,21 +1,31 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
+
 <main class="container">
     <div class="header-actions">
-        <h1>Modifier la fiche de <%= dog.name %></h1>
-        <a href="/dogs" class="btn btn-secondary">Annuler</a>
+        <h1>Modifier : <%= dog.name %></h1>
+        <div class="actions">
+            <a href="/dogs" class="btn btn-secondary">Retour à la liste</a>
+        </div>
     </div>
 
     <form action="/dogs/<%= dog.id %>/edit" method="POST" class="card form-block">
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Identité & Statut</h3>
         
         <div class="form-grid">
             <div class="form-group">
-                <label for="name">Nom du chien *</label>
+                <label for="name">Nom d'usage *</label>
                 <input type="text" id="name" name="name" value="<%= dog.name %>" required>
             </div>
-
             <div class="form-group">
-                <label for="status">Statut *</label>
+                <label for="sex">Sexe *</label>
+                <select id="sex" name="sex" required>
+                    <option value="M" <%= dog.sex === 'M' ? 'selected' : '' %>>Mâle</option>
+                    <option value="F" <%= dog.sex === 'F' ? 'selected' : '' %>>Femelle</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="status">Statut actuel *</label>
                 <select id="status" name="status" required>
                     <option value="Actif" <%= dog.status === 'Actif' ? 'selected' : '' %>>Actif</option>
                     <option value="En pause" <%= dog.status === 'En pause' ? 'selected' : '' %>>En pause</option>
@@ -27,29 +37,73 @@
             </div>
         </div>
 
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Informations Officielles</h3>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="breed">Race</label>
+                <input type="text" id="breed" name="breed" value="<%= dog.breed %>">
+            </div>
+            <div class="form-group">
+                <label for="lof">Numéro LOF</label>
+                <input type="text" id="lof" name="lof" value="<%= dog.lof || '' %>">
+            </div>
+            <div class="form-group">
+                <label for="id_scc">ID SCC (Société Centrale Canine)</label>
+                <input type="text" id="id_scc" name="id_scc" value="<%= dog.id_scc || '' %>">
+            </div>
+        </div>
+
         <div class="form-grid" style="margin-top: 1rem;">
             <div class="form-group">
                 <label for="chip_number">Numéro de Puce / Tatouage</label>
                 <input type="text" id="chip_number" name="chip_number" value="<%= dog.chip_number || '' %>">
             </div>
-
             <div class="form-group">
                 <label for="birth_date">Date de naissance</label>
                 <input type="date" id="birth_date" name="birth_date" value="<%= dog.birth_date ? new Date(dog.birth_date).toISOString().split('T')[0] : '' %>">
             </div>
         </div>
 
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Généalogie (Ascendance)</h3>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="father_id">Père</label>
+                <select id="father_id" name="father_id">
+                    <option value="">-- Inconnu --</option>
+                    <% fathers.forEach(f => { %>
+                        <option value="<%= f.id %>" <%= dog.father_id === f.id ? 'selected' : '' %>><%= f.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mother_id">Mère</label>
+                <select id="mother_id" name="mother_id">
+                    <option value="">-- Inconnue --</option>
+                    <% mothers.forEach(m => { %>
+                        <option value="<%= m.id %>" <%= dog.mother_id === m.id ? 'selected' : '' %>><%= m.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+        </div>
+
         <div class="form-group" style="margin-top: 1rem;">
-            <label for="notes">Notes particulières</label>
+            <label for="pedigree">Notes ou lien Pedigree</label>
+            <input type="text" id="pedigree" name="pedigree" value="<%= dog.pedigree || '' %>">
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="notes">Observations / Notes privées</label>
             <textarea id="notes" name="notes" rows="4"><%= dog.notes || '' %></textarea>
         </div>
 
-        <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
-                Sauvegarder les modifications
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #eee;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.2rem; font-size: 1.2rem; font-weight: bold;">
+                💾 Enregistrer les modifications
             </button>
         </div>
-
     </form>
 </main>
+
 <%- include('../partials/foot') %>
