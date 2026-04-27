@@ -54,7 +54,7 @@ exports.getIndex = async (req, res) => {
         });
     } catch (error) {
         console.error('Erreur reproduction:', error);
-        res.status(500).send('Erreur lors du chargement du module de reproduction.');
+        res.status(500).send("Erreur lors du chargement du module de reproduction.");
     }
 };
 
@@ -88,7 +88,8 @@ exports.addMating = async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Erreur création saillie:', error);
-        res.status(500).send('Erreur lors de l\\'enregistrement de la saillie.');
+        // Correction ici : utilisation des doubles guillemets
+        res.status(500).send("Erreur lors de l'enregistrement de la saillie.");
     } finally {
         client.release();
     }
