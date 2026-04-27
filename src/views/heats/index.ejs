@@ -1,0 +1,58 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>Suivi des Chaleurs</h1>
+            <p style="color: #7f8c8d; margin-top:-0.5rem;">Historique et cycles des femelles</p>
+        </div>
+        <a href="/heats/new" class="btn btn-primary">Déclarer une chaleur</a>
+    </div>
+
+    <section class="card">
+        <% if (heats.length === 0) { %>
+            <p style="text-align: center; color: #7f8c8d; padding: 2rem;">Aucun cycle enregistré pour le moment.</p>
+        <% } else { %>
+            <div class="table-responsive">
+                <table class="table" style="width: 100%; text-align: left;">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th>Chienne</th>
+                            <th>Début</th>
+                            <th>Fin</th>
+                            <th>Phase</th>
+                            <th>Notes</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% heats.forEach(h => { %>
+                            <tr>
+                                <td><strong><%= h.dog_name %></strong></td>
+                                <td><%= new Date(h.start_date).toLocaleDateString('fr-FR') %></td>
+                                <td><%= h.end_date ? new Date(h.end_date).toLocaleDateString('fr-FR') : '-' %></td>
+                                <td>
+                                    <% if (h.stage) { %>
+                                        <span style="background-color: #e8f4fd; color: #0d6efd; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;"><%= h.stage %></span>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td style="color: #555; font-size: 0.9rem;"><%= h.notes || '-' %></td>
+                                <td style="text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                    <a href="/heats/<%= h.id %>/edit" class="btn btn-secondary btn-sm">Modifier</a>
+                                    <form action="/heats/<%= h.id %>/delete" method="POST" onsubmit="return confirm('Supprimer définitivement cet enregistrement ?');">
+                                        <button type="submit" class="btn btn-sm" style="background-color: #ffeaea; color: #dc3545; border: 1px solid #ffc2c2;">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </section>
+</main>
+
+<%- include('../partials/foot') %>

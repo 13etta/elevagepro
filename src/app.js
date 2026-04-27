@@ -81,7 +81,7 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/dogs', dogsRoutes);
 app.use('/soins', require('./routes/soins.routes'))
 app.use('/reminders', remindersRoutes);
-app.use('/heats', heatsRoutes);
+app.use('/heats', require('./routes/heats.routes'));
 app.use('/matings', matingsRoutes);
 app.use('/pregnancies', pregnanciesRoutes);
 app.use('/litters', require('./routes/litters.routes'));
