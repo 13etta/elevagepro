@@ -3,19 +3,19 @@ const router = express.Router();
 const dogsController = require('../controllers/dogs.controller');
 const { requireAuth } = require('../middleware/auth');
 
-// Protection de toutes les routes du module
+// Protection des routes
 router.use(requireAuth);
 
-// Liste et filtres
+// Lecture
 router.get('/', dogsController.listDogs);
 
-// Création d'un chien
+// Création
 router.get('/new', dogsController.getCreateForm);
 router.post('/new', dogsController.createDog);
 
-// Édition d'un chien
+// Modification
 router.get('/:id/edit', dogsController.getEditForm);
-router.post('/:id/edit', dogsController.updateDog); // La route qui corrige ton erreur 404
+router.post('/:id/edit', dogsController.updateDog);
 
 // Suppression
 router.post('/:id/delete', dogsController.deleteDog);
