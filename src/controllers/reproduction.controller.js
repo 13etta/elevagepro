@@ -11,7 +11,7 @@ exports.getIndex = async (req, res) => {
             WHERE h.breeder_id = $1 ORDER BY h.start_date DESC LIMIT 5
         `, [breederId]);
 
-        // 2. Récupération des saillies sans gestation associée (en attente d'échographie)
+        // 2. Récupération des saillies sans gestation associée
         const matings = await pool.query(`
             SELECT m.id, m.mating_date, m.method, f.name AS female_name, ma.name AS male_name
             FROM matings m
@@ -22,7 +22,7 @@ exports.getIndex = async (req, res) => {
             ORDER BY m.mating_date DESC
         `, [breederId]);
 
-        // 3. Récupération des gestations en cours (le compte à rebours)
+        // 3. Récupération des gestations en cours
         const pregnancies = await pool.query(`
             SELECT p.expected_delivery_date, p.status, f.name AS female_name
             FROM pregnancies p JOIN dogs f ON p.dog_id = f.id
@@ -30,9 +30,20 @@ exports.getIndex = async (req, res) => {
             ORDER BY p.expected_delivery_date ASC
         `, [breederId]);
 
-        // 4. Listes déroulantes pour les formulaires de saisie
-        const females = await pool.query(`SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND status = 'actif'`, [breederId]);
-        const males = await pool.query(`SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'M' AND status = 'actif'`, [breederId]);
+        // 4. Listes déroulantes : Application du filtre de sécurité d'élevage
+        const females = await pool.query(`
+            SELECT id, name FROM dogs 
+            WHERE breeder_id = $1 AND sex = 'F' 
+            AND status NOT IN ('Réforme', 'Retraite', 'Placé', 'Décédé', 'Vendu')
+            ORDER BY name ASC
+        `, [breederId]);
+
+        const males = await pool.query(`
+            SELECT id, name FROM dogs 
+            WHERE breeder_id = $1 AND sex = 'M' 
+            AND status NOT IN ('Réforme', 'Retraite', 'Placé', 'Décédé', 'Vendu')
+            ORDER BY name ASC
+        `, [breederId]);
 
         res.render('reproduction/index', {
             heats: heats.rows,
@@ -77,7 +88,7 @@ exports.addMating = async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Erreur création saillie:', error);
-        res.status(500).send('Erreur lors de l\'enregistrement de la saillie.');
+        res.status(500).send('Erreur lors de l\\'enregistrement de la saillie.');
     } finally {
         client.release();
     }

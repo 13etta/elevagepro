@@ -2,13 +2,16 @@ const { pool } = require('../db');
 
 exports.getDashboard = async (req, res) => {
     try {
-        // Sécurité absolue : on récupère l'ID de l'éleveur depuis la session active
         const breederId = req.session.user.breeder_id;
 
-        // 1. Calcul des KPIs (Indicateurs clés)
-        const activeDogs = await pool.query(`SELECT count(*) FROM dogs WHERE breeder_id = $1 AND status = 'actif'`, [breederId]);
-        const availablePuppies = await pool.query(`SELECT count(*) FROM puppies WHERE breeder_id = $1 AND status = 'disponible'`, [breederId]);
-        const activeLitters = await pool.query(`SELECT count(*) FROM litters WHERE breeder_id = $1`, [breederId]);
+        // 1. Calcul des KPIs avec la bonne casse et les bonnes conditions
+        const activeDogs = await pool.query(`SELECT count(*) FROM dogs WHERE breeder_id = $1 AND status = 'Actif'`, [breederId]);
+        
+        // J'utilise ILIKE pour que 'disponible' ou 'Disponible' soient tous les deux comptés
+        const availablePuppies = await pool.query(`SELECT count(*) FROM puppies WHERE breeder_id = $1 AND status ILIKE 'disponible'`, [breederId]);
+        
+        // Correction du KPI : on ne compte que les portées nécessitant une action
+        const activeLitters = await pool.query(`SELECT count(*) FROM litters WHERE breeder_id = $1 AND status IN ('active', 'sevrage')`, [breederId]);
         const ongoingPregnancies = await pool.query(`SELECT count(*) FROM pregnancies WHERE breeder_id = $1 AND status = 'en_cours'`, [breederId]);
 
         const kpis = {
@@ -18,7 +21,7 @@ exports.getDashboard = async (req, res) => {
             ongoingPregnancies: ongoingPregnancies.rows[0].count
         };
 
-        // 2. Récupération des rappels (avec jointure pour le nom du chien et alias pour la vue)
+        // 2. Récupération des rappels
         const remindersRes = await pool.query(`
             SELECT r.due_date, r.title AS label, d.name AS dog_name
             FROM reminders r
@@ -38,7 +41,7 @@ exports.getDashboard = async (req, res) => {
             LIMIT 5
         `, [breederId]);
 
-        // 4. Récupération des ventes (avec adaptation des noms de colonnes pour l'EJS)
+        // 4. Récupération des ventes
         const salesRes = await pool.query(`
             SELECT sale_date, buyer_name AS buyer_firstname, price AS total_price
             FROM sales
@@ -47,20 +50,19 @@ exports.getDashboard = async (req, res) => {
             LIMIT 5
         `, [breederId]);
 
-        // 5. Fonction utilitaire de formatage de date passée directement à la vue
+        // 5. Utilitaire de formatage
         const formatDate = (dateString) => {
             if (!dateString) return '-';
             return new Date(dateString).toLocaleDateString('fr-FR');
         };
 
-        // Envoi des données formatées à la vue 'dashboard.ejs'
         res.render('dashboard', {
             kpis,
             reminders: remindersRes.rows,
             soins: soinsRes.rows,
             sales: salesRes.rows,
             formatDate,
-            user: req.session.user // On passe l'utilisateur pour l'affichage éventuel du nom
+            user: req.session.user
         });
 
     } catch (error) {
