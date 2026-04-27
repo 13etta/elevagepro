@@ -1,0 +1,61 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+    <div class="header-actions">
+        <h1>Nouvelle portée</h1>
+        <a href="/litters" class="btn btn-secondary">Annuler</a>
+    </div>
+
+    <form action="/litters/new" method="POST" class="card form-block">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="mother_id">Mère (Femelle) *</label>
+                <select id="mother_id" name="mother_id" required>
+                    <option value="">-- Sélectionner --</option>
+                    <% females.forEach(f => { %>
+                        <option value="<%= f.id %>"><%= f.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mating_id">Lier à une saillie (Optionnel)</label>
+                <select id="mating_id" name="mating_id">
+                    <option value="">-- Indépendante --</option>
+                    <% matings.forEach(m => { %>
+                        <option value="<%= m.id %>"><%= m.female_name %> × <%= m.male_name %> (<%= new Date(m.mating_date).toLocaleDateString('fr-FR') %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem;">
+            <div class="form-group">
+                <label for="birth_date">Date de mise bas *</label>
+                <input type="date" id="birth_date" name="birth_date" required>
+            </div>
+            <div class="form-group">
+                <label for="puppies_count_total">Nombre de chiots nés</label>
+                <input type="number" id="puppies_count_total" name="puppies_count_total" min="0" value="0">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="status">Statut de la portée</label>
+            <select id="status" name="status">
+                <option value="active" selected>Active (Nouveau-nés)</option>
+                <option value="sevrage">En sevrage</option>
+                <option value="terminee">Terminée (Tous les chiots sont partis)</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="notes">Notes (Déroulement de la mise bas...)</label>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Enregistrer et passer aux chiots</button>
+        </div>
+    </form>
+</main>
+<%- include('../partials/foot') %>

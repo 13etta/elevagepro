@@ -1,16 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
 const littersController = require('../controllers/litters.controller');
+const { requireAuth } = require('../middleware/auth');
 
 router.use(requireAuth);
 
+// Liste et filtres
 router.get('/', littersController.listLitters);
-router.post('/new', littersController.createLitter);
-// Voir le détail d'une portée
-router.get('/:id', littersController.getLitterDetails);
 
-// Mettre à jour un chiot (cette route appartient techniquement aux chiots, mais on la groupe ici pour simplifier)
-router.post('/puppies/:puppyId/edit', littersController.updatePuppy);
+// Création
+router.get('/new', littersController.getCreateForm);
+router.post('/new', littersController.createLitter);
+
+// Vue de détail (celle de ta capture d'écran pour gérer les chiots)
+router.get('/:id', littersController.showLitter);
+
+// Édition
+router.get('/:id/edit', littersController.getEditForm);
+router.post('/:id/edit', littersController.updateLitter);
+
+// Suppression
+router.post('/:id/delete', littersController.deleteLitter);
 
 module.exports = router;
