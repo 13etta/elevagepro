@@ -1,28 +1,30 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
+
 <main class="container">
     <div class="header-actions">
-        <h1>Nouvelle portée</h1>
+        <h1>Modifier la portée de <%= litter.mother_name %></h1>
         <a href="/litters" class="btn btn-secondary">Annuler</a>
     </div>
 
-    <form action="/litters/new" method="POST" class="card form-block">
+    <form action="/litters/<%= litter.id %>/edit" method="POST" class="card form-block">
         <div class="form-grid">
             <div class="form-group">
                 <label for="mother_id">Mère (Femelle) *</label>
                 <select id="mother_id" name="mother_id" required>
-                    <option value="">-- Sélectionner --</option>
                     <% females.forEach(f => { %>
-                        <option value="<%= f.id %>"><%= f.name %></option>
+                        <option value="<%= f.id %>" <%= litter.mother_id === f.id ? 'selected' : '' %>><%= f.name %></option>
                     <% }) %>
                 </select>
             </div>
             <div class="form-group">
-                <label for="mating_id">Lier à une saillie (Optionnel)</label>
+                <label for="mating_id">Saillie associée</label>
                 <select id="mating_id" name="mating_id">
                     <option value="">-- Indépendante --</option>
                     <% matings.forEach(m => { %>
-                        <option value="<%= m.id %>"><%= m.female_name %> × <%= m.male_name %> (<%= new Date(m.mating_date).toLocaleDateString('fr-FR') %>)</option>
+                        <option value="<%= m.id %>" <%= litter.mating_id === m.id ? 'selected' : '' %>>
+                            <%= m.female_name %> × <%= m.male_name %> (<%= new Date(m.mating_date).toLocaleDateString('fr-FR') %>)
+                        </option>
                     <% }) %>
                 </select>
             </div>
@@ -31,31 +33,35 @@
         <div class="form-grid" style="margin-top: 1rem;">
             <div class="form-group">
                 <label for="birth_date">Date de mise bas *</label>
-                <input type="date" id="birth_date" name="birth_date" required>
+                <input type="date" id="birth_date" name="birth_date" 
+                       value="<%= litter.birth_date ? new Date(litter.birth_date).toISOString().split('T')[0] : '' %>" required>
             </div>
             <div class="form-group">
                 <label for="puppies_count_total">Nombre de chiots nés</label>
-                <input type="number" id="puppies_count_total" name="puppies_count_total" min="0" value="0">
+                <input type="number" id="puppies_count_total" name="puppies_count_total" value="<%= litter.puppies_count_total %>" min="0">
             </div>
         </div>
 
         <div class="form-group" style="margin-top: 1rem;">
             <label for="status">Statut de la portée</label>
             <select id="status" name="status">
-                <option value="active" selected>Active (Nouveau-nés)</option>
-                <option value="sevrage">En sevrage</option>
-                <option value="terminee">Terminée (Tous les chiots sont partis)</option>
+                <option value="active" <%= litter.status === 'active' ? 'selected' : '' %>>Active (Nouveau-nés)</option>
+                <option value="sevrage" <%= litter.status === 'sevrage' ? 'selected' : '' %>>En sevrage</option>
+                <option value="terminee" <%= litter.status === 'terminee' ? 'selected' : '' %>>Terminée</option>
             </select>
         </div>
 
         <div class="form-group" style="margin-top: 1rem;">
-            <label for="notes">Notes (Déroulement de la mise bas...)</label>
-            <textarea id="notes" name="notes" rows="3"></textarea>
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" rows="3"><%= litter.notes %></textarea>
         </div>
 
-        <div style="margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Enregistrer et passer aux chiots</button>
+        <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-weight: bold;">
+                💾 Enregistrer les modifications
+            </button>
         </div>
     </form>
 </main>
+
 <%- include('../partials/foot') %>

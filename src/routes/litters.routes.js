@@ -5,17 +5,17 @@ const { requireAuth } = require('../middleware/auth');
 
 router.use(requireAuth);
 
-// Liste et filtres
+// Liste
 router.get('/', littersController.listLitters);
 
 // Création
 router.get('/new', littersController.getCreateForm);
 router.post('/new', littersController.createLitter);
 
-// Vue de détail (celle de ta capture d'écran pour gérer les chiots)
+// Vue de détail
 router.get('/:id', littersController.showLitter);
 
-// Édition
+// ÉDITION (C'est ici que l'aiguillage se joue)
 router.get('/:id/edit', littersController.getEditForm);
 router.post('/:id/edit', littersController.updateLitter);
 

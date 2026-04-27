@@ -28,8 +28,6 @@ exports.listLitters = async (req, res) => {
 
         query += ' ORDER BY l.birth_date DESC';
         const result = await pool.query(query, params);
-
-        // Récupération des femelles pour le filtre déroulant
         const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ORDER BY name ASC", [breederId]);
 
         res.render('litters/index', { litters: result.rows, females: females.rows, filters: req.query });
@@ -42,17 +40,11 @@ exports.listLitters = async (req, res) => {
 exports.getCreateForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        
-        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND status NOT IN ('Réforme', 'Retraite', 'Placé', 'Décédé', 'Vendu') ORDER BY name ASC", [breederId]);
-        
-        // On récupère les saillies pour les lier à la portée
+        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND status = 'Actif' ORDER BY name ASC", [breederId]);
         const matings = await pool.query(`
             SELECT m.id, m.mating_date, d1.name AS male_name, d2.name AS female_name
-            FROM matings m
-            JOIN dogs d1 ON m.male_id = d1.id
-            JOIN dogs d2 ON m.female_id = d2.id
-            WHERE m.breeder_id = $1
-            ORDER BY m.mating_date DESC
+            FROM matings m JOIN dogs d1 ON m.male_id = d1.id JOIN dogs d2 ON m.female_id = d2.id
+            WHERE m.breeder_id = $1 ORDER BY m.mating_date DESC
         `, [breederId]);
 
         res.render('litters/new', { females: females.rows, matings: matings.rows });
@@ -72,7 +64,6 @@ exports.createLitter = async (req, res) => {
             RETURNING id
         `, [breederId, mother_id, mating_id || null, birth_date, puppies_count_total || 0, status || 'active', notes]);
 
-        // Redirection vers la fiche de la portée pour créer les chiots
         res.redirect(`/litters/${result.rows[0].id}`);
     } catch (error) {
         console.error('Erreur création portée:', error);
@@ -104,17 +95,20 @@ exports.getEditForm = async (req, res) => {
 exports.updateLitter = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
+        const litterId = req.params.id;
         const { mother_id, mating_id, birth_date, puppies_count_total, status, notes } = req.body;
 
+        // On utilise UPDATE avec une condition stricte sur l'ID de la portée et de l'éleveur
         await pool.query(`
             UPDATE litters 
             SET mother_id = $1, mating_id = $2, birth_date = $3, puppies_count_total = $4, status = $5, notes = $6, updated_at = CURRENT_TIMESTAMP
             WHERE id = $7 AND breeder_id = $8
-        `, [mother_id, mating_id || null, birth_date, puppies_count_total || 0, status, notes, req.params.id, breederId]);
+        `, [mother_id, mating_id || null, birth_date, puppies_count_total || 0, status, notes, litterId, breederId]);
 
         res.redirect('/litters');
     } catch (error) {
-        res.status(500).send('Erreur lors de la sauvegarde.');
+        console.error('Erreur mise à jour portée:', error);
+        res.status(500).send('Erreur lors de la sauvegarde des modifications.');
     }
 };
 
@@ -127,7 +121,6 @@ exports.deleteLitter = async (req, res) => {
     }
 };
 
-// La fonction correspondant à ta capture d'écran (Gestion des chiots d'une portée)
 exports.showLitter = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
@@ -142,15 +135,10 @@ exports.showLitter = async (req, res) => {
 
         if (litterRes.rows.length === 0) return res.status(404).send('Portée introuvable.');
 
-        // Récupération des chiots liés à cette portée
         const puppiesRes = await pool.query('SELECT * FROM puppies WHERE litter_id = $1 ORDER BY created_at ASC', [litterId]);
 
-        res.render('litters/show', { 
-            litter: litterRes.rows[0], 
-            puppies: puppiesRes.rows 
-        });
+        res.render('litters/show', { litter: litterRes.rows[0], puppies: puppiesRes.rows });
     } catch (error) {
-        console.error('Erreur affichage portée:', error);
         res.status(500).send('Erreur serveur.');
     }
 };
