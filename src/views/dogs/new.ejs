@@ -1,80 +1,110 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
-<main class="container">
-  <h1>Ajouter un nouveau chien</h1>
 
-  <section class="form-block card">
-    <form action="/dogs/new" method="POST">
+<main class="container">
+    <div class="header-actions">
+        <h1>Ajouter un nouveau chien</h1>
+        <div class="actions">
+            <a href="/dogs" class="btn btn-secondary">Annuler et retour</a>
+        </div>
+    </div>
+
+    <form action="/dogs/new" method="POST" class="card form-block">
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Identité & Statut</h3>
+        
         <div class="form-grid">
             <div class="form-group">
-                <label for="name">Nom du chien *</label>
-                <input type="text" id="name" name="name" required>
+                <label for="name">Nom d'usage *</label>
+                <input type="text" id="name" name="name" required placeholder="Ex: Ulysse des Hautes Quêtes">
             </div>
-            
             <div class="form-group">
                 <label for="sex">Sexe *</label>
                 <select id="sex" name="sex" required>
-                    <option value="F">Femelle</option>
+                    <option value="">-- Sélectionner --</option>
                     <option value="M">Mâle</option>
+                    <option value="F">Femelle</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label for="status">Statut actuel *</label>
+                <select id="status" name="status" required>
+                    <option value="Actif" selected>Actif</option>
+                    <option value="En pause">En pause</option>
+                    <option value="Réforme">Réforme</option>
+                    <option value="Retraite">Retraite</option>
+                    <option value="Placé">Placé / Cédé</option>
+                    <option value="Décédé">Décédé</option>
+                </select>
+            </div>
+        </div>
 
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Informations Officielles</h3>
+        
+        <div class="form-grid">
             <div class="form-group">
                 <label for="breed">Race</label>
-                <input type="text" id="breed" name="breed">
+                <input type="text" id="breed" name="breed" value="Setter anglais">
             </div>
+            <div class="form-group">
+                <label for="lof">Numéro LOF</label>
+                <input type="text" id="lof" name="lof" placeholder="Ex: 12345/678">
+            </div>
+            <div class="form-group">
+                <label for="id_scc">ID SCC (Société Centrale Canine)</label>
+                <input type="text" id="id_scc" name="id_scc" placeholder="Identifiant unique SCC">
+            </div>
+        </div>
 
+        <div class="form-grid" style="margin-top: 1rem;">
+            <div class="form-group">
+                <label for="chip_number">Numéro de Puce / Tatouage</label>
+                <input type="text" id="chip_number" name="chip_number" placeholder="25026...">
+            </div>
             <div class="form-group">
                 <label for="birth_date">Date de naissance</label>
                 <input type="date" id="birth_date" name="birth_date">
             </div>
+        </div>
 
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Généalogie (Ascendance)</h3>
+        
+        <div class="form-grid">
             <div class="form-group">
-                <label for="chip_number">Numéro de puce</label>
-                <input type="text" id="chip_number" name="chip_number">
-            </div>
-
-            <div class="form-group">
-                <label for="id_scc">Identifiant SCC</label>
-                <input type="text" id="id_scc" name="id_scc">
-            </div>
-
-            <div class="form-group">
-                <label for="pedigree_number">Numéro de Pedigree / LOF</label>
-                <input type="text" id="pedigree_number" name="pedigree_number">
-            </div>
-
-            <div class="form-group">
-                <label for="mother_id">Mère (sélectionner dans l'élevage)</label>
-                <select id="mother_id" name="mother_id">
-                    <option value="">-- Inconnue / Externe --</option>
-                    <% dogs.filter(d => d.sex === 'F').forEach(f => { %>
+                <label for="father_id">Père</label>
+                <select id="father_id" name="father_id">
+                    <option value="">-- Inconnu / Externe à l'élevage --</option>
+                    <% fathers.forEach(f => { %>
                         <option value="<%= f.id %>"><%= f.name %></option>
                     <% }) %>
                 </select>
             </div>
-
             <div class="form-group">
-                <label for="father_id">Père (sélectionner dans l'élevage)</label>
-                <select id="father_id" name="father_id">
-                    <option value="">-- Inconnu / Externe --</option>
-                    <% dogs.filter(d => d.sex === 'M').forEach(m => { %>
+                <label for="mother_id">Mère</label>
+                <select id="mother_id" name="mother_id">
+                    <option value="">-- Inconnue / Externe à l'élevage --</option>
+                    <% mothers.forEach(m => { %>
                         <option value="<%= m.id %>"><%= m.name %></option>
                     <% }) %>
                 </select>
             </div>
         </div>
 
-        <div class="form-group full-width">
-            <label for="notes">Notes / Particularités</label>
-            <textarea id="notes" name="notes" rows="4"></textarea>
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="pedigree">Notes ou lien Pedigree</label>
+            <input type="text" id="pedigree" name="pedigree" placeholder="Lien vers une base de données de pedigree externe...">
         </div>
 
-        <div class="form-actions">
-            <a href="/dogs" class="btn btn-secondary">Annuler</a>
-            <button type="submit" class="btn btn-primary">Enregistrer le chien</button>
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="notes">Observations / Notes privées</label>
+            <textarea id="notes" name="notes" rows="4" placeholder="Informations sanitaires, comportementales..."></textarea>
+        </div>
+
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #eee;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.2rem; font-size: 1.2rem; font-weight: bold;">
+                Enregistrer le chien au cheptel
+            </button>
         </div>
     </form>
-  </section>
 </main>
+
 <%- include('../partials/foot') %>
