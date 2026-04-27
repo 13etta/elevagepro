@@ -1,0 +1,62 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions">
+        <h1>Déclarer une saillie</h1>
+        <a href="/matings" class="btn btn-secondary">Annuler</a>
+    </div>
+
+    <form action="/matings/new" method="POST" class="card form-block">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="male_id">Mâle *</label>
+                <select id="male_id" name="male_id" required>
+                    <option value="">-- Sélectionner un mâle actif --</option>
+                    <% males.forEach(m => { %>
+                        <option value="<%= m.id %>"><%= m.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="female_id">Femelle *</label>
+                <select id="female_id" name="female_id" required>
+                    <option value="">-- Sélectionner une femelle active --</option>
+                    <% females.forEach(f => { %>
+                        <option value="<%= f.id %>"><%= f.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem;">
+            <div class="form-group">
+                <label for="mating_date">Date de la saillie *</label>
+                <input type="date" id="mating_date" name="mating_date" required>
+            </div>
+            <div class="form-group">
+                <label for="method">Méthode</label>
+                <select id="method" name="method">
+                    <option value="Naturelle">Naturelle</option>
+                    <option value="Insémination">Insémination (IA)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="place">Lieu de la saillie (Optionnel)</label>
+            <input type="text" id="place" name="place" placeholder="Ex: Chez l'étalonnier, Clinique vétérinaire...">
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="notes">Observations (Verrouillage, comportement...)</label>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Enregistrer la saillie</button>
+        </div>
+    </form>
+</main>
+
+<%- include('../partials/foot') %>

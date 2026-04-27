@@ -82,7 +82,7 @@ app.use('/dogs', dogsRoutes);
 app.use('/soins', require('./routes/soins.routes'))
 app.use('/reminders', remindersRoutes);
 app.use('/heats', require('./routes/heats.routes'));
-app.use('/matings', matingsRoutes);
+app.use('/matings', require('./routes/matings.routes'));
 app.use('/pregnancies', pregnanciesRoutes);
 app.use('/litters', require('./routes/litters.routes'));
 app.use('/puppies', puppiesRoutes);

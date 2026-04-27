@@ -1,0 +1,89 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1>Gestion des Saillies</h1>
+            <p style="color: #7f8c8d; margin-top:-0.5rem;">Historique des accouplements et inséminations</p>
+        </div>
+        <div>
+            <a href="/matings/virtual-litter" class="btn btn-secondary" style="margin-right: 0.5rem;">🧬 Portée virtuelle (SCC)</a>
+            <a href="/matings/new" class="btn btn-primary">Déclarer une saillie</a>
+        </div>
+    </div>
+
+    <form method="GET" action="/matings" class="card form-grid" style="margin-bottom: 2rem; padding: 1.5rem; background-color: #f8f9fa;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
+            <input type="text" name="q" placeholder="Recherche..." value="<%= filters && filters.q ? filters.q : '' %>" style="flex: 2; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+            
+            <select name="male_id" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Mâle --</option>
+                <% males.forEach(m => { %>
+                    <option value="<%= m.id %>" <%= filters && filters.male_id == m.id ? 'selected' : '' %>><%= m.name %></option>
+                <% }) %>
+            </select>
+
+            <select name="female_id" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Femelle --</option>
+                <% females.forEach(f => { %>
+                    <option value="<%= f.id %>" <%= filters && filters.female_id == f.id ? 'selected' : '' %>><%= f.name %></option>
+                <% }) %>
+            </select>
+
+            <select name="method" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Méthode --</option>
+                <option value="Naturelle" <%= filters && filters.method === 'Naturelle' ? 'selected' : '' %>>Naturelle</option>
+                <option value="Insémination" <%= filters && filters.method === 'Insémination' ? 'selected' : '' %>>Insémination</option>
+            </select>
+
+            <button type="submit" class="btn btn-secondary">Filtrer</button>
+            <a href="/matings" class="btn btn-outline-secondary" style="padding: 0.5rem 1rem; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: #555;">Reset</a>
+        </div>
+    </form>
+
+    <section class="card">
+        <% if (matings.length === 0) { %>
+            <p style="text-align: center; color: #7f8c8d; padding: 3rem;">Aucune saillie trouvée.</p>
+        <% } else { %>
+            <div class="table-responsive">
+                <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <tr>
+                            <th style="padding: 1rem;">Date</th>
+                            <th style="padding: 1rem;">Mâle</th>
+                            <th style="padding: 1rem;">Femelle</th>
+                            <th style="padding: 1rem;">Méthode</th>
+                            <th style="padding: 1rem;">Lieu</th>
+                            <th style="padding: 1rem; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% matings.forEach(m => { %>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 1rem;"><strong><%= new Date(m.mating_date).toLocaleDateString('fr-FR') %></strong></td>
+                                <td style="padding: 1rem;"><%= m.male_name %></td>
+                                <td style="padding: 1rem;"><%= m.female_name %></td>
+                                <td style="padding: 1rem;">
+                                    <span style="background-color: <%= m.method === 'Naturelle' ? '#e8fdf5; color: #198754;' : '#e8f4fd; color: #0d6efd;' %> padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;"><%= m.method %></span>
+                                </td>
+                                <td style="padding: 1rem;"><%= m.place || '-' %></td>
+                                <td style="padding: 1rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem; align-items: center;">
+                                    <% if (m.male_id_scc && m.female_id_scc) { %>
+                                        <a href="https://www.centrale-canine.fr/lofselect/alliance-virtuelle/result?chienMaleId=<%= encodeURIComponent(m.male_id_scc) %>&chienFemaleId=<%= encodeURIComponent(m.female_id_scc) %>&globalBreedId=223&globalBreedName=Setter%20anglais" target="_blank" class="btn btn-sm" style="background-color: #f39c12; color: white;">Voir SCC</a>
+                                    <% } %>
+                                    <a href="/matings/<%= m.id %>/edit" class="btn btn-secondary btn-sm">Modifier</a>
+                                    <form action="/matings/<%= m.id %>/delete" method="POST" onsubmit="return confirm('Supprimer cette saillie ?');" style="margin:0;">
+                                        <button type="submit" class="btn btn-sm" style="background-color: #ffeaea; color: #dc3545; border: 1px solid #ffc2c2;">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </section>
+</main>
+
+<%- include('../partials/foot') %>
