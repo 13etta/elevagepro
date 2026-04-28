@@ -1,83 +1,31 @@
 const { pool } = require('../db');
 
 exports.listPregnancies = async (req, res) => {
-    try {
-        const breederId = req.session.user.breeder_id;
-        const { q, female, status } = req.query;
-
-        let query = `
-            SELECT p.*, f.name AS female_name
-            FROM pregnancies p
-            LEFT JOIN dogs f ON p.female_id = f.id
-            WHERE p.breeder_id = $1
-        `;
-        let params = [breederId];
-
-        if (q) {
-            params.push(`%${q}%`);
-            query += ` AND (f.name ILIKE $${params.length} OR p.notes ILIKE $${params.length})`;
-        }
-        if (female) {
-            params.push(female);
-            query += ` AND f.id = $${params.length}`;
-        }
-        if (status) {
-            params.push(status);
-            query += ` AND p.result = $${params.length}`;
-        }
-
-        query += ' ORDER BY p.start_date DESC';
-        const result = await pool.query(query, params);
-        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ORDER BY name ASC", [breederId]);
-
-        res.render('pregnancies/index', { pregnancies: result.rows, females: females.rows, filters: req.query });
-    } catch (error) {
-        console.error('Erreur liste gestations:', error);
-        res.status(500).send('Erreur lors du chargement des gestations.');
-    }
+    // Garde ton listPregnancies actuel
 };
 
 exports.getForm = async (req, res) => {
-    try {
-        const breederId = req.session.user.breeder_id;
-        const pregId = req.params.id;
-        const matingId = req.query.mating_id; // Si on vient du bouton "Déclarer gestation" depuis une saillie
-
-        let preg = { result: 'En cours' };
-
-        // Si c'est une modification
-        if (pregId) {
-            const pregRes = await pool.query('SELECT * FROM pregnancies WHERE id = $1 AND breeder_id = $2', [pregId, breederId]);
-            if (pregRes.rows.length > 0) preg = pregRes.rows[0];
-        } 
-        // Si c'est une création pré-remplie depuis une saillie
-        else if (matingId) {
-            const matingRes = await pool.query('SELECT female_id, mating_date FROM matings WHERE id = $1 AND breeder_id = $2', [matingId, breederId]);
-            if (matingRes.rows.length > 0) {
-                preg.mating_id = matingId;
-                preg.female_id = matingRes.rows[0].female_id;
-                preg.start_date = matingRes.rows[0].mating_date;
-                
-                // Calcul automatique des 63 jours
-                let start = new Date(preg.start_date);
-                start.setDate(start.getDate() + 63);
-                preg.expected_date = start.toISOString().split('T')[0];
-            }
-        }
-
-        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND status = 'Actif' ORDER BY name ASC", [breederId]);
-        
-        res.render('pregnancies/form', { preg, females: females.rows });
-    } catch (error) {
-        res.status(500).send('Erreur serveur.');
-    }
+    // Garde ton getForm actuel
 };
 
 exports.savePregnancy = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const pregId = req.params.id;
-        const { mating_id, female_id, start_date, expected_date, due_date, result, notes } = req.body;
+        const { mating_id, female_id, start_date, notes } = req.body;
+        let { expected_date, due_date, result } = req.body;
+
+        // 🧠 AUTOMATISATION 1 : Calcul si l'utilisateur modifie les dates
+        if (start_date && !expected_date) {
+            let start = new Date(start_date);
+            start.setDate(start.getDate() + 63);
+            expected_date = start.toISOString().split('T')[0];
+        }
+
+        // 🧠 AUTOMATISATION 2 : Si date de mise bas réelle renseignée, la gestation passe "Réussie"
+        if (due_date && result === 'En cours') {
+            result = 'Réussie';
+        }
 
         if (pregId) {
             await pool.query(`
@@ -100,10 +48,5 @@ exports.savePregnancy = async (req, res) => {
 };
 
 exports.deletePregnancy = async (req, res) => {
-    try {
-        await pool.query('DELETE FROM pregnancies WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);
-        res.redirect('/pregnancies');
-    } catch (error) {
-        res.status(500).send('Erreur suppression.');
-    }
+    // Garde ton deletePregnancy actuel
 };
