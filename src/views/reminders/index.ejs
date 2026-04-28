@@ -1,0 +1,104 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Pilotage sanitaire</p>
+      <h1>Rappels</h1>
+      <p>Suivez les échéances importantes : vaccins, vermifuges, antiparasitaires, échographies, documents et actions administratives.</p>
+    </div>
+    <a class="btn btn-primary" href="/reminders/new">Ajouter un rappel</a>
+  </section>
+
+  <section class="kpi-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+    <article class="kpi-card"><span>En retard</span><strong><%= lateReminders.length %></strong></article>
+    <article class="kpi-card"><span>À venir</span><strong><%= upcomingReminders.length %></strong></article>
+    <article class="kpi-card"><span>Terminés</span><strong><%= completedReminders.length %></strong></article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Prioritaire</span>
+        <h2>Rappels en retard</h2>
+      </div>
+      <% if (!lateReminders.length) { %>
+        <p class="muted">Aucun rappel en retard.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Libellé</th><th>Chien</th><th>Actions</th></tr></thead>
+          <tbody>
+            <% lateReminders.forEach((reminder) => { %>
+              <tr class="late">
+                <td><%= formatDate(reminder.due_date) %></td>
+                <td><strong><%= reminder.title %></strong><br><small><%= reminder.type || 'general' %></small></td>
+                <td><%= reminder.dog_name || 'Général' %></td>
+                <td class="table-actions">
+                  <a class="btn btn-primary" href="/reminders/<%= reminder.id %>/complete">Fait</a>
+                  <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/edit">Modifier</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Planifié</span>
+        <h2>Rappels à venir</h2>
+      </div>
+      <% if (!upcomingReminders.length) { %>
+        <p class="muted">Aucun rappel à venir.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Libellé</th><th>Chien</th><th>Actions</th></tr></thead>
+          <tbody>
+            <% upcomingReminders.forEach((reminder) => { %>
+              <tr>
+                <td><%= formatDate(reminder.due_date) %></td>
+                <td><strong><%= reminder.title %></strong><br><small><%= reminder.type || 'general' %></small></td>
+                <td><%= reminder.dog_name || 'Général' %></td>
+                <td class="table-actions">
+                  <a class="btn btn-primary" href="/reminders/<%= reminder.id %>/complete">Fait</a>
+                  <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/edit">Modifier</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact">
+      <span class="section-kicker">Historique</span>
+      <h2>Rappels terminés</h2>
+    </div>
+    <% if (!completedReminders.length) { %>
+      <p class="muted">Aucun rappel terminé.</p>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Date</th><th>Libellé</th><th>Chien</th><th>Actions</th></tr></thead>
+        <tbody>
+          <% completedReminders.forEach((reminder) => { %>
+            <tr>
+              <td><%= formatDate(reminder.due_date) %></td>
+              <td><%= reminder.title %></td>
+              <td><%= reminder.dog_name || 'Général' %></td>
+              <td class="table-actions">
+                <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/reopen">Réouvrir</a>
+                <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/delete" onclick="return confirm('Supprimer ce rappel ?')">Supprimer</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
