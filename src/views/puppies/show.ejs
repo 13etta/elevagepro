@@ -1,0 +1,103 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Fiche chiot</p>
+      <h1><%= puppy.name || 'Chiot sans nom' %></h1>
+      <p><%= puppy.sex || '-' %> — <%= puppy.color || 'Robe non renseignée' %></p>
+    </div>
+    <div class="topbar-actions">
+      <a class="btn btn-secondary" href="/puppies">Retour</a>
+      <a class="btn btn-primary" href="/puppies/edit/<%= puppy.id %>">Modifier</a>
+    </div>
+  </section>
+
+  <section class="kpi-grid">
+    <article class="kpi-card"><span>Statut</span><strong><%= puppy.status || '-' %></strong></article>
+    <article class="kpi-card"><span>Puce</span><strong><%= puppy.chip_number || '-' %></strong></article>
+    <article class="kpi-card"><span>Prix</span><strong><%= puppy.sale_price ? puppy.sale_price + ' €' : '-' %></strong></article>
+    <article class="kpi-card"><span>Portée</span><strong><%= puppy.litter_birth_date ? formatDate(puppy.litter_birth_date) : '-' %></strong></article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Origines</span>
+        <h2>Portée</h2>
+      </div>
+      <p><strong>Mère :</strong> <%= puppy.mother_name || '-' %></p>
+      <p><strong>Père :</strong> <%= puppy.father_name || '-' %></p>
+      <p><strong>Date portée :</strong> <%= puppy.litter_birth_date ? formatDate(puppy.litter_birth_date) : '-' %></p>
+    </article>
+
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Commercial</span>
+        <h2>Vente / réservation</h2>
+      </div>
+      <% if (!sales.length) { %>
+        <p class="muted">Aucune vente ou réservation enregistrée.</p>
+        <a class="btn btn-primary" href="/sales/new">Créer une réservation</a>
+      <% } else { %>
+        <% sales.forEach((sale) => { %>
+          <p>
+            <strong><%= sale.is_reservation ? 'Réservation' : 'Vente définitive' %></strong>
+            — <%= sale.buyer_name || '-' %>
+            — <a href="/sales/<%= sale.id %>/edit">Modifier</a>
+          </p>
+        <% }) %>
+      <% } %>
+    </article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Santé</span>
+        <h2>Soins</h2>
+      </div>
+      <% if (!soins.length) { %>
+        <p class="muted">Aucun soin enregistré.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Acte</th><th>Échéance</th></tr></thead>
+          <tbody>
+            <% soins.forEach((soin) => { %>
+              <tr>
+                <td><%= formatDate(soin.event_date) %></td>
+                <td><%= soin.label %> <small>(<%= soin.type %>)</small></td>
+                <td><%= soin.next_due ? formatDate(soin.next_due) : '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Prioritaire</span>
+        <h2>Rappels</h2>
+      </div>
+      <% if (!reminders.length) { %>
+        <p class="muted">Aucun rappel actif.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Libellé</th></tr></thead>
+          <tbody>
+            <% reminders.forEach((reminder) => { %>
+              <tr>
+                <td><%= formatDate(reminder.due_date) %></td>
+                <td><%= reminder.title %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
