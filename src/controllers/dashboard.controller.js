@@ -6,7 +6,7 @@ exports.getDashboard = async (req, res) => {
 
         await pool.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE').catch(() => {});
         await pool.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE').catch(() => {});
-        await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS documents_checked JSONB DEFAULT '{}'::jsonb').catch(() => {});
+        await pool.query(`ALTER TABLE sales ADD COLUMN IF NOT EXISTS documents_checked JSONB DEFAULT '{}'::jsonb`).catch(() => {});
 
         const activeDogs = await pool.query(`SELECT count(*) FROM dogs WHERE breeder_id = $1 AND status = 'Actif'`, [breederId]);
         const availablePuppies = await pool.query(`SELECT count(*) FROM puppies WHERE breeder_id = $1 AND status ILIKE 'disponible'`, [breederId]);
