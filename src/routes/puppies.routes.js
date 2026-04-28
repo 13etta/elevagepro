@@ -5,7 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 
 router.use(requireAuth);
 
-router.get('/', (req, res) => res.redirect('/dashboard'));
+router.get('/', puppiesController.listPuppies);
 router.get('/new', puppiesController.getForm);
 router.post('/save', puppiesController.savePuppy);
 router.get('/edit/:id', puppiesController.getForm);
