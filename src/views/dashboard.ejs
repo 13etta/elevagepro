@@ -11,6 +11,17 @@
     <a class="btn btn-primary" href="/dogs"><%= __('dashboard.primaryAction') %></a>
   </section>
 
+  <% if (typeof alerts !== 'undefined' && alerts.length) { %>
+    <section class="alert-grid">
+      <% alerts.forEach((alert) => { %>
+        <a class="business-alert alert-<%= alert.level %>" href="<%= alert.href %>">
+          <span><%= alert.level === 'danger' ? '!' : alert.level === 'warning' ? '⚠' : 'i' %></span>
+          <strong><%= alert.title %></strong>
+        </a>
+      <% }) %>
+    </section>
+  <% } %>
+
   <section class="kpi-grid">
     <article class="kpi-card"><span><%= __('dashboard.activeDogs') %></span><strong><%= kpis.activeDogs %></strong></article>
     <article class="kpi-card"><span><%= __('dashboard.availablePuppies') %></span><strong><%= kpis.availablePuppies %></strong></article>
@@ -24,18 +35,22 @@
         <span class="section-kicker"><%= __('dashboard.priority') %></span>
         <h2><%= __('dashboard.reminders') %></h2>
       </div>
-      <table>
-        <thead><tr><th><%= __('common.date') %></th><th><%= __('common.label') %></th><th><%= __('common.dog') %></th></tr></thead>
-        <tbody>
-          <% reminders.forEach((row) => { %>
-            <tr class="<%= new Date(row.due_date) < new Date() ? 'late' : '' %>">
-              <td><%= formatDate(row.due_date) %></td>
-              <td><%= row.label %></td>
-              <td><%= row.dog_name || __('common.general') %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+      <% if (!reminders.length) { %>
+        <p class="muted">Aucun rappel prioritaire.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th><%= __('common.date') %></th><th><%= __('common.label') %></th><th><%= __('common.dog') %></th></tr></thead>
+          <tbody>
+            <% reminders.forEach((row) => { %>
+              <tr class="<%= new Date(row.due_date) < new Date() ? 'late' : '' %>">
+                <td><%= formatDate(row.due_date) %></td>
+                <td><%= row.label %><br><small><%= row.scope || '' %></small></td>
+                <td><%= row.dog_name || __('common.general') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
     </article>
 
     <article class="table-block">
@@ -43,20 +58,75 @@
         <span class="section-kicker"><%= __('dashboard.recent') %></span>
         <h2><%= __('dashboard.care') %></h2>
       </div>
-      <table>
-        <thead><tr><th><%= __('common.date') %></th><th><%= __('common.type') %></th><th><%= __('common.dog') %></th></tr></thead>
-        <tbody>
-          <% soins.forEach((row) => { %>
-            <tr>
-              <td><%= formatDate(row.event_date) %></td>
-              <td><%= row.label || row.type %></td>
-              <td><%= row.dog_name || __('common.general') %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+      <% if (!soins.length) { %>
+        <p class="muted">Aucun soin récent.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th><%= __('common.date') %></th><th><%= __('common.type') %></th><th><%= __('common.dog') %></th></tr></thead>
+          <tbody>
+            <% soins.forEach((row) => { %>
+              <tr>
+                <td><%= formatDate(row.event_date) %></td>
+                <td><%= row.label || row.type %></td>
+                <td><%= row.dog_name || __('common.general') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
     </article>
   </section>
+
+  <% if ((typeof salesToFinalize !== 'undefined' && salesToFinalize.length) || (typeof littersWithoutPuppies !== 'undefined' && littersWithoutPuppies.length)) { %>
+    <section class="dashboard-columns dashboard-priority-zone">
+      <article class="table-block">
+        <div class="section-title compact">
+          <span class="section-kicker">Commercial</span>
+          <h2>Ventes incomplètes</h2>
+        </div>
+        <% if (!salesToFinalize.length) { %>
+          <p class="muted">Aucune réservation à finaliser.</p>
+        <% } else { %>
+          <table>
+            <thead><tr><th>Animal</th><th>Acquéreur</th><th>Solde</th><th>Action</th></tr></thead>
+            <tbody>
+              <% salesToFinalize.forEach((sale) => { %>
+                <tr>
+                  <td><%= sale.animal_name || '-' %></td>
+                  <td><%= sale.buyer_name || '-' %></td>
+                  <td><%= Math.max(Number(sale.price || 0) - Number(sale.deposit_amount || 0), 0).toFixed(2) %> €</td>
+                  <td><a class="btn btn-secondary" href="/sales/<%= sale.id %>/edit">Finaliser</a></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </article>
+
+      <article class="table-block">
+        <div class="section-title compact">
+          <span class="section-kicker">Portées</span>
+          <h2>Actions manquantes</h2>
+        </div>
+        <% if (!littersWithoutPuppies.length) { %>
+          <p class="muted">Aucune portée sans chiots.</p>
+        <% } else { %>
+          <table>
+            <thead><tr><th>Date</th><th>Mère</th><th>Action</th></tr></thead>
+            <tbody>
+              <% littersWithoutPuppies.forEach((litter) => { %>
+                <tr>
+                  <td><%= formatDate(litter.birth_date) %></td>
+                  <td><%= litter.mother_name || '-' %></td>
+                  <td><a class="btn btn-secondary" href="/litters/<%= litter.id %>">Ouvrir</a></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </article>
+    </section>
+  <% } %>
 
   <section class="module-cockpit">
     <div class="section-title">
