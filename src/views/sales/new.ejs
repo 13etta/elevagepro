@@ -22,21 +22,30 @@
         <div class="form-group">
             <label for="animal_selection">Sélectionner l'animal *</label>
             <select id="animal_selection" name="animal_selection" required>
-                <option value="">-- Choisir un animal --</option>
+                <option value="" data-price="">-- Choisir un animal --</option>
                 
                 <optgroup id="optgroup-puppies" label="Chiots (Portées actuelles)">
                     <% puppies.forEach(p => { %>
-                        <option value="puppy|<%= p.id %>"><%= p.name %> (Puce: <%= p.chip_number || 'En attente' %>)</option>
+                        <option
+                            value="puppy|<%= p.id %>"
+                            data-price="<%= p.sale_price || '' %>"
+                        >
+                            <%= p.name || 'Chiot sans nom' %>
+                            <% if (p.mother_name) { %> — portée de <%= p.mother_name %><% } %>
+                            (Puce: <%= p.chip_number || 'En attente' %>)
+                            <% if (p.sale_price) { %> — <%= p.sale_price %> €<% } %>
+                        </option>
                     <% }) %>
                 </optgroup>
 
                 <optgroup id="optgroup-dogs" label="Chiens Adultes (Réforme / Replacement)">
                     <% dogs.forEach(d => { %>
-                        <option value="dog|<%= d.id %>"><%= d.name %> (Puce: <%= d.chip_number || 'N/A' %>)</option>
+                        <option value="dog|<%= d.id %>" data-price=""><%= d.name %> (Puce: <%= d.chip_number || 'N/A' %>)</option>
                     <% }) %>
                 </optgroup>
 
             </select>
+            <small style="color: #7f8c8d;">Pour un chiot, le prix renseigné dans sa fiche est repris automatiquement.</small>
         </div>
 
         <div class="form-group">
@@ -69,16 +78,28 @@
 </main>
 
 <script>
-    // Ce script écoute la case à cocher pour masquer les chiens adultes si "Réservation" est actif
-    document.getElementById('is_reservation').addEventListener('change', function() {
-        const optAdults = document.getElementById('optgroup-dogs');
-        const animalSelect = document.getElementById('animal_selection');
-        
+    const reservationCheckbox = document.getElementById('is_reservation');
+    const optAdults = document.getElementById('optgroup-dogs');
+    const animalSelect = document.getElementById('animal_selection');
+    const priceInput = document.getElementById('price');
+
+    function applySelectedAnimalPrice() {
+        const selectedOption = animalSelect.options[animalSelect.selectedIndex];
+        const selectedPrice = selectedOption ? selectedOption.getAttribute('data-price') : '';
+
+        if (selectedPrice !== null && selectedPrice !== '') {
+            priceInput.value = Number(selectedPrice).toFixed(2);
+        }
+    }
+
+    animalSelect.addEventListener('change', applySelectedAnimalPrice);
+
+    reservationCheckbox.addEventListener('change', function() {
         if (this.checked) {
             optAdults.style.display = 'none';
-            // Si un adulte était déjà sélectionné, on réinitialise le champ
             if (animalSelect.value.startsWith('dog|')) {
                 animalSelect.value = '';
+                priceInput.value = '';
             }
         } else {
             optAdults.style.display = 'block';
