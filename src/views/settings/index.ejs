@@ -1,95 +1,112 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
+
 <main class="container">
-  <div class="header-actions">
-      <h1>Paramètres de l'élevage</h1>
-  </div>
-  <p style="color: #7f8c8d; margin-top:-1rem; margin-bottom: 2rem;">
-      Ces informations apparaîtront automatiquement sur les contrats, factures et attestations de cession.
-  </p>
-
-  <div class="form-grid" style="align-items: start;">
-      
-      <section class="form-block card">
-          <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Informations Légales</h3>
-          <form action="/settings" method="POST">
-              <div class="form-group">
-                  <label for="company_name">Nom de l'entreprise / Élevage *</label>
-                  <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name %>" required>
-              </div>
-              
-              <div class="form-group">
-                  <label for="affix_name">Nom d'Affixe (FCI/SCC)</label>
-                  <input type="text" id="affix_name" name="affix_name" value="<%= breeder.affix_name || '' %>">
-              </div>
-
-              <div class="form-group">
-                  <label for="siret">Numéro de SIRET</label>
-                  <input type="text" id="siret" name="siret" value="<%= breeder.siret || '' %>">
-              </div>
-
-              <div class="form-group">
-                  <label for="address">Adresse postale complète</label>
-                  <textarea id="address" name="address" rows="3" required><%= breeder.address || '' %></textarea>
-              </div>
-
-              <button type="submit" class="btn btn-primary">Enregistrer les informations</button>
-          </form>
-      </section>
-
-      <section class="form-block card" style="background-color: #fdfdfd;">
-          <h3 style="color: var(--accent-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Identité Visuelle</h3>
-          <p style="font-size: 0.9rem; color: #7f8c8d;">Téléchargez votre logo pour personnaliser vos PDF.</p>
-          
-          <form action="/settings/logo" method="POST" enctype="multipart/form-data">
-    <% if (breeder.logo_url) { %>
-        <div style="text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-            <img src="<%= breeder.logo_url %>" alt="Logo de l'élevage" style="max-height: 120px; max-width: 100%; object-fit: contain;">
-        </div>
-    <% } else { %>
-        <div style="text-align: center; padding: 2rem; border: 2px dashed #bdc3c7; border-radius: 8px; margin-bottom: 1rem;">
-            <span style="font-size: 2rem;">[IMAGE]</span>
-            <p>Aucun logo configuré.</p>
-        </div>
-    <% } %>
-    
-    <div class="form-group">
-        <label for="logo">Choisir une image (PNG, JPG, WEBP)</label>
-        <input type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/webp" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow"><%= __('settings.title') %></p>
+      <h1><%= __('settings.heading') %></h1>
+      <p><%= __('settings.subtitle') %></p>
     </div>
-    
-    <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Uploader et Sauvegarder</button>
-</form>
-      </section>
+  </section>
 
-  </div>
-  <section class="settings-module card">
-  <h2><%= __('settings.appearance') %></h2>
-  
-  <div class="setting-item">
-    <label><%= __('settings.language') %></label>
-    <select onchange="window.location.href='?lang=' + this.value">
-      <option value="fr" <%= currentLang === 'fr' ? 'selected' : '' %>>Français</option>
-      <option value="en" <%= currentLang === 'en' ? 'selected' : '' %>>English</option>
-    </select>
-  </div>
+  <section class="settings-grid">
+    <article class="card settings-card">
+      <div class="section-title">
+        <span class="section-kicker"><%= __('settings.identity') %></span>
+        <h2><%= __('settings.legalInfo') %></h2>
+      </div>
 
-  <div class="setting-item">
-    <label>Couleur de l'application</label>
-    <div class="theme-selector">
-      <button onclick="setTheme('default')" class="btn-theme nature">Nature</button>
-      <button onclick="setTheme('professional')" class="btn-theme pro">Pro</button>
-      <button onclick="setTheme('dark')" class="btn-theme dark">Sombre</button>
-    </div>
-  </div>
-</section>
+      <form action="/settings" method="POST" class="stacked-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-<script>
-  function setTheme(themeName) {
-    document.cookie = "theme=" + themeName + ";path=/;max-age=31536000";
-    document.documentElement.setAttribute('data-theme', themeName);
-    location.reload(); // Pour appliquer partout immédiatement
-  }
-</script>
+        <div class="form-group">
+          <label for="company_name"><%= __('settings.companyName') %></label>
+          <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name || '' %>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="affix_name"><%= __('settings.affixName') %></label>
+          <input type="text" id="affix_name" name="affix_name" value="<%= breeder.affix_name || '' %>">
+        </div>
+
+        <div class="form-group">
+          <label for="siret"><%= __('settings.siret') %></label>
+          <input type="text" id="siret" name="siret" value="<%= breeder.siret || '' %>">
+        </div>
+
+        <div class="form-group">
+          <label for="address"><%= __('settings.address') %></label>
+          <textarea id="address" name="address" rows="4" required><%= breeder.address || '' %></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><%= __('settings.saveIdentity') %></button>
+      </form>
+    </article>
+
+    <article class="card settings-card">
+      <div class="section-title">
+        <span class="section-kicker"><%= __('settings.appearance') %></span>
+        <h2><%= __('settings.interfacePreferences') %></h2>
+      </div>
+
+      <form action="/settings/preferences" method="POST" class="stacked-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-group">
+          <label for="lang"><%= __('settings.language') %></label>
+          <select id="lang" name="lang">
+            <option value="fr" <%= currentLang === 'fr' ? 'selected' : '' %>>Français</option>
+            <option value="en" <%= currentLang === 'en' ? 'selected' : '' %>>English</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="theme"><%= __('settings.theme') %></label>
+          <select id="theme" name="theme">
+            <option value="prestige" <%= theme === 'prestige' ? 'selected' : '' %>><%= __('themes.prestige') %></option>
+            <option value="clinical" <%= theme === 'clinical' ? 'selected' : '' %>><%= __('themes.clinical') %></option>
+            <option value="nature" <%= theme === 'nature' ? 'selected' : '' %>><%= __('themes.nature') %></option>
+          </select>
+        </div>
+
+        <div class="theme-preview-grid">
+          <div class="theme-preview prestige"><span></span><strong><%= __('themes.prestige') %></strong></div>
+          <div class="theme-preview clinical"><span></span><strong><%= __('themes.clinical') %></strong></div>
+          <div class="theme-preview nature"><span></span><strong><%= __('themes.nature') %></strong></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><%= __('settings.savePreferences') %></button>
+      </form>
+    </article>
+
+    <article class="card settings-card settings-logo-card">
+      <div class="section-title">
+        <span class="section-kicker"><%= __('settings.visualIdentity') %></span>
+        <h2><%= __('settings.logo') %></h2>
+      </div>
+
+      <% if (breeder.logo_url) { %>
+        <div class="logo-preview">
+          <img src="<%= breeder.logo_url %>" alt="<%= __('settings.logo') %>">
+        </div>
+      <% } else { %>
+        <div class="empty-logo-preview">
+          <strong>EP</strong>
+          <p><%= __('settings.noLogo') %></p>
+        </div>
+      <% } %>
+
+      <form action="/settings/logo" method="POST" enctype="multipart/form-data" class="stacked-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label for="logo"><%= __('settings.chooseLogo') %></label>
+          <input type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/webp" required>
+        </div>
+        <button type="submit" class="btn btn-secondary"><%= __('settings.uploadLogo') %></button>
+      </form>
+    </article>
+  </section>
 </main>
+
 <%- include('../partials/foot') %>
