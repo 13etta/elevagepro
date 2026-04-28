@@ -1,0 +1,91 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions">
+        <h1>Registre des Chiots</h1>
+        <a href="/puppies/new" class="btn btn-primary">Ajouter un chiot</a>
+    </div>
+
+    <form method="GET" action="/puppies" class="card form-grid" style="margin-bottom: 2rem; padding: 1.5rem; background-color: #f8f9fa; border: 1px solid #e9ecef;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
+            <input type="text" name="q" placeholder="Recherche (Nom ou Puce)" value="<%= filters && filters.q ? filters.q : '' %>" style="flex: 2; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+            
+            <select name="sex" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Sexe --</option>
+                <option value="M" <%= filters && filters.sex === 'M' ? 'selected' : '' %>>Mâle</option>
+                <option value="F" <%= filters && filters.sex === 'F' ? 'selected' : '' %>>Femelle</option>
+            </select>
+
+            <select name="status" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Statut --</option>
+                <option value="Actif" <%= filters && filters.status === 'Actif' ? 'selected' : '' %>>Disponible</option>
+                <option value="Réservé" <%= filters && filters.status === 'Réservé' ? 'selected' : '' %>>Réservé</option>
+                <option value="Vendu" <%= filters && filters.status === 'Vendu' ? 'selected' : '' %>>Vendu</option>
+                <option value="Décédé" <%= filters && filters.status === 'Décédé' ? 'selected' : '' %>>Décédé</option>
+            </select>
+
+            <select name="litter" style="flex: 2; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="">-- Portée --</option>
+                <% litters.forEach(l => { %>
+                    <option value="<%= l.id %>" <%= filters && filters.litter == l.id ? 'selected' : '' %>><%= l.mother_name %> (<%= new Date(l.birth_date).toLocaleDateString('fr-FR') %>)</option>
+                <% }) %>
+            </select>
+
+            <button type="submit" class="btn btn-secondary">Filtrer</button>
+            <a href="/puppies" class="btn btn-outline-secondary" style="display: flex; align-items: center; text-decoration: none; color: #6c757d; border: 1px solid #ccc; padding: 0.5rem 1rem; border-radius: 4px;">Reset</a>
+        </div>
+    </form>
+
+    <section class="card">
+        <% if (puppies.length === 0) { %>
+            <p style="text-align: center; color: #7f8c8d; padding: 3rem;">Aucun chiot trouvé avec ces critères.</p>
+        <% } else { %>
+            <div class="table-responsive">
+                <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <tr>
+                            <th style="padding: 1rem;">Nom / Collier</th>
+                            <th style="padding: 1rem;">Sexe</th>
+                            <th style="padding: 1rem;">Mère</th>
+                            <th style="padding: 1rem;">Né(e) le</th>
+                            <th style="padding: 1rem;">Puce</th>
+                            <th style="padding: 1rem;">Statut</th>
+                            <th style="padding: 1rem; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% puppies.forEach(p => { %>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 1rem;"><strong><%= p.name %></strong></td>
+                                <td style="padding: 1rem;"><%= p.sex === 'M' ? '♂️' : '♀️' %></td>
+                                <td style="padding: 1rem;"><%= p.female_name || '-' %></td>
+                                <td style="padding: 1rem;"><%= p.birth_date ? new Date(p.birth_date).toLocaleDateString('fr-FR') : '-' %></td>
+                                <td style="padding: 1rem;"><%= p.chip_number || '-' %></td>
+                                <td style="padding: 1rem;">
+                                    <% if (p.status === 'Actif' || p.status === 'disponible') { %>
+                                        <span style="background-color: #e8fdf5; color: #198754; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">Disponible</span>
+                                    <% } else if (p.status === 'Réservé') { %>
+                                        <span style="background-color: #fff3cd; color: #856404; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">Réservé</span>
+                                    <% } else if (p.status === 'Vendu') { %>
+                                        <span style="background-color: #ffeaea; color: #dc3545; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">Vendu</span>
+                                    <% } else { %>
+                                        <span style="background-color: #e9ecef; color: #495057; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;"><%= p.status %></span>
+                                    <% } %>
+                                </td>
+                                <td style="padding: 1rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                    <a href="/puppies/<%= p.id %>/edit" class="btn btn-secondary btn-sm">Modifier</a>
+                                    <form action="/puppies/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Supprimer ce chiot ?');" style="margin:0;">
+                                        <button type="submit" class="btn btn-sm" style="background-color: #ffeaea; color: #dc3545; border: 1px solid #ffc2c2;">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } %>
+    </section>
+</main>
+
+<%- include('../partials/foot') %>
