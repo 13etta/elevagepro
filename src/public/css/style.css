@@ -105,9 +105,9 @@ a { color: inherit; }
 .page-hero p:not(.eyebrow) { max-width: 780px; margin: 14px 0 0; color: var(--text-muted); font-size: 1.02rem; line-height: 1.65; }
 .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 30px; }
 .kpi-card, .card, .table-block { background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
-.kpi-card { padding: 22px; }
+.kpi-card { padding: 22px; min-width: 0; overflow: hidden; }
 .kpi-card span { display: block; color: var(--text-muted); font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
-.kpi-card strong { display: block; margin-top: 12px; color: var(--primary-color); font-size: 2.45rem; line-height: 1; }
+.kpi-card strong { display: block; margin-top: 12px; color: var(--primary-color); font-size: clamp(1.35rem, 2.1vw, 2.45rem); line-height: 1.05; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
 .section-title { margin-bottom: 18px; }
 .section-title h2 { margin: 0; font-size: 1.4rem; letter-spacing: -0.035em; }
 .section-title.compact { margin-bottom: 12px; }
