@@ -5,6 +5,13 @@ const generateInvoiceNumber = (saleId, date) => {
     return `FA-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-${saleId.substring(0, 4).toUpperCase()}`;
 };
 
+function paragraph(doc, title, lines) {
+    doc.moveDown(0.6);
+    doc.fontSize(10).font('Helvetica-Bold').text(title);
+    doc.font('Helvetica').fontSize(9);
+    lines.forEach((line) => doc.text(`- ${line}`, { align: 'left' }));
+}
+
 exports.generateDocument = async (docType, breeder, sale, puppy) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -79,6 +86,60 @@ exports.generateDocument = async (docType, breeder, sale, puppy) => {
                     doc.moveDown(3);
                     doc.font('Helvetica').fontSize(9).text(`Moyen de paiement : ${sale.payment_method || '-'}`);
                     doc.text('TVA non applicable, art. 293 B du CGI.');
+                    break;
+                }
+
+                case 'information': {
+                    const sexLabel = puppy?.sex === 'M' ? 'Mâle' : puppy?.sex === 'F' ? 'Femelle' : '-';
+
+                    doc.fontSize(15).font('Helvetica-Bold').text("DOCUMENT D'INFORMATION SUR LES BESOINS DE L'ANIMAL", 50, doc.y, { align: 'center' });
+                    doc.fontSize(9).font('Helvetica').text('Document remis à l’acquéreur avant ou au moment de la cession, afin de l’informer sur les besoins essentiels de l’animal.', { align: 'center' });
+                    doc.moveDown(1.4);
+
+                    doc.fontSize(11).font('Helvetica-Bold').text('IDENTIFICATION DE L’ANIMAL');
+                    doc.font('Helvetica').fontSize(9);
+                    doc.text(`Nom : ${puppy?.name || '-'}`);
+                    doc.text(`Sexe : ${sexLabel}`);
+                    doc.text(`Identification : ${puppy?.chip_number || 'Non renseignée / en attente'}`);
+                    if (puppy?.color) doc.text(`Robe / signes particuliers : ${puppy.color}`);
+
+                    paragraph(doc, '1. Besoins alimentaires', [
+                        'L’animal doit recevoir une alimentation adaptée à son espèce, son âge, son état physiologique, son activité et son état de santé.',
+                        'Toute transition alimentaire doit être progressive afin de limiter les troubles digestifs.',
+                        'De l’eau propre et fraîche doit être disponible en permanence.'
+                    ]);
+
+                    paragraph(doc, '2. Besoins sanitaires et suivi vétérinaire', [
+                        'L’acquéreur doit assurer un suivi vétérinaire régulier, notamment vaccination, identification, vermifugation et protection antiparasitaire selon les recommandations du vétérinaire.',
+                        'Toute modification importante de comportement, d’appétit, de locomotion ou d’état général doit conduire à consulter un vétérinaire.',
+                        'Les documents sanitaires remis lors de la cession doivent être conservés.'
+                    ]);
+
+                    paragraph(doc, '3. Besoins comportementaux et sociaux', [
+                        'Le chien est un animal social : il a besoin de contacts réguliers, d’éducation cohérente, de repères stables et d’interactions positives.',
+                        'La socialisation doit être poursuivie progressivement avec les humains, les congénères, les environnements et les situations de vie courante.',
+                        'Les méthodes brutales ou coercitives inadaptées peuvent nuire au bien-être et à l’équilibre comportemental de l’animal.'
+                    ]);
+
+                    paragraph(doc, '4. Besoins d’activité, d’exercice et d’environnement', [
+                        'L’animal doit disposer d’un espace de vie propre, sécurisé, ventilé, protégé des intempéries et compatible avec ses besoins.',
+                        'Il doit bénéficier de sorties, d’activité physique et de stimulations mentales adaptées à son âge, sa race, son niveau d’énergie et son état de santé.',
+                        'Un chien ne doit pas être maintenu durablement dans des conditions d’isolement, d’attache ou de confinement incompatibles avec son bien-être.'
+                    ]);
+
+                    paragraph(doc, '5. Engagements et responsabilités de l’acquéreur', [
+                        'L’acquéreur reconnaît avoir été informé des besoins essentiels de l’animal et s’engage à lui assurer des conditions de vie compatibles avec son bien-être.',
+                        'L’acquéreur s’engage à respecter les obligations relatives à l’identification, à la garde, à la sécurité et à la protection de l’animal.',
+                        'L’acquisition d’un animal engage sur plusieurs années et implique des frais réguliers : alimentation, soins vétérinaires, matériel, éducation et entretien.'
+                    ]);
+
+                    doc.moveDown(1.2);
+                    doc.fontSize(9).font('Helvetica-Oblique').text('Ce document constitue une information générale. Il ne remplace pas les conseils individualisés d’un vétérinaire, d’un éducateur canin compétent ou d’un professionnel qualifié.', { align: 'justify' });
+
+                    doc.moveDown(2);
+                    doc.font('Helvetica-Bold').fontSize(10);
+                    doc.text('Signature de l’Éleveur', 50, doc.y);
+                    doc.text('Signature de l’Acquéreur', 350, doc.y - 10);
                     break;
                 }
 
