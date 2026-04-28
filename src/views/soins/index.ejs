@@ -1,19 +1,41 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
 <main class="container">
-  <h1>Soins & Registre de Santé</h1>
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Registre sanitaire</p>
+      <h1>Soins & santé</h1>
+      <p>Enregistrez les vaccins, vermifuges, antiparasitaires, consultations et actes sanitaires pour les chiens adultes comme pour les chiots.</p>
+    </div>
+  </section>
 
   <div class="form-grid" style="align-items: start;">
       <section class="form-block card">
         <h3>Enregistrer un nouveau soin</h3>
         <form action="/soins/new" method="POST">
             <div class="form-group">
-                <label for="dog_id">Chien concerné (laisser vide si général)</label>
-                <select id="dog_id" name="dog_id">
+                <label for="animal_selection">Animal concerné</label>
+                <select id="animal_selection" name="animal_selection">
                     <option value="">-- Soin d'élevage / Général --</option>
-                    <% dogs.forEach(d => { %>
-                        <option value="<%= d.id %>"><%= d.name %></option>
-                    <% }) %>
+
+                    <optgroup label="Chiens adultes">
+                        <% dogs.forEach(d => { %>
+                            <option value="dog|<%= d.id %>">
+                                <%= d.name %>
+                                <% if (d.chip_number) { %> — <%= d.chip_number %><% } %>
+                            </option>
+                        <% }) %>
+                    </optgroup>
+
+                    <optgroup label="Chiots">
+                        <% puppies.forEach(p => { %>
+                            <option value="puppy|<%= p.id %>">
+                                <%= p.name || 'Chiot sans nom' %>
+                                <% if (p.mother_name) { %> — portée de <%= p.mother_name %><% } %>
+                                <% if (p.chip_number) { %> — <%= p.chip_number %><% } %>
+                            </option>
+                        <% }) %>
+                    </optgroup>
                 </select>
             </div>
 
@@ -59,21 +81,23 @@
           <thead>
             <tr>
                 <th>Date</th>
-                <th>Chien</th>
+                <th>Animal</th>
+                <th>Catégorie</th>
                 <th>Acte</th>
                 <th>Prochaine échéance</th>
             </tr>
           </thead>
           <tbody>
             <% if (soins.length === 0) { %>
-                <tr><td colspan="4">Aucun soin enregistré.</td></tr>
+                <tr><td colspan="5">Aucun soin enregistré.</td></tr>
             <% } %>
             <% soins.forEach((soin) => { %>
               <tr>
                 <td><strong><%= new Date(soin.event_date).toLocaleDateString('fr-FR') %></strong></td>
-                <td><%= soin.dog_name || 'Général' %></td>
+                <td><%= soin.animal_name || 'Général' %></td>
+                <td><%= soin.animal_category || 'Général' %></td>
                 <td>
-                    <span class="badge" style="background: #eee; color: #333;"><%= soin.type %></span>
+                    <span class="badge"><%= soin.type %></span>
                     <%= soin.label %>
                 </td>
                 <td>
