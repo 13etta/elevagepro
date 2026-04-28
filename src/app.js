@@ -112,5 +112,16 @@ app.use((error, req, res, next) => {
     user: req.session?.user || null,
   });
 });
+const i18n = require('./src/middleware/i18n');
+const cookieParser = require('cookie-parser');
 
+app.use(cookieParser());
+app.use(i18n.init);
+
+// Middleware pour injecter les préférences (langue et thème) dans toutes les vues
+app.use((req, res, next) => {
+  res.locals.theme = req.cookies.theme || 'default';
+  res.locals.currentLang = req.locale;
+  next();
+});
 module.exports = app;

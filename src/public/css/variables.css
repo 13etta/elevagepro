@@ -1,0 +1,24 @@
+:root {
+  /* Valeurs par défaut (Thème Nature) */
+  --primary-color: #2d5a27;
+  --secondary-color: #f4f1ea;
+  --accent-color: #d4a373;
+  --text-main: #1a1a1a;
+  --sidebar-bg: #1e3a1a;
+  --sidebar-text: #ffffff;
+  --card-bg: #ffffff;
+  --border-radius: 12px;
+}
+
+[data-theme='professional'] {
+  --primary-color: #1a3a5f;
+  --sidebar-bg: #0d1b2a;
+  --accent-color: #3a86ff;
+}
+
+[data-theme='dark'] {
+  --primary-color: #bb86fc;
+  --secondary-color: #121212;
+  --text-main: #e1e1e1;
+  --card-bg: #1e1e1e;
+}

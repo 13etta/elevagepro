@@ -1,0 +1,11 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "settings": "Paramètres"
+  },
+  "settings": {
+    "title": "Configuration de l'application",
+    "appearance": "Apparence",
+    "language": "Langue"
+  }
+}

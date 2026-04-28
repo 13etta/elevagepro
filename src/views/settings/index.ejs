@@ -63,5 +63,33 @@
       </section>
 
   </div>
+  <section class="settings-module card">
+  <h2><%= __('settings.appearance') %></h2>
+  
+  <div class="setting-item">
+    <label><%= __('settings.language') %></label>
+    <select onchange="window.location.href='?lang=' + this.value">
+      <option value="fr" <%= currentLang === 'fr' ? 'selected' : '' %>>Français</option>
+      <option value="en" <%= currentLang === 'en' ? 'selected' : '' %>>English</option>
+    </select>
+  </div>
+
+  <div class="setting-item">
+    <label>Couleur de l'application</label>
+    <div class="theme-selector">
+      <button onclick="setTheme('default')" class="btn-theme nature">Nature</button>
+      <button onclick="setTheme('professional')" class="btn-theme pro">Pro</button>
+      <button onclick="setTheme('dark')" class="btn-theme dark">Sombre</button>
+    </div>
+  </div>
+</section>
+
+<script>
+  function setTheme(themeName) {
+    document.cookie = "theme=" + themeName + ";path=/;max-age=31536000";
+    document.documentElement.setAttribute('data-theme', themeName);
+    location.reload(); // Pour appliquer partout immédiatement
+  }
+</script>
 </main>
 <%- include('../partials/foot') %>
