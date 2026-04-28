@@ -1,52 +1,5 @@
 const { pool } = require('../db');
 
-exports.listPuppies = async (req, res) => {
-    try {
-        const breederId = req.session.user.breeder_id;
-        const { q, sex, status, litter } = req.query;
-
-        let query = `
-            SELECT p.*, l.birth_date AS litter_date, f.name AS female_name 
-            FROM puppies p
-            LEFT JOIN litters l ON p.litter_id = l.id
-            LEFT JOIN dogs f ON l.mother_id = f.id
-            WHERE p.breeder_id = $1
-        `;
-        let params = [breederId];
-
-        if (q) {
-            params.push(`%${q}%`);
-            query += ` AND (p.name ILIKE $${params.length} OR p.chip_number ILIKE $${params.length})`;
-        }
-        if (sex) {
-            params.push(sex);
-            query += ` AND p.sex = $${params.length}`;
-        }
-        if (status) {
-            params.push(status);
-            query += ` AND p.status = $${params.length}`;
-        }
-        if (litter) {
-            params.push(litter);
-            query += ` AND p.litter_id = $${params.length}`;
-        }
-
-        query += ' ORDER BY p.created_at DESC';
-        const result = await pool.query(query, params);
-
-        const litters = await pool.query(`
-            SELECT l.id, d.name AS mother_name, l.birth_date 
-            FROM litters l JOIN dogs d ON l.mother_id = d.id 
-            WHERE l.breeder_id = $1 ORDER BY l.birth_date DESC
-        `, [breederId]);
-
-        res.render('puppies/index', { puppies: result.rows, litters: litters.rows, filters: req.query });
-    } catch (error) {
-        console.error('Erreur liste chiots:', error);
-        res.status(500).send('Erreur lors du chargement des chiots.');
-    }
-};
-
 exports.getForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
@@ -56,10 +9,24 @@ exports.getForm = async (req, res) => {
         let puppy = { status: 'Actif', litter_id: litterId };
 
         if (puppyId) {
+            // Cas d'une modification : on récupère les données existantes du chiot
             const puppyRes = await pool.query('SELECT * FROM puppies WHERE id = $1 AND breeder_id = $2', [puppyId, breederId]);
             if (puppyRes.rows.length > 0) puppy = puppyRes.rows[0];
+        } 
+        else if (litterId) {
+            // Cas d'une création avec portée spécifiée : 
+            // On récupère la date de naissance de la portée pour pré-remplir celle du chiot
+            const litterRes = await pool.query(
+                'SELECT birth_date FROM litters WHERE id = $1 AND breeder_id = $2', 
+                [litterId, breederId]
+            );
+            if (litterRes.rows.length > 0) {
+                puppy.birth_date = litterRes.rows[0].birth_date;
+            }
         }
 
+        // On récupère toutes les portées pour le menu déroulant, 
+        // en incluant la date de naissance dans les données envoyées à la vue
         const litters = await pool.query(`
             SELECT l.id, d.name as mother_name, l.birth_date 
             FROM litters l 

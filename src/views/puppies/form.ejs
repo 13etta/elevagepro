@@ -13,24 +13,37 @@
 
     <form action="<%= puppy.id ? '/puppies/' + puppy.id + '/edit' : '/puppies/new' %>" method="POST" class="card form-block">
         
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Portée d'appartenance *</label>
-                <select name="litter_id" required style="background-color: #f8f9fa;">
-                    <option value="">-- Choisir une portée --</option>
-                    <% litters.forEach(l => { %>
-                        <option value="<%= l.id %>" <%= puppy.litter_id === l.id ? 'selected' : '' %>>
-                            Portée de <%= l.mother_name %> (Née le <%= new Date(l.birth_date).toLocaleDateString('fr-FR') %>)
-                        </option>
-                    <% }) %>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Date de naissance exacte</label>
-                <input type="date" name="birth_date" value="<%= puppy.birth_date ? new Date(puppy.birth_date).toISOString().split('T')[0] : '' %>">
-            </div>
-        </div>
+       <div class="form-grid">
+    <div class="form-group">
+        <label>Portée d'appartenance *</label>
+        <select id="litter_select" name="litter_id" required style="background-color: #f8f9fa;">
+            <option value="">-- Choisir une portée --</option>
+            <% litters.forEach(l => { %>
+                <option value="<%= l.id %>" 
+                        data-birth="<%= new Date(l.birth_date).toISOString().split('T')[0] %>"
+                        <%= puppy.litter_id === l.id ? 'selected' : '' %>>
+                    Portée de <%= l.mother_name %> (Née le <%= new Date(l.birth_date).toLocaleDateString('fr-FR') %>)
+                </option>
+            <% }) %>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Date de naissance exacte</label>
+        <input type="date" id="puppy_birth_date" name="birth_date" 
+               value="<%= puppy.birth_date ? new Date(puppy.birth_date).toISOString().split('T')[0] : '' %>">
+    </div>
+</div>
 
+<script>
+document.getElementById('litter_select').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const birthDate = selectedOption.getAttribute('data-birth');
+    if (birthDate) {
+        document.getElementById('puppy_birth_date').value = birthDate;
+    }
+});
+</script>
+        
         <div class="form-grid" style="margin-top: 1rem;">
             <div class="form-group">
                 <label>Nom ou Collier *</label>
