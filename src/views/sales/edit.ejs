@@ -79,6 +79,7 @@
 
       <div class="form-actions" style="justify-content: space-between;">
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <a class="btn btn-secondary" href="/sales/<%= sale.id %>/document/information" target="_blank">Document besoins animal</a>
           <a class="btn btn-secondary" href="/sales/<%= sale.id %>/document/reservation" target="_blank">Contrat réservation</a>
           <a class="btn btn-secondary" href="/sales/<%= sale.id %>/document/facture" target="_blank">Facture</a>
           <% if (!sale.is_reservation) { %>
