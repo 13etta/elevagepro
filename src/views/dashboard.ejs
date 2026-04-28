@@ -1,61 +1,79 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
+
 <main class="container">
-  <h1>Dashboard</h1>
+  <section class="page-hero dashboard-hero">
+    <div>
+      <p class="eyebrow"><%= __('dashboard.kicker') %></p>
+      <h1><%= __('dashboard.title') %></h1>
+      <p><%= __('dashboard.subtitle') %></p>
+    </div>
+    <a class="btn btn-primary" href="/dogs"><%= __('dashboard.primaryAction') %></a>
+  </section>
+
   <section class="kpi-grid">
-    <article class="card"><h2>Chiens actifs</h2><strong><%= kpis.activeDogs %></strong></article>
-    <article class="card"><h2>Chiots disponibles</h2><strong><%= kpis.availablePuppies %></strong></article>
-    <article class="card"><h2>Portées actives</h2><strong><%= kpis.activeLitters %></strong></article>
-    <article class="card"><h2>Gestations en cours</h2><strong><%= kpis.ongoingPregnancies %></strong></article>
+    <article class="kpi-card"><span><%= __('dashboard.activeDogs') %></span><strong><%= kpis.activeDogs %></strong></article>
+    <article class="kpi-card"><span><%= __('dashboard.availablePuppies') %></span><strong><%= kpis.availablePuppies %></strong></article>
+    <article class="kpi-card"><span><%= __('dashboard.activeLitters') %></span><strong><%= kpis.activeLitters %></strong></article>
+    <article class="kpi-card"><span><%= __('dashboard.ongoingPregnancies') %></span><strong><%= kpis.ongoingPregnancies %></strong></article>
   </section>
 
-  <section class="table-block">
-    <h3>Rappels prioritaires</h3>
-    <table>
-      <thead><tr><th>Échéance</th><th>Libellé</th><th>Chien</th></tr></thead>
-      <tbody>
-        <% reminders.forEach((row) => { %>
-          <tr class="<%= new Date(row.due_date) < new Date() ? 'late' : '' %>">
-            <td><%= formatDate(row.due_date) %></td>
-            <td><%= row.label %></td>
-            <td><%= row.dog_name || 'Général' %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+  <section class="module-cockpit">
+    <div class="section-title">
+      <span class="section-kicker"><%= __('dashboard.modulesKicker') %></span>
+      <h2><%= __('dashboard.modulesTitle') %></h2>
+    </div>
+
+    <div class="module-grid">
+      <% modules.filter((module) => module.key !== 'dashboard').forEach((module) => { %>
+        <a class="module-card accent-<%= module.accent %>" href="<%= module.href %>">
+          <span class="module-icon"><%= module.icon %></span>
+          <strong><%= __(module.labelKey) %></strong>
+          <p><%= __(module.descriptionKey) %></p>
+        </a>
+      <% }) %>
+    </div>
   </section>
 
-  <section class="table-block">
-    <h3>Soins récents</h3>
-    <table>
-      <thead><tr><th>Date</th><th>Type</th><th>Libellé</th><th>Chien</th></tr></thead>
-      <tbody>
-        <% soins.forEach((row) => { %>
-          <tr>
-            <td><%= formatDate(row.event_date) %></td>
-            <td><%= row.type %></td>
-            <td><%= row.label %></td>
-            <td><%= row.dog_name || 'Général' %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </section>
+  <section class="dashboard-columns">
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker"><%= __('dashboard.priority') %></span>
+        <h2><%= __('dashboard.reminders') %></h2>
+      </div>
+      <table>
+        <thead><tr><th><%= __('common.date') %></th><th><%= __('common.label') %></th><th><%= __('common.dog') %></th></tr></thead>
+        <tbody>
+          <% reminders.forEach((row) => { %>
+            <tr class="<%= new Date(row.due_date) < new Date() ? 'late' : '' %>">
+              <td><%= formatDate(row.due_date) %></td>
+              <td><%= row.label %></td>
+              <td><%= row.dog_name || __('common.general') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </article>
 
-  <section class="table-block">
-    <h3>Dernières ventes</h3>
-    <table>
-      <thead><tr><th>Date</th><th>Acheteur</th><th>Montant</th></tr></thead>
-      <tbody>
-        <% sales.forEach((row) => { %>
-          <tr>
-            <td><%= formatDate(row.sale_date) %></td>
-            <td><%= `${row.buyer_firstname || ''} ${row.buyer_lastname || ''}`.trim() || '-' %></td>
-            <td><%= row.total_price ? `${row.total_price} €` : '-' %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker"><%= __('dashboard.recent') %></span>
+        <h2><%= __('dashboard.care') %></h2>
+      </div>
+      <table>
+        <thead><tr><th><%= __('common.date') %></th><th><%= __('common.type') %></th><th><%= __('common.dog') %></th></tr></thead>
+        <tbody>
+          <% soins.forEach((row) => { %>
+            <tr>
+              <td><%= formatDate(row.event_date) %></td>
+              <td><%= row.label || row.type %></td>
+              <td><%= row.dog_name || __('common.general') %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </article>
   </section>
 </main>
+
 <%- include('partials/foot') %>
