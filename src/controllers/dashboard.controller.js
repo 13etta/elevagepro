@@ -12,7 +12,7 @@ exports.getDashboard = async (req, res) => {
         
         // Correction du KPI : on ne compte que les portées nécessitant une action
         const activeLitters = await pool.query(`SELECT count(*) FROM litters WHERE breeder_id = $1 AND status IN ('active', 'sevrage')`, [breederId]);
-        const ongoingPregnancies = await pool.query(`SELECT count(*) FROM pregnancies WHERE breeder_id = $1 AND status = 'en_cours'`, [breederId]);
+        const ongoingPregnancies = await pool.query(`SELECT count(*) FROM pregnancies WHERE breeder_id = $1 AND result = 'En cours'`, [breederId]);
 
         const kpis = {
             activeDogs: activeDogs.rows[0].count,
