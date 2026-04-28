@@ -71,6 +71,7 @@
               <td>
                 <div class="table-actions">
                   <a href="/sales/<%= sale.id %>/edit" class="btn btn-secondary">Modifier</a>
+                  <a href="/sales/<%= sale.id %>/document/information" class="btn btn-secondary" target="_blank">Info besoins</a>
                   <% if (sale.is_reservation) { %>
                     <a href="/sales/<%= sale.id %>/document/reservation" class="btn btn-secondary" target="_blank">Réservation</a>
                   <% } %>
