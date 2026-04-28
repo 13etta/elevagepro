@@ -1,21 +1,67 @@
 const { pool } = require('../db');
 
 exports.listLitters = async (req, res) => {
-    // Garde ton listLitters actuel
+    try {
+        const breederId = req.session.user.breeder_id;
+        const { q, status, female_id } = req.query;
+
+        let query = `
+            SELECT l.*, d.name AS mother_name 
+            FROM litters l
+            LEFT JOIN dogs d ON l.mother_id = d.id
+            WHERE l.breeder_id = $1
+        `;
+        let params = [breederId];
+
+        if (q) {
+            params.push(`%${q}%`);
+            query += ` AND (l.notes ILIKE $${params.length} OR d.name ILIKE $${params.length})`;
+        }
+        if (status) {
+            params.push(status);
+            query += ` AND l.status = $${params.length}`;
+        }
+        if (female_id) {
+            params.push(female_id);
+            query += ` AND l.mother_id = $${params.length}`;
+        }
+
+        query += ' ORDER BY l.birth_date DESC';
+        const result = await pool.query(query, params);
+        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ORDER BY name ASC", [breederId]);
+
+        res.render('litters/index', { litters: result.rows, females: females.rows, filters: req.query });
+    } catch (error) {
+        console.error('Erreur liste portées:', error);
+        res.status(500).send('Erreur lors du chargement des portées.');
+    }
 };
 
 exports.getCreateForm = async (req, res) => {
-    // Garde ton getCreateForm actuel
+    try {
+        const breederId = req.session.user.breeder_id;
+        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND status = 'Actif' ORDER BY name ASC", [breederId]);
+        const matings = await pool.query(`
+            SELECT m.id, m.mating_date, d1.name AS male_name, d2.name AS female_name
+            FROM matings m JOIN dogs d1 ON m.male_id = d1.id JOIN dogs d2 ON m.female_id = d2.id
+            WHERE m.breeder_id = $1 ORDER BY m.mating_date DESC
+        `, [breederId]);
+
+        res.render('litters/new', { females: females.rows, matings: matings.rows });
+    } catch (error) {
+        res.status(500).send('Erreur serveur.');
+    }
 };
 
 exports.createLitter = async (req, res) => {
     const client = await pool.connect();
     try {
-        await client.query('BEGIN'); // Début de la transaction
+        await client.query('BEGIN'); // Début de la synchronisation inter-modules
+
         const breederId = req.session.user.breeder_id;
         const { mother_id, birth_date, puppies_count_total, status, notes } = req.body;
 
-        // 🧠 RECHERCHE INTELLIGENTE : Y a-t-il une gestation en cours pour cette chienne ?
+        // MACHINE À ÉTATS : Résolution de la gestation associée
         const activePregRes = await client.query(`
             SELECT id, mating_id FROM pregnancies 
             WHERE female_id = $1 AND breeder_id = $2 AND result = 'En cours'
@@ -24,10 +70,10 @@ exports.createLitter = async (req, res) => {
         let pregnancyId = null;
         let finalMatingId = req.body.mating_id || null;
 
-        // 🧠 SYNCHRONISATION : Si trouvée, on la valide et on injecte la date de naissance
+        // MACHINE À ÉTATS : Mise à jour rétroactive du statut de la mère
         if (activePregRes.rows.length > 0) {
             pregnancyId = activePregRes.rows[0].id;
-            finalMatingId = activePregRes.rows[0].mating_id || finalMatingId; // On récupère la saillie d'origine
+            finalMatingId = activePregRes.rows[0].mating_id || finalMatingId;
 
             await client.query(`
                 UPDATE pregnancies 
@@ -36,7 +82,6 @@ exports.createLitter = async (req, res) => {
             `, [birth_date, pregnancyId]);
         }
 
-        // Création de la portée
         const result = await client.query(`
             INSERT INTO litters (breeder_id, mother_id, pregnancy_id, mating_id, birth_date, puppies_count_total, status, notes)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -55,7 +100,24 @@ exports.createLitter = async (req, res) => {
 };
 
 exports.getEditForm = async (req, res) => {
-    // Garde ton getEditForm actuel
+    try {
+        const breederId = req.session.user.breeder_id;
+        const litterId = req.params.id;
+
+        const litterRes = await pool.query('SELECT * FROM litters WHERE id = $1 AND breeder_id = $2', [litterId, breederId]);
+        if (litterRes.rows.length === 0) return res.status(404).send('Portée introuvable.');
+
+        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F'", [breederId]);
+        const matings = await pool.query(`
+            SELECT m.id, m.mating_date, d1.name AS male_name, d2.name AS female_name
+            FROM matings m JOIN dogs d1 ON m.male_id = d1.id JOIN dogs d2 ON m.female_id = d2.id
+            WHERE m.breeder_id = $1 ORDER BY m.mating_date DESC
+        `, [breederId]);
+
+        res.render('litters/edit', { litter: litterRes.rows[0], females: females.rows, matings: matings.rows });
+    } catch (error) {
+        res.status(500).send('Erreur serveur.');
+    }
 };
 
 exports.updateLitter = async (req, res) => {
@@ -66,7 +128,7 @@ exports.updateLitter = async (req, res) => {
         const litterId = req.params.id;
         const { mother_id, mating_id, birth_date, puppies_count_total, status, notes } = req.body;
 
-        // 🧠 MISE À JOUR CASCADÉE : Si la portée est modifiée, on met à jour la date de la gestation
+        // MACHINE À ÉTATS : Propagation d'une modification de date vers la gestation
         const oldLitterRes = await client.query('SELECT pregnancy_id FROM litters WHERE id = $1 AND breeder_id = $2', [litterId, breederId]);
         
         if (oldLitterRes.rows.length > 0 && oldLitterRes.rows[0].pregnancy_id) {
@@ -85,15 +147,40 @@ exports.updateLitter = async (req, res) => {
         res.redirect('/litters');
     } catch (error) {
         await client.query('ROLLBACK');
-        res.status(500).send('Erreur lors de la synchronisation.');
+        console.error('Erreur mise à jour portée:', error);
+        res.status(500).send('Erreur lors de la sauvegarde des modifications.');
     } finally {
         client.release();
     }
 };
 
-exports.showLitter = async (req, res) => {
-    // Garde ton showLitter actuel
-};
 exports.deleteLitter = async (req, res) => {
-    // Garde ton deleteLitter actuel
+    try {
+        await pool.query('DELETE FROM litters WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);
+        res.redirect('/litters');
+    } catch (error) {
+        res.status(500).send('Erreur suppression.');
+    }
+};
+
+exports.showLitter = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const litterId = req.params.id;
+
+        const litterRes = await pool.query(`
+            SELECT l.*, d.name AS mother_name 
+            FROM litters l 
+            LEFT JOIN dogs d ON l.mother_id = d.id 
+            WHERE l.id = $1 AND l.breeder_id = $2
+        `, [litterId, breederId]);
+
+        if (litterRes.rows.length === 0) return res.status(404).send('Portée introuvable.');
+
+        const puppiesRes = await pool.query('SELECT * FROM puppies WHERE litter_id = $1 ORDER BY created_at ASC', [litterId]);
+
+        res.render('litters/show', { litter: litterRes.rows[0], puppies: puppiesRes.rows });
+    } catch (error) {
+        res.status(500).send('Erreur serveur.');
+    }
 };
