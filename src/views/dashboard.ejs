@@ -18,24 +18,7 @@
     <article class="kpi-card"><span><%= __('dashboard.ongoingPregnancies') %></span><strong><%= kpis.ongoingPregnancies %></strong></article>
   </section>
 
-  <section class="module-cockpit">
-    <div class="section-title">
-      <span class="section-kicker"><%= __('dashboard.modulesKicker') %></span>
-      <h2><%= __('dashboard.modulesTitle') %></h2>
-    </div>
-
-    <div class="module-grid">
-      <% modules.filter((module) => module.key !== 'dashboard').forEach((module) => { %>
-        <a class="module-card accent-<%= module.accent %>" href="<%= module.href %>">
-          <span class="module-icon"><%= module.icon %></span>
-          <strong><%= __(module.labelKey) %></strong>
-          <p><%= __(module.descriptionKey) %></p>
-        </a>
-      <% }) %>
-    </div>
-  </section>
-
-  <section class="dashboard-columns">
+  <section class="dashboard-columns dashboard-priority-zone">
     <article class="table-block">
       <div class="section-title compact">
         <span class="section-kicker"><%= __('dashboard.priority') %></span>
@@ -73,6 +56,23 @@
         </tbody>
       </table>
     </article>
+  </section>
+
+  <section class="module-cockpit">
+    <div class="section-title">
+      <span class="section-kicker"><%= __('dashboard.modulesKicker') %></span>
+      <h2><%= __('dashboard.modulesTitle') %></h2>
+    </div>
+
+    <div class="module-grid">
+      <% modules.filter((module) => module.key !== 'dashboard').forEach((module) => { %>
+        <a class="module-card accent-<%= module.accent %>" href="<%= module.href %>">
+          <span class="module-icon"><%= module.icon %></span>
+          <strong><%= __(module.labelKey) %></strong>
+          <p><%= __(module.descriptionKey) %></p>
+        </a>
+      <% }) %>
+    </div>
   </section>
 </main>
 
