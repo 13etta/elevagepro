@@ -1,0 +1,68 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions">
+        <h1>Modifier la chaleur</h1>
+        <div class="actions">
+            <a href="/heats" class="btn btn-secondary">Annuler et retour</a>
+        </div>
+    </div>
+
+    <form action="/heats/<%= heat.id %>/edit" method="POST" class="card form-block">
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Informations du cycle</h3>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="dog_id">Femelle *</label>
+                <select id="dog_id" name="dog_id" required>
+                    <% females.forEach(f => { %>
+                        <option value="<%= f.id %>" <%= heat.dog_id === f.id ? 'selected' : '' %>><%= f.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="stage">Stade du cycle</label>
+                <select id="stage" name="stage">
+                    <option value="Proestrus" <%= heat.stage === 'Proestrus' ? 'selected' : '' %>>Proestrus (Début, pertes sanguines)</option>
+                    <option value="Oestrus" <%= heat.stage === 'Oestrus' ? 'selected' : '' %>>Oestrus (Acceptation du mâle)</option>
+                    <option value="Diestrus" <%= heat.stage === 'Diestrus' ? 'selected' : '' %>>Diestrus (Fin, refus du mâle)</option>
+                    <option value="Anestrus" <%= heat.stage === 'Anestrus' ? 'selected' : '' %>>Anestrus (Repos sexuel)</option>
+                </select>
+            </div>
+        </div>
+
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Calendrier</h3>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="start_date">Date de début *</label>
+                <input type="date" id="start_date" name="start_date" 
+                       value="<%= heat.start_date ? new Date(heat.start_date).toISOString().split('T')[0] : '' %>" required>
+            </div>
+            <div class="form-group">
+                <label for="end_date">Date de fin prévue</label>
+                <input type="date" id="end_date" name="end_date" 
+                       value="<%= heat.end_date ? new Date(heat.end_date).toISOString().split('T')[0] : '' %>">
+                <small style="color: #7f8c8d; display: block; margin-top: 0.5rem;">
+                    💡 Laisse ce champ vide ou efface-le pour que le système recalcule automatiquement la date (+21 jours).
+                </small>
+            </div>
+        </div>
+
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">Suivi</h3>
+
+        <div class="form-group">
+            <label for="notes">Observations (Comportement, aspect des pertes, frottis...)</label>
+            <textarea id="notes" name="notes" rows="4" placeholder="Détails importants pour le suivi de la reproduction..."><%= heat.notes %></textarea>
+        </div>
+
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #eee;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.2rem; font-size: 1.2rem; font-weight: bold;">
+                Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+</main>
+
+<%- include('../partials/foot') %>
