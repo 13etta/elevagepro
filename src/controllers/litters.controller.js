@@ -1,4 +1,5 @@
 const { pool } = require('../db');
+const { createPuppyProtocolReminders, ensureAutomationColumns } = require('../services/protocols.service');
 
 exports.listLitters = async (req, res) => {
     try {
@@ -56,12 +57,12 @@ exports.getCreateForm = async (req, res) => {
 exports.createLitter = async (req, res) => {
     const client = await pool.connect();
     try {
-        await client.query('BEGIN'); // Début de la synchronisation inter-modules
+        await client.query('BEGIN');
+        await ensureAutomationColumns(client);
 
         const breederId = req.session.user.breeder_id;
         const { mother_id, birth_date, puppies_count_total, status, notes } = req.body;
 
-        // MACHINE À ÉTATS : Résolution de la gestation associée
         const activePregRes = await client.query(`
             SELECT id, mating_id FROM pregnancies 
             WHERE female_id = $1 AND breeder_id = $2 AND result = 'En cours'
@@ -70,7 +71,6 @@ exports.createLitter = async (req, res) => {
         let pregnancyId = null;
         let finalMatingId = req.body.mating_id || null;
 
-        // MACHINE À ÉTATS : Mise à jour rétroactive du statut de la mère
         if (activePregRes.rows.length > 0) {
             pregnancyId = activePregRes.rows[0].id;
             finalMatingId = activePregRes.rows[0].mating_id || finalMatingId;
@@ -87,6 +87,14 @@ exports.createLitter = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
         `, [breederId, mother_id, pregnancyId, finalMatingId, birth_date, puppies_count_total || 0, status || 'active', notes]);
+
+        const motherRes = await client.query('SELECT name FROM dogs WHERE id = $1 AND breeder_id = $2', [mother_id, breederId]);
+        await createPuppyProtocolReminders(client, {
+            breederId,
+            litterId: result.rows[0].id,
+            birthDate: birth_date,
+            motherName: motherRes.rows[0]?.name || null,
+        });
 
         await client.query('COMMIT');
         res.redirect(`/litters/${result.rows[0].id}`);
@@ -124,11 +132,11 @@ exports.updateLitter = async (req, res) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
+        await ensureAutomationColumns(client);
         const breederId = req.session.user.breeder_id;
         const litterId = req.params.id;
         const { mother_id, mating_id, birth_date, puppies_count_total, status, notes } = req.body;
 
-        // MACHINE À ÉTATS : Propagation d'une modification de date vers la gestation
         const oldLitterRes = await client.query('SELECT pregnancy_id FROM litters WHERE id = $1 AND breeder_id = $2', [litterId, breederId]);
         
         if (oldLitterRes.rows.length > 0 && oldLitterRes.rows[0].pregnancy_id) {
@@ -143,8 +151,16 @@ exports.updateLitter = async (req, res) => {
             WHERE id = $7 AND breeder_id = $8
         `, [mother_id, mating_id || null, birth_date, puppies_count_total || 0, status, notes, litterId, breederId]);
 
+        const motherRes = await client.query('SELECT name FROM dogs WHERE id = $1 AND breeder_id = $2', [mother_id, breederId]);
+        await createPuppyProtocolReminders(client, {
+            breederId,
+            litterId,
+            birthDate: birth_date,
+            motherName: motherRes.rows[0]?.name || null,
+        });
+
         await client.query('COMMIT');
-        res.redirect('/litters');
+        res.redirect(`/litters/${litterId}`);
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Erreur mise à jour portée:', error);
@@ -178,8 +194,13 @@ exports.showLitter = async (req, res) => {
         if (litterRes.rows.length === 0) return res.status(404).send('Portée introuvable.');
 
         const puppiesRes = await pool.query('SELECT * FROM puppies WHERE litter_id = $1 ORDER BY created_at ASC', [litterId]);
+        const remindersRes = await pool.query(`
+            SELECT * FROM reminders
+            WHERE breeder_id = $1 AND litter_id = $2 AND is_completed = FALSE
+            ORDER BY due_date ASC
+        `, [breederId, litterId]).catch(() => ({ rows: [] }));
 
-        res.render('litters/show', { litter: litterRes.rows[0], puppies: puppiesRes.rows });
+        res.render('litters/show', { litter: litterRes.rows[0], puppies: puppiesRes.rows, reminders: remindersRes.rows });
     } catch (error) {
         res.status(500).send('Erreur serveur.');
     }
