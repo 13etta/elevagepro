@@ -1,11 +1,108 @@
 {
+  "app": {
+    "name": "ElevagePro",
+    "tagline": "ERP cynotechnique professionnel",
+    "commandCenter": "Cockpit d’élevage"
+  },
+  "auth": {
+    "logout": "Déconnexion"
+  },
   "nav": {
     "dashboard": "Tableau de bord",
+    "dogs": "Chiens",
+    "soins": "Soins",
+    "reminders": "Rappels",
+    "reproduction": "Reproduction",
+    "heats": "Chaleurs",
+    "matings": "Saillies",
+    "pregnancies": "Gestations",
+    "litters": "Portées",
+    "puppies": "Chiots",
+    "sales": "Ventes & contrats",
+    "genetics": "Génétique",
+    "breeder": "Élevage",
+    "website": "Site vitrine",
     "settings": "Paramètres"
   },
+  "groups": {
+    "pilotage": "Pilotage",
+    "cheptel": "Cheptel",
+    "sante": "Santé",
+    "reproduction": "Reproduction",
+    "commercial": "Commercial",
+    "selection": "Sélection",
+    "communication": "Communication",
+    "admin": "Administration"
+  },
+  "themes": {
+    "prestige": "Prestige sombre",
+    "clinical": "Bleu clinique",
+    "nature": "Nature élevage"
+  },
+  "dashboard": {
+    "kicker": "Poste de pilotage",
+    "title": "Cockpit professionnel de l’élevage",
+    "subtitle": "Supervisez le cheptel, la reproduction, le sanitaire, les ventes et la communication depuis une seule interface structurée.",
+    "primaryAction": "Ouvrir le cheptel",
+    "activeDogs": "Chiens actifs",
+    "availablePuppies": "Chiots disponibles",
+    "activeLitters": "Portées actives",
+    "ongoingPregnancies": "Gestations en cours",
+    "modulesKicker": "Modules",
+    "modulesTitle": "Accès rapide aux fonctions métier",
+    "priority": "Prioritaire",
+    "recent": "Récent",
+    "reminders": "Rappels prioritaires",
+    "care": "Soins récents"
+  },
+  "modules": {
+    "dashboard": { "description": "Vue de synthèse des indicateurs, alertes et actions prioritaires." },
+    "dogs": { "description": "Gérez les fiches chiens, statuts, informations administratives et suivi individuel." },
+    "soins": { "description": "Centralisez les soins, traitements, vaccins et actes sanitaires." },
+    "reminders": { "description": "Pilotez les échéances critiques : vaccins, antiparasitaires, documents et contrôles." },
+    "reproduction": { "description": "Structurez votre stratégie de reproduction et vos décisions d’élevage." },
+    "heats": { "description": "Suivez les cycles de chaleurs, dates clés et prévisions de saillie." },
+    "matings": { "description": "Enregistrez les saillies, reproducteurs, dates et observations." },
+    "pregnancies": { "description": "Suivez les gestations, diagnostics, échéances et mises bas attendues." },
+    "litters": { "description": "Pilotez les portées, naissances, suivis et documents associés." },
+    "puppies": { "description": "Suivez les chiots, statuts, réservations et départs." },
+    "sales": { "description": "Gérez les ventes, contrats, attestations, factures et cessions." },
+    "genetics": { "description": "Analysez les lignées, reproducteurs et orientations de sélection." },
+    "breeder": { "description": "Administrez l’identité de l’élevage et les informations professionnelles." },
+    "website": { "description": "Configurez votre vitrine web et votre présence publique." },
+    "settings": { "description": "Réglez l’apparence, la langue et les paramètres de l’application." }
+  },
   "settings": {
-    "title": "Configuration de l'application",
+    "title": "Configuration de l’application",
+    "heading": "Paramètres de l’élevage",
+    "subtitle": "Réglez l’identité professionnelle, l’apparence et la langue de votre espace de travail.",
+    "identity": "Identité",
+    "legalInfo": "Informations légales",
     "appearance": "Apparence",
-    "language": "Langue"
+    "interfacePreferences": "Préférences d’interface",
+    "language": "Langue",
+    "theme": "Thème couleur",
+    "visualIdentity": "Identité visuelle",
+    "logo": "Logo de l’élevage",
+    "companyName": "Nom de l’entreprise / élevage",
+    "affixName": "Nom d’affixe SCC / FCI",
+    "siret": "Numéro SIRET",
+    "address": "Adresse postale complète",
+    "saveIdentity": "Enregistrer l’identité",
+    "savePreferences": "Enregistrer les préférences",
+    "noLogo": "Aucun logo configuré",
+    "chooseLogo": "Choisir une image PNG, JPG ou WEBP",
+    "uploadLogo": "Uploader le logo"
+  },
+  "common": {
+    "date": "Date",
+    "label": "Libellé",
+    "dog": "Chien",
+    "type": "Type",
+    "general": "Général"
+  },
+  "errors": {
+    "notFound": "Page introuvable",
+    "serverError": "Erreur serveur"
   }
 }
