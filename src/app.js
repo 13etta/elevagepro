@@ -83,7 +83,7 @@ app.use('/soins', require('./routes/soins.routes'))
 app.use('/reminders', remindersRoutes);
 app.use('/heats', require('./routes/heats.routes'));
 app.use('/matings', require('./routes/matings.routes'));
-app.use('/pregnancies', pregnanciesRoutes);
+app.use('/pregnancies', require('./routes/pregnancies.routes'));
 app.use('/litters', require('./routes/litters.routes'));
 app.use('/puppies', puppiesRoutes);
 app.use('/sales', require('./routes/sales.routes'));

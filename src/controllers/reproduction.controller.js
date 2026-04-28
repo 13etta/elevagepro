@@ -22,12 +22,13 @@ exports.getIndex = async (req, res) => {
             ORDER BY m.mating_date DESC
         `, [breederId]);
 
-        // 3. Récupération des gestations en cours
+      // 3. Récupération des gestations en cours
         const pregnancies = await pool.query(`
-            SELECT p.expected_delivery_date, p.status, f.name AS female_name
-            FROM pregnancies p JOIN dogs f ON p.dog_id = f.id
-            WHERE p.breeder_id = $1 AND p.status = 'en_cours'
-            ORDER BY p.expected_delivery_date ASC
+            SELECT p.expected_date AS expected_delivery_date, p.result AS status, f.name AS female_name
+            FROM pregnancies p 
+            JOIN dogs f ON p.female_id = f.id
+            WHERE p.breeder_id = $1 AND p.result = 'En cours'
+            ORDER BY p.expected_date ASC
         `, [breederId]);
 
         // 4. Listes déroulantes : Application du filtre de sécurité d'élevage

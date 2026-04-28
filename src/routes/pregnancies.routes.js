@@ -1,14 +1,15 @@
 const express = require('express');
+const router = express.Router();
+const pregnanciesController = require('../controllers/pregnancies.controller');
 const { requireAuth } = require('../middleware/auth');
 
-const router = express.Router();
+router.use(requireAuth);
 
-router.get('/', requireAuth, (req, res) => {
-  res.status(501).render('coming-soon', {
-    title: 'Module en préparation',
-    user: req.session.user,
-    moduleName: req.baseUrl.replace('/', ''),
-  });
-});
+router.get('/', pregnanciesController.listPregnancies);
+router.get('/new', pregnanciesController.getForm);
+router.post('/new', pregnanciesController.savePregnancy);
+router.get('/:id/edit', pregnanciesController.getForm);
+router.post('/:id/edit', pregnanciesController.savePregnancy);
+router.post('/:id/delete', pregnanciesController.deletePregnancy);
 
 module.exports = router;
