@@ -37,6 +37,81 @@ exports.listPuppies = async (req, res) => {
   }
 };
 
+exports.showPuppy = async (req, res) => {
+  try {
+    const breederId = req.session.user.breeder_id;
+    const puppyId = req.params.id;
+
+    const puppyResult = await pool.query(
+      `
+        SELECT p.*,
+               l.birth_date AS litter_birth_date,
+               mother.name AS mother_name,
+               father.name AS father_name
+        FROM puppies p
+        LEFT JOIN litters l ON p.litter_id = l.id
+        LEFT JOIN dogs mother ON l.mother_id = mother.id
+        LEFT JOIN dogs father ON l.father_id = father.id
+        WHERE p.id = $1 AND p.breeder_id = $2
+      `,
+      [puppyId, breederId],
+    );
+
+    if (!puppyResult.rows.length) {
+      return res.status(404).render('errors/404', {
+        title: 'Chiot introuvable',
+        user: req.session.user,
+      });
+    }
+
+    const soins = await pool.query(
+      `
+        SELECT id, type, label, event_date, next_due
+        FROM soins
+        WHERE breeder_id = $1 AND puppy_id = $2
+        ORDER BY event_date DESC
+        LIMIT 10
+      `,
+      [breederId, puppyId],
+    ).catch(() => ({ rows: [] }));
+
+    const reminders = await pool.query(
+      `
+        SELECT id, type, title, due_date, is_completed
+        FROM reminders
+        WHERE breeder_id = $1
+          AND puppy_id = $2
+          AND is_completed = FALSE
+        ORDER BY due_date ASC
+        LIMIT 10
+      `,
+      [breederId, puppyId],
+    ).catch(() => ({ rows: [] }));
+
+    const sales = await pool.query(
+      `
+        SELECT id, buyer_name, sale_date, price, deposit_amount, is_reservation
+        FROM sales
+        WHERE breeder_id = $1 AND puppy_id = $2
+        ORDER BY sale_date DESC
+        LIMIT 5
+      `,
+      [breederId, puppyId],
+    );
+
+    res.render('puppies/show', {
+      title: puppyResult.rows[0].name || 'Fiche chiot',
+      puppy: puppyResult.rows[0],
+      soins: soins.rows,
+      reminders: reminders.rows,
+      sales: sales.rows,
+    });
+  } catch (error) {
+    console.error('Erreur fiche chiot:', error);
+    res.status(500).send('Erreur lors du chargement de la fiche chiot.');
+  }
+};
+
 exports.getForm = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
