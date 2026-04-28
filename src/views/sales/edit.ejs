@@ -1,0 +1,112 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Cycle commercial</p>
+      <h1>Modifier la transaction</h1>
+      <p>Actualisez une réservation, encaissez le solde le jour du départ et générez ensuite la facture acquittée.</p>
+    </div>
+    <a class="btn btn-secondary" href="/sales">Retour aux ventes</a>
+  </section>
+
+  <section class="card">
+    <div class="section-title compact">
+      <span class="section-kicker"><%= sale.is_reservation ? 'Réservation en cours' : 'Vente définitive' %></span>
+      <h2><%= sale.animal_name || 'Animal' %></h2>
+      <p style="color: var(--text-muted); margin: 0;">
+        <%= sale.animal_type === 'puppy' ? 'Chiot' : 'Chien adulte' %>
+        <% if (sale.animal_chip_number) { %> — Puce : <%= sale.animal_chip_number %><% } %>
+      </p>
+    </div>
+
+    <form action="/sales/<%= sale.id %>/edit" method="POST" class="stacked-form">
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label for="buyer_name">Nom complet de l'acquéreur *</label>
+          <input type="text" id="buyer_name" name="buyer_name" value="<%= sale.buyer_name || '' %>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sale_date">Date de transaction / départ *</label>
+          <input type="date" id="sale_date" name="sale_date" value="<%= sale.sale_date ? new Date(sale.sale_date).toISOString().split('T')[0] : '' %>" required>
+        </div>
+      </div>
+
+      <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label for="price">Prix total convenu (€) *</label>
+          <input type="number" step="0.01" id="price" name="price" value="<%= sale.price || '' %>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="deposit_amount">Acompte / arrhes déjà versé (€)</label>
+          <input type="number" step="0.01" id="deposit_amount" name="deposit_amount" value="<%= sale.deposit_amount || 0 %>">
+        </div>
+
+        <div class="form-group">
+          <label for="payment_method">Moyen de paiement du solde</label>
+          <select id="payment_method" name="payment_method">
+            <option value="Virement" <%= sale.payment_method === 'Virement' ? 'selected' : '' %>>Virement bancaire</option>
+            <option value="Espèces" <%= sale.payment_method === 'Espèces' ? 'selected' : '' %>>Espèces</option>
+            <option value="Chèque" <%= sale.payment_method === 'Chèque' ? 'selected' : '' %>>Chèque</option>
+            <option value="Carte bancaire" <%= sale.payment_method === 'Carte bancaire' ? 'selected' : '' %>>Carte bancaire</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="background: var(--surface-2); box-shadow: none;">
+        <strong>Solde théorique restant</strong>
+        <p id="remainingAmount" style="font-size: 1.6rem; color: var(--primary-color); margin: 0.5rem 0 0;">0.00 €</p>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="4"><%= sale.notes || '' %></textarea>
+      </div>
+
+      <% if (sale.is_reservation) { %>
+        <div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--surface-2);">
+          <label style="display: flex; align-items: center; gap: 0.6rem; color: var(--text-color);">
+            <input type="checkbox" name="finalize_sale" value="true" style="width: auto;">
+            Le client règle le solde aujourd'hui : transformer cette réservation en vente définitive et inscrire la sortie au registre.
+          </label>
+        </div>
+      <% } else { %>
+        <input type="hidden" name="finalize_sale" value="false">
+      <% } %>
+
+      <div class="form-actions" style="justify-content: space-between;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <a class="btn btn-secondary" href="/sales/<%= sale.id %>/document/reservation" target="_blank">Contrat réservation</a>
+          <a class="btn btn-secondary" href="/sales/<%= sale.id %>/document/facture" target="_blank">Facture</a>
+          <% if (!sale.is_reservation) { %>
+            <a class="btn btn-primary" href="/sales/<%= sale.id %>/document/facture" target="_blank">Facture acquittée</a>
+            <a class="btn btn-secondary" href="/sales/<%= sale.id %>/document/cession" target="_blank">Attestation de cession</a>
+          <% } %>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer la transaction</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<script>
+  const priceInput = document.getElementById('price');
+  const depositInput = document.getElementById('deposit_amount');
+  const remainingAmount = document.getElementById('remainingAmount');
+
+  function updateRemainingAmount() {
+    const price = Number(priceInput.value || 0);
+    const deposit = Number(depositInput.value || 0);
+    const remaining = Math.max(price - deposit, 0);
+    remainingAmount.textContent = remaining.toFixed(2) + ' €';
+  }
+
+  priceInput.addEventListener('input', updateRemainingAmount);
+  depositInput.addEventListener('input', updateRemainingAmount);
+  updateRemainingAmount();
+</script>
+
+<%- include('../partials/foot') %>
