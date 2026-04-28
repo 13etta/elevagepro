@@ -113,7 +113,7 @@ const modules = [
     key: 'genetics',
     labelKey: 'nav.genetics',
     descriptionKey: 'modules.genetics.description',
-    href: '/genetics',
+    href: '/genetics/simulator',
     icon: 'DNA',
     group: 'selection',
     accent: 'violet',
