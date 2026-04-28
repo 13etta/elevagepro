@@ -268,6 +268,11 @@ exports.downloadDocument = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const saleId = req.params.id;
     const docType = req.params.type;
+    const allowedDocumentTypes = ['reservation', 'facture', 'cession', 'information'];
+
+    if (!allowedDocumentTypes.includes(docType)) {
+      return res.status(400).send('Type de document non autorisé.');
+    }
 
     const saleRes = await pool.query(
       `
