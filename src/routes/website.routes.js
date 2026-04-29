@@ -3,8 +3,38 @@ const { pool } = require('../db');
 
 const router = express.Router();
 
+function buildSlug(input) {
+  return String(input || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
+
+async function ensureWebsiteSchema() {
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS slug VARCHAR(180)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
+  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS sale_price DECIMAL(10,2)').catch(() => {});
+  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT \'active\'').catch(() => {});
+}
+
+async function ensureBreederSlug(breeder) {
+  if (breeder.slug) return breeder.slug;
+
+  const base = buildSlug(breeder.company_name || breeder.name || 'elevage') || 'elevage';
+  const slug = `${base}-${String(breeder.id).slice(0, 8)}`;
+
+  await pool.query('UPDATE breeder SET slug = $1 WHERE id = $2', [slug, breeder.id]).catch(() => {});
+  return slug;
+}
+
 async function renderPublic(req, res) {
   try {
+    await ensureWebsiteSchema();
     const slug = req.params.slug;
 
     const breederRes = await pool.query(
@@ -25,18 +55,20 @@ async function renderPublic(req, res) {
     }
 
     const breeder = breederRes.rows[0];
+    breeder.slug = await ensureBreederSlug(breeder);
 
     const dogs = await pool.query(
       `
-        SELECT id, name, sex, breed, lof, chip_number, birth_date, status, notes
+        SELECT id, name, sex, breed, chip_number, birth_date, status, notes,
+               COALESCE(lof, pedigree_number, id_scc) AS lof
         FROM dogs
         WHERE breeder_id = $1
-          AND COALESCE(lower(status), '') IN ('actif', 'reproducteur', 'active')
+          AND COALESCE(lower(status), '') IN ('actif', 'active', 'reproducteur')
         ORDER BY sex DESC, name ASC
         LIMIT 12
       `,
       [breeder.id],
-    );
+    ).catch(() => ({ rows: [] }));
 
     const puppies = await pool.query(
       `
@@ -45,12 +77,12 @@ async function renderPublic(req, res) {
         LEFT JOIN litters l ON p.litter_id = l.id
         LEFT JOIN dogs mother ON l.mother_id = mother.id
         WHERE p.breeder_id = $1
-          AND COALESCE(lower(p.status), '') IN ('disponible', 'actif', 'réservé', 'reserve', 'reservé')
+          AND COALESCE(lower(p.status), '') IN ('disponible', 'actif', 'active', 'réservé', 'reserve', 'reservé')
         ORDER BY l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
         LIMIT 24
       `,
       [breeder.id],
-    );
+    ).catch(() => ({ rows: [] }));
 
     const litters = await pool.query(
       `
@@ -58,17 +90,17 @@ async function renderPublic(req, res) {
         FROM litters l
         LEFT JOIN dogs mother ON l.mother_id = mother.id
         WHERE l.breeder_id = $1
-          AND COALESCE(lower(l.status), '') IN ('active', 'sevrage')
+          AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage')
         ORDER BY l.birth_date DESC
         LIMIT 8
       `,
       [breeder.id],
-    );
+    ).catch(() => ({ rows: [] }));
 
     return res.status(200).render('website/public-site', {
       title: breeder.company_name || breeder.name || 'Élevage',
       user: null,
-      slug,
+      slug: breeder.slug,
       breeder,
       dogs: dogs.rows,
       puppies: puppies.rows,
@@ -76,20 +108,19 @@ async function renderPublic(req, res) {
     });
   } catch (error) {
     console.error('Erreur vitrine publique:', error);
-    return res.status(500).render('errors/500', {
-      title: 'Erreur vitrine',
-      user: null,
-    });
+    return res.status(500).send('Erreur lors du chargement de la vitrine publique.');
   }
 }
 
 router.get('/', async (req, res) => {
   try {
+    await ensureWebsiteSchema();
+
     if (!req.session?.user?.breeder_id) {
       return res.redirect('/auth/login');
     }
 
-    const breederRes = await pool.query('SELECT id, slug FROM breeder WHERE id = $1 LIMIT 1', [req.session.user.breeder_id]);
+    const breederRes = await pool.query('SELECT * FROM breeder WHERE id = $1 LIMIT 1', [req.session.user.breeder_id]);
     if (!breederRes.rows.length) {
       return res.status(404).render('errors/404', {
         title: 'Élevage introuvable',
@@ -98,13 +129,11 @@ router.get('/', async (req, res) => {
     }
 
     const breeder = breederRes.rows[0];
-    return res.redirect(`/site/${breeder.slug || breeder.id}`);
+    const slug = await ensureBreederSlug(breeder);
+    return res.redirect(`/site/${slug || breeder.id}`);
   } catch (error) {
     console.error('Erreur route vitrine:', error);
-    return res.status(500).render('errors/500', {
-      title: 'Erreur vitrine',
-      user: req.session?.user || null,
-    });
+    return res.status(500).send('Erreur lors de l’ouverture de la vitrine.');
   }
 });
 
