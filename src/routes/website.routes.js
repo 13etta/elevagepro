@@ -15,8 +15,8 @@ function buildSlug(input) {
 
 function defaultWebsiteSettings() {
   return {
-    primaryColor: '#3f6212',
-    secondaryColor: '#b45309',
+    primaryColor: '#6d7c45',
+    secondaryColor: '#c8b397',
     heroTitle: '',
     heroSubtitle: 'Élevage canin familial, sélection, passion et accompagnement.',
     heroImageUrl: '',
