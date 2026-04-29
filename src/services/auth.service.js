@@ -2,43 +2,121 @@ const bcrypt = require('bcrypt');
 const db = require('../db');
 
 function buildSlug(input) {
-  return input
+  return String(input || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 160);
+    .slice(0, 120);
+}
+
+async function ensureAuthSchema(client) {
+  await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+
+  await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)
+  `);
+
+  await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS name VARCHAR(255)
+  `);
+
+  await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS slug VARCHAR(180)
+  `);
+
+  await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)
+  `);
+
+  await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS siret VARCHAR(32)
+  `);
+
+  await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS address TEXT
+  `);
+
+  await client.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE
+  `);
+
+  await client.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)
+  `);
+
+  await client.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'admin'
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_breeder_slug_unique
+    ON breeder(slug)
+    WHERE slug IS NOT NULL
+  `);
+}
+
+async function createUniqueSlug(client, kennelName) {
+  const baseSlug = buildSlug(kennelName) || `elevage-${Date.now()}`;
+  let candidate = baseSlug;
+  let attempt = 0;
+
+  while (attempt < 10) {
+    const existing = await client.query('SELECT id FROM breeder WHERE slug = $1 LIMIT 1', [candidate]);
+    if (!existing.rows.length) return candidate;
+
+    attempt += 1;
+    candidate = `${baseSlug}-${Date.now().toString().slice(-6)}-${attempt}`;
+  }
+
+  return `${baseSlug}-${Date.now()}`;
 }
 
 async function createBreederWithAdmin({ kennelName, email, password, fullName }) {
   const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
+    await ensureAuthSchema(client);
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = String(email || '').toLowerCase().trim();
+    const cleanKennelName = String(kennelName || '').trim();
+    const cleanFullName = String(fullName || '').trim();
 
     const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
     if (existingUser.rowCount > 0) {
       throw new Error('EMAIL_ALREADY_EXISTS');
     }
 
-    const baseSlug = buildSlug(kennelName) || `elevage-${Date.now()}`;
+    const slug = await createUniqueSlug(client, cleanKennelName);
 
     const breederResult = await client.query(
-      `INSERT INTO breeder (name, slug)
-       VALUES ($1, $2)
-       RETURNING id`,
-      [kennelName.trim(), `${baseSlug}-${Date.now().toString().slice(-6)}`],
+      `
+        INSERT INTO breeder (company_name, name, slug)
+        VALUES ($1, $1, $2)
+        RETURNING id
+      `,
+      [cleanKennelName, slug],
     );
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const userResult = await client.query(
-      `INSERT INTO users (breeder_id, email, password_hash, full_name, role)
-       VALUES ($1, $2, $3, $4, 'owner')
-       RETURNING id, breeder_id, email, full_name, role`,
-      [breederResult.rows[0].id, normalizedEmail, hashedPassword, fullName.trim()],
+      `
+        INSERT INTO users (breeder_id, email, password_hash, full_name, role, is_active)
+        VALUES ($1, $2, $3, $4, 'owner', TRUE)
+        RETURNING id, breeder_id, email, full_name, role
+      `,
+      [breederResult.rows[0].id, normalizedEmail, hashedPassword, cleanFullName],
     );
 
     await client.query('COMMIT');
@@ -53,10 +131,12 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName })
 
 async function login({ email, password }) {
   const result = await db.query(
-    `SELECT id, breeder_id, email, full_name, role, password_hash
-     FROM users
-     WHERE email = $1 AND is_active = true`,
-    [email.toLowerCase().trim()],
+    `
+      SELECT id, breeder_id, email, full_name, role, password_hash
+      FROM users
+      WHERE email = $1 AND COALESCE(is_active, TRUE) = TRUE
+    `,
+    [String(email || '').toLowerCase().trim()],
   );
 
   const user = result.rows[0];
