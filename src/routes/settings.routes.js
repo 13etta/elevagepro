@@ -12,9 +12,6 @@ router.get('/', settingsController.getSettings);
 router.post('/', settingsController.updateSettings);
 router.post('/preferences', settingsController.updatePreferences);
 router.post('/logo', upload.single('logo'), settingsController.uploadLogo);
-router.post('/website', upload.fields([
-  { name: 'hero_image', maxCount: 1 },
-  { name: 'gallery_images', maxCount: 12 }
-]), settingsController.updateWebsiteSettings);
+router.post('/website', upload.any(), settingsController.updateWebsiteSettings);
 
 module.exports = router;
