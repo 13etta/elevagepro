@@ -1,0 +1,150 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Sélection</p>
+      <h1>Stratégie de reproduction</h1>
+      <p>Analysez un accouplement avec une lecture génétique, commerciale et cynotechnique : COI, risques, complémentarité et objectif de portée.</p>
+    </div>
+    <a class="btn btn-secondary" href="/genetics/simulator">Simulateur génétique</a>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Analyse</span>
+        <h2>Choisir un couple</h2>
+      </div>
+
+      <form action="/strategy" method="POST" class="stacked-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="sire_id">Étalon</label>
+            <select id="sire_id" name="sire_id" required>
+              <option value="">Sélectionner</option>
+              <% males.forEach((dog) => { %>
+                <option value="<%= dog.id %>"><%= dog.name %> — <%= dog.breed || 'Race non renseignée' %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dam_id">Lice</label>
+            <select id="dam_id" name="dam_id" required>
+              <option value="">Sélectionner</option>
+              <% females.forEach((dog) => { %>
+                <option value="<%= dog.id %>"><%= dog.name %> — <%= dog.breed || 'Race non renseignée' %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="objective">Objectif de portée</label>
+          <textarea id="objective" name="objective" rows="4" placeholder="Ex : garder une femelle, renforcer la passion chasse, conserver le style setter, produire chasse pratique/field..."></textarea>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Analyser l’accouplement</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Doctrine</span>
+        <h2>Lecture d’éleveur</h2>
+      </div>
+      <p>La consanguinité n’est qu’un indicateur. La décision doit intégrer le type, le mental, le style, le terrain, la santé et la capacité à transmettre.</p>
+      <p>Un accouplement sérieux n’additionne pas deux noms : il corrige, consolide et prépare la génération suivante.</p>
+    </article>
+  </section>
+
+  <% if (result) { %>
+    <% if (result.error) { %>
+      <section class="card"><p class="alert"><%= result.error %></p></section>
+    <% } else { %>
+      <section class="kpi-grid">
+        <article class="kpi-card"><span>Étalon</span><strong><%= result.sire.name %></strong></article>
+        <article class="kpi-card"><span>Lice</span><strong><%= result.dam.name %></strong></article>
+        <article class="kpi-card"><span>COI estimé</span><strong><%= result.genetic.coi.toFixed(2) %> %</strong></article>
+        <article class="kpi-card"><span>Niveau</span><strong><%= result.genetic.classification.label %></strong></article>
+      </section>
+
+      <section class="dashboard-columns">
+        <article class="card">
+          <div class="section-title compact">
+            <span class="section-kicker">Verdict</span>
+            <h2>Recommandation</h2>
+          </div>
+          <p><strong><%= result.recommendation %></strong></p>
+          <p><%= result.genetic.classification.recommendation %></p>
+        </article>
+
+        <article class="card">
+          <div class="section-title compact">
+            <span class="section-kicker">Objectif</span>
+            <h2>Orientation</h2>
+          </div>
+          <p><%= result.objective || 'Aucun objectif saisi. Ajoutez un objectif pour rendre l’analyse plus précise.' %></p>
+        </article>
+      </section>
+
+      <section class="dashboard-columns">
+        <article class="table-block">
+          <div class="section-title compact">
+            <span class="section-kicker">Points forts</span>
+            <h2>Arguments favorables</h2>
+          </div>
+          <% if (!result.strengths.length) { %>
+            <p class="muted">Aucun point fort automatique détecté.</p>
+          <% } else { %>
+            <ul>
+              <% result.strengths.forEach((item) => { %><li><%= item %></li><% }) %>
+            </ul>
+          <% } %>
+        </article>
+
+        <article class="table-block">
+          <div class="section-title compact">
+            <span class="section-kicker">Risques</span>
+            <h2>Points de vigilance</h2>
+          </div>
+          <% if (!result.risks.length) { %>
+            <p class="muted">Aucun risque immédiat détecté par le système.</p>
+          <% } else { %>
+            <ul>
+              <% result.risks.forEach((item) => { %><li><%= item %></li><% }) %>
+            </ul>
+          <% } %>
+        </article>
+      </section>
+
+      <section class="table-block">
+        <div class="section-title compact">
+          <span class="section-kicker">Généalogie</span>
+          <h2>Ancêtres communs détectés</h2>
+        </div>
+        <% if (!result.genetic.commonAncestors.length) { %>
+          <%- include('../partials/empty-state', { emptyTitle: 'Aucun ancêtre commun', emptyText: 'Aucun ancêtre commun détecté sur les générations connues.' }) %>
+        <% } else { %>
+          <table>
+            <thead><tr><th>Ancêtre</th><th>Côté étalon</th><th>Côté lice</th><th>Contribution</th></tr></thead>
+            <tbody>
+              <% result.genetic.commonAncestors.forEach((ancestor) => { %>
+                <tr>
+                  <td><%= ancestor.name %></td>
+                  <td>G<%= ancestor.sireGeneration %></td>
+                  <td>G<%= ancestor.damGeneration %></td>
+                  <td><%= ancestor.contribution.toFixed(4) %> %</td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </section>
+    <% } %>
+  <% } %>
+</main>
+
+<%- include('../partials/foot') %>
