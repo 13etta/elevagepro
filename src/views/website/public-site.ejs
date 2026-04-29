@@ -1,9 +1,95 @@
-<%- include('../partials/head') %>
-<main class="auth-shell">
-  <section class="auth-card wide">
-    <h1>Site public élevage</h1>
-    <p>Slug: <strong><%= slug %></strong></p>
-    <p>Le générateur public sera livré dans un lot dédié.</p>
-  </section>
-</main>
-<%- include('../partials/foot') %>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-theme="nature" class="public-website-body">
+  <main class="public-site">
+    <section class="public-hero">
+      <div>
+        <p class="eyebrow">Élevage canin</p>
+        <h1><%= breeder.company_name || breeder.name || 'Élevage' %></h1>
+        <% if (breeder.affix_name) { %><p class="public-affix"><%= breeder.affix_name %></p><% } %>
+        <p>Découvrez nos reproducteurs, nos portées et les chiots disponibles.</p>
+      </div>
+      <% if (breeder.logo_url) { %>
+        <img src="<%= breeder.logo_url %>" alt="Logo élevage" class="public-logo">
+      <% } %>
+    </section>
+
+    <section class="public-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Disponibilités</span>
+        <h2>Chiots disponibles ou réservables</h2>
+      </div>
+      <% if (!puppies.length) { %>
+        <div class="empty-state"><strong>Aucun chiot disponible actuellement</strong><p>Contactez l’élevage pour connaître les prochains projets de portée.</p></div>
+      <% } else { %>
+        <div class="public-card-grid">
+          <% puppies.forEach((puppy) => { %>
+            <article class="public-card">
+              <span class="badge"><%= puppy.status || 'Disponible' %></span>
+              <h3><%= puppy.name || 'Chiot disponible' %></h3>
+              <p><%= puppy.sex || '-' %> — <%= puppy.color || 'Robe non renseignée' %></p>
+              <% if (puppy.mother_name) { %><p>Mère : <strong><%= puppy.mother_name %></strong></p><% } %>
+              <% if (puppy.sale_price) { %><p class="public-price"><%= puppy.sale_price %> €</p><% } %>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="public-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Portées</span>
+        <h2>Portées en cours</h2>
+      </div>
+      <% if (!litters.length) { %>
+        <p class="muted">Aucune portée active affichée.</p>
+      <% } else { %>
+        <div class="public-card-grid">
+          <% litters.forEach((litter) => { %>
+            <article class="public-card">
+              <h3>Portée de <%= litter.mother_name || 'mère non renseignée' %></h3>
+              <p>Née le <%= formatDate(litter.birth_date) %></p>
+              <p><%= litter.puppies_count_total || 0 %> chiot(s)</p>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="public-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Sélection</span>
+        <h2>Nos chiens</h2>
+      </div>
+      <% if (!dogs.length) { %>
+        <p class="muted">Aucun chien affiché pour le moment.</p>
+      <% } else { %>
+        <div class="public-card-grid">
+          <% dogs.forEach((dog) => { %>
+            <article class="public-card">
+              <h3><%= dog.name %></h3>
+              <p><%= dog.breed || 'Race non renseignée' %> — <%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></p>
+              <% if (dog.lof) { %><p>LOF : <%= dog.lof %></p><% } %>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="public-section public-contact">
+      <div>
+        <span class="section-kicker">Contact</span>
+        <h2>Contacter l’élevage</h2>
+        <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
+        <% if (breeder.siret) { %><p>SIRET : <%= breeder.siret %></p><% } %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
