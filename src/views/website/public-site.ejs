@@ -39,8 +39,9 @@
         </div>
       </div>
       <div class="institutional-info-block">
-        <p class="institutional-slogan"><%= websiteSettings.heroSubtitle || 'Élevage canin familial, sélection et accompagnement.' %></p>
+        <p class="institutional-slogan"><%= websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial, sélection et accompagnement.' %></p>
         <% if (breeder.address) { %><p class="institutional-address"><%= breeder.address %></p><% } %>
+        <% if (websiteSettings.openingHours) { %><p class="institutional-hours"><%= websiteSettings.openingHours %></p><% } %>
         <% if (websiteSettings.phone) { %><p class="institutional-phone"><a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
       </div>
     </header>
@@ -66,12 +67,12 @@
 
     <section class="contact-strip">
       <div>
-        <strong>Besoin d’un renseignement ?</strong>
-        <span>Informations, réservation, projet de portée ou disponibilité.</span>
+        <strong><%= websiteSettings.contactStripTitle || 'Besoin d’un renseignement ?' %></strong>
+        <span><%= websiteSettings.contactStripText || 'Informations, réservation, projet de portée ou disponibilité.' %></span>
       </div>
       <div class="contact-strip-actions">
-        <% if (websiteSettings.showContact) { %><a class="showcase-btn primary" href="#contact">Contactez-nous</a><% } %>
-        <% if (websiteSettings.publicEmail) { %><a class="showcase-btn secondary" href="mailto:<%= websiteSettings.publicEmail %>">Envoyer un message</a><% } %>
+        <% if (websiteSettings.showContact) { %><a class="showcase-btn primary" href="#contact"><%= websiteSettings.primaryCtaLabel || 'Contactez-nous' %></a><% } %>
+        <% if (websiteSettings.publicEmail) { %><a class="showcase-btn secondary" href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.secondaryCtaLabel || 'Envoyer un message' %></a><% } %>
       </div>
     </section>
 
@@ -108,8 +109,8 @@
     <% if (websiteSettings.showServices) { %>
       <section id="services" class="public-section services-showcase-section">
         <div class="section-title compact">
-          <span class="section-kicker">Savoir-faire</span>
-          <h2>Nos services</h2>
+          <span class="section-kicker"><%= websiteSettings.serviceSectionKicker || 'Savoir-faire' %></span>
+          <h2><%= websiteSettings.serviceSectionTitle || 'Nos services' %></h2>
         </div>
         <div class="service-panel-grid">
           <% [1, 2, 3].forEach((index) => { const title = websiteSettings[`service${index}Title`]; const text = websiteSettings[`service${index}Text`]; if (title || text) { %>
@@ -215,11 +216,11 @@
       </section>
     <% } %>
 
-    <% if (strengthsList.length) { %>
+    <% if (websiteSettings.showStrengths && strengthsList.length) { %>
       <section class="public-section strengths-band">
         <div class="section-title compact">
-          <span class="section-kicker">Nos points forts</span>
-          <h2>Pourquoi nous faire confiance</h2>
+          <span class="section-kicker"><%= websiteSettings.strengthsKicker || 'Nos points forts' %></span>
+          <h2><%= websiteSettings.strengthsTitle || 'Pourquoi nous faire confiance' %></h2>
         </div>
         <div class="strengths-grid">
           <% strengthsList.slice(0, 4).forEach((strength, index) => { %>
@@ -238,6 +239,7 @@
           <span class="section-kicker">Contact</span>
           <h2>Contacter l’élevage</h2>
           <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
+          <% if (websiteSettings.openingHours) { %><p>Horaires : <%= websiteSettings.openingHours %></p><% } %>
           <% if (websiteSettings.phone) { %><p>Téléphone : <a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
           <% if (websiteSettings.publicEmail) { %><p>Email : <a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
           <% if (websiteSettings.instagram) { %><p>Instagram : <%= websiteSettings.instagram %></p><% } %>
@@ -245,8 +247,8 @@
           <% if (breeder.siret) { %><p>SIRET : <%= breeder.siret %></p><% } %>
         </div>
         <div class="contact-panel">
-          <strong>Engagement éleveur</strong>
-          <p>Un élevage sérieux ne vend pas seulement un chiot : il transmet une lignée, une méthode et un suivi.</p>
+          <strong><%= websiteSettings.contactPanelTitle || 'Engagement éleveur' %></strong>
+          <p><%= websiteSettings.contactPanelText || 'Un élevage sérieux ne vend pas seulement un chiot : il transmet une lignée, une méthode et un suivi.' %></p>
         </div>
       </section>
     <% } %>
@@ -255,10 +257,11 @@
       <div>
         <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>"><% } %>
         <strong><%= siteTitle %></strong>
-        <p><%= websiteSettings.heroSubtitle || 'Élevage canin familial.' %></p>
+        <p><%= websiteSettings.footerText || websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial.' %></p>
       </div>
       <div>
         <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
+        <% if (websiteSettings.openingHours) { %><p><%= websiteSettings.openingHours %></p><% } %>
         <% if (websiteSettings.phone) { %><p><a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
         <% if (websiteSettings.publicEmail) { %><p><a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
       </div>
