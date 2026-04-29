@@ -1,4 +1,5 @@
 <%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/phase5.css">
 <%- include('../partials/nav') %>
 
 <main class="container">
@@ -79,8 +80,9 @@
       <%- include('../partials/empty-state', { emptyTitle: 'Aucun poids enregistré', emptyText: 'Ajoutez le premier poids du chiot pour démarrer le suivi de croissance.' }) %>
     <% } else { %>
       <div class="growth-chart" data-labels='<%- JSON.stringify(chartLabels) %>' data-values='<%- JSON.stringify(chartValues) %>'>
+        <% const maxWeight = Math.max(...chartValues); %>
         <% weights.forEach((weight) => { %>
-          <div class="growth-bar" style="height:<%= Math.max(20, Math.round((weight.weight_grams / Math.max(...chartValues)) * 180)) %>px">
+          <div class="growth-bar" style="height:<%= Math.max(20, Math.round((weight.weight_grams / maxWeight) * 180)) %>px">
             <span><%= weight.weight_grams %> g</span>
           </div>
         <% }) %>
