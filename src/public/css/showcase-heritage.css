@@ -1,0 +1,298 @@
+.public-website-body {
+  font-family: 'Merriweather Sans', Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.public-website-body h1,
+.public-website-body h2,
+.public-website-body h3,
+.institutional-logo-block strong,
+.showcase-footer strong {
+  font-family: 'Merriweather', Georgia, serif;
+}
+
+.institutional-header {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 24px;
+  border-radius: 30px;
+  border: 1px solid color-mix(in srgb, var(--showcase-secondary, #c8b397) 36%, transparent);
+  background: color-mix(in srgb, var(--showcase-bg, #f6f1e8) 90%, #ffffff);
+  box-shadow: 0 18px 50px rgba(48, 37, 25, 0.08);
+}
+
+.institutional-logo-block {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.institutional-logo-block img,
+.institutional-logo-fallback {
+  width: 94px;
+  height: 94px;
+  border-radius: 50%;
+  object-fit: contain;
+  display: grid;
+  place-items: center;
+  background: #fffaf2;
+  color: var(--showcase-primary, #6d7c45);
+  border: 1px solid color-mix(in srgb, var(--showcase-secondary, #c8b397) 50%, transparent);
+  font-size: 2.2rem;
+  font-weight: 900;
+}
+
+.institutional-logo-block strong {
+  display: block;
+  color: var(--showcase-text, #2b2014);
+  font-size: clamp(1.8rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.institutional-logo-block small {
+  display: block;
+  margin-top: 8px;
+  color: var(--showcase-primary, #6d7c45);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 900;
+}
+
+.institutional-info-block {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  text-align: right;
+}
+
+.institutional-info-block p {
+  margin: 0;
+  color: color-mix(in srgb, var(--showcase-text, #2b2014) 72%, transparent);
+}
+
+.institutional-slogan {
+  max-width: 620px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--showcase-text, #2b2014) !important;
+}
+
+.institutional-phone a {
+  color: var(--showcase-primary, #6d7c45);
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.contact-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 18px 24px;
+  border-radius: 999px;
+  color: #fffaf2;
+  background: linear-gradient(135deg, var(--showcase-primary, #6d7c45), var(--showcase-accent, #2b2014));
+  box-shadow: 0 18px 50px rgba(48, 37, 25, 0.14);
+}
+
+.contact-strip strong,
+.contact-strip span {
+  display: block;
+}
+
+.contact-strip span {
+  opacity: 0.8;
+}
+
+.contact-strip-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contact-strip .showcase-btn.primary {
+  background: #fffaf2;
+  color: var(--showcase-accent, #2b2014);
+}
+
+.contact-strip .showcase-btn.secondary {
+  border-color: rgba(255,255,255,.4);
+  background: transparent;
+  color: #fffaf2;
+}
+
+.showcase-template-heritage .public-hero.premium-hero {
+  border-radius: 10px 60px 10px 60px;
+}
+
+.showcase-template-heritage .public-hero.premium-hero h1 {
+  font-family: 'Merriweather', Georgia, serif;
+  letter-spacing: -0.04em;
+}
+
+.editorial-intro {
+  position: relative;
+}
+
+.editorial-intro::after {
+  content: '';
+  position: absolute;
+  right: 34px;
+  bottom: 28px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--showcase-primary, #6d7c45) 10%, transparent);
+}
+
+.service-panel-grid {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--showcase-secondary, #c8b397) 40%, transparent);
+}
+
+.service-panel {
+  min-height: 280px;
+  display: grid;
+  align-items: center;
+  padding: clamp(28px, 5vw, 70px);
+  background: color-mix(in srgb, var(--showcase-bg, #f6f1e8) 82%, #ffffff);
+}
+
+.service-panel:nth-child(even) {
+  justify-items: end;
+  text-align: right;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--showcase-primary, #6d7c45) 28%, rgba(0,0,0,.42)), rgba(0,0,0,.22)),
+    color-mix(in srgb, var(--showcase-secondary, #c8b397) 72%, #ffffff);
+  color: #fffaf2;
+}
+
+.service-panel div {
+  max-width: 620px;
+}
+
+.service-panel span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: var(--showcase-primary, #6d7c45);
+  color: #fffaf2;
+  font-weight: 900;
+}
+
+.service-panel:nth-child(even) span {
+  background: #fffaf2;
+  color: var(--showcase-primary, #6d7c45);
+}
+
+.service-panel h3 {
+  margin: 0 0 14px;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.service-panel p {
+  margin: 0;
+  line-height: 1.75;
+  font-size: 1.04rem;
+}
+
+.strengths-band {
+  text-align: center;
+}
+
+.strengths-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.strengths-grid article {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 22px;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--showcase-bg, #f6f1e8) 80%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--showcase-secondary, #c8b397) 36%, transparent);
+}
+
+.strengths-grid span {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  color: #fffaf2;
+  background: var(--showcase-primary, #6d7c45);
+  font-weight: 900;
+  font-size: 1.2rem;
+}
+
+.strengths-grid strong {
+  color: var(--showcase-text, #2b2014);
+}
+
+.showcase-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: center;
+  padding: 34px;
+  border-radius: 34px 34px 0 0;
+  color: #fffaf2;
+  background: linear-gradient(135deg, var(--showcase-accent, #2b2014), color-mix(in srgb, var(--showcase-primary, #6d7c45) 45%, #000000));
+}
+
+.showcase-footer img {
+  max-width: 120px;
+  max-height: 90px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+
+.showcase-footer strong {
+  display: block;
+  font-size: 1.6rem;
+}
+
+.showcase-footer p {
+  color: rgba(255,250,242,.78);
+}
+
+.showcase-footer a {
+  color: #fffaf2;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+@media (max-width: 920px) {
+  .institutional-header,
+  .contact-strip,
+  .showcase-footer,
+  .strengths-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .institutional-header,
+  .institutional-info-block,
+  .service-panel:nth-child(even) {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .contact-strip {
+    border-radius: 28px;
+  }
+}
