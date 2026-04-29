@@ -8,7 +8,11 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/phase5.css">
 </head>
-<body data-theme="nature" class="public-website-body" style="--showcase-primary:<%= websiteSettings.primaryColor %>;--showcase-secondary:<%= websiteSettings.secondaryColor %>;">
+<body
+  data-theme="nature"
+  class="public-website-body showcase-template-<%= websiteSettings.template || 'heritage' %>"
+  style="--showcase-primary:<%= websiteSettings.primaryColor %>;--showcase-secondary:<%= websiteSettings.secondaryColor %>;--showcase-accent:<%= websiteSettings.accentColor || '#2b2014' %>;--showcase-bg:<%= websiteSettings.backgroundColor || '#f6f1e8' %>;--showcase-text:<%= websiteSettings.textColor || '#2b2014' %>;"
+>
   <main class="public-site premium-showcase">
     <nav class="showcase-nav" aria-label="Navigation vitrine">
       <a href="#accueil" class="showcase-brand">
@@ -20,9 +24,10 @@
         <strong><%= breeder.company_name || breeder.name || 'Élevage' %></strong>
       </a>
       <div class="showcase-links">
-        <a href="#selection">Sélection</a>
-        <a href="#chiots">Chiots</a>
-        <a href="#contact">Contact</a>
+        <% if (websiteSettings.showDogs) { %><a href="#selection">Sélection</a><% } %>
+        <% if (websiteSettings.showPuppies) { %><a href="#chiots">Chiots</a><% } %>
+        <% if (websiteSettings.showGallery) { %><a href="#galerie">Galerie</a><% } %>
+        <% if (websiteSettings.showContact) { %><a href="#contact">Contact</a><% } %>
       </div>
     </nav>
 
@@ -33,8 +38,8 @@
         <% if (breeder.affix_name) { %><p class="public-affix"><%= breeder.affix_name %></p><% } %>
         <p class="hero-lead"><%= websiteSettings.heroSubtitle || 'Une vitrine claire pour présenter la sélection, les reproducteurs, les portées et la philosophie de l’élevage.' %></p>
         <div class="hero-actions">
-          <a class="showcase-btn primary" href="#chiots">Voir les disponibilités</a>
-          <a class="showcase-btn secondary" href="#contact">Contacter l’élevage</a>
+          <% if (websiteSettings.showPuppies) { %><a class="showcase-btn primary" href="#chiots">Voir les disponibilités</a><% } %>
+          <% if (websiteSettings.showContact) { %><a class="showcase-btn secondary" href="#contact">Contacter l’élevage</a><% } %>
         </div>
       </div>
       <aside class="hero-portrait" <% if (websiteSettings.heroImageUrl) { %>style="background-image:url('<%= websiteSettings.heroImageUrl %>')"<% } %>>
@@ -46,92 +51,141 @@
       </aside>
     </section>
 
-    <section class="showcase-intro public-section">
-      <div>
-        <span class="section-kicker">Ligne d’élevage</span>
-        <h2>Une sélection lisible, suivie et assumée</h2>
-      </div>
-      <p><%= websiteSettings.newsText || 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.' %></p>
-    </section>
+    <% if (websiteSettings.showIntro) { %>
+      <section class="showcase-intro public-section">
+        <div>
+          <span class="section-kicker">Ligne d’élevage</span>
+          <h2><%= websiteSettings.introTitle || 'Une sélection lisible, suivie et assumée' %></h2>
+        </div>
+        <p><%= websiteSettings.introText || websiteSettings.newsText || 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.' %></p>
+      </section>
+    <% } %>
 
-    <section id="chiots" class="public-section">
-      <div class="section-title compact">
-        <span class="section-kicker">Disponibilités</span>
-        <h2>Chiots disponibles ou réservables</h2>
-      </div>
-      <% if (!puppies.length) { %>
-        <div class="empty-state"><strong>Aucun chiot disponible actuellement</strong><p>Contactez l’élevage pour connaître les prochains projets de portée.</p></div>
-      <% } else { %>
+    <% if (websiteSettings.showServices) { %>
+      <section class="public-section">
+        <div class="section-title compact">
+          <span class="section-kicker">Savoir-faire</span>
+          <h2>Nos services</h2>
+        </div>
         <div class="public-card-grid premium-card-grid">
-          <% puppies.forEach((puppy) => { %>
+          <% [1, 2, 3].forEach((index) => { const title = websiteSettings[`service${index}Title`]; const text = websiteSettings[`service${index}Text`]; if (title || text) { %>
             <article class="public-card premium-card">
-              <span class="badge"><%= puppy.status || 'Disponible' %></span>
-              <h3><%= puppy.name || 'Chiot disponible' %></h3>
-              <p><%= puppy.sex || '-' %> — <%= puppy.color || 'Robe non renseignée' %></p>
-              <% if (puppy.mother_name) { %><p>Mère : <strong><%= puppy.mother_name %></strong></p><% } %>
-              <% if (puppy.sale_price) { %><p class="public-price"><%= puppy.sale_price %> €</p><% } %>
+              <h3><%= title || `Service ${index}` %></h3>
+              <p><%= text || '' %></p>
             </article>
+          <% } }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (websiteSettings.showPuppies) { %>
+      <section id="chiots" class="public-section">
+        <div class="section-title compact">
+          <span class="section-kicker">Disponibilités</span>
+          <h2>Chiots disponibles ou réservables</h2>
+        </div>
+        <% if (!puppies.length) { %>
+          <div class="empty-state"><strong>Aucun chiot disponible actuellement</strong><p>Contactez l’élevage pour connaître les prochains projets de portée.</p></div>
+        <% } else { %>
+          <div class="public-card-grid premium-card-grid">
+            <% puppies.forEach((puppy) => { %>
+              <article class="public-card premium-card">
+                <span class="badge"><%= puppy.status || 'Disponible' %></span>
+                <h3><%= puppy.name || 'Chiot disponible' %></h3>
+                <p><%= puppy.sex || '-' %> — <%= puppy.color || 'Robe non renseignée' %></p>
+                <% if (puppy.mother_name) { %><p>Mère : <strong><%= puppy.mother_name %></strong></p><% } %>
+                <% if (puppy.sale_price) { %><p class="public-price"><%= puppy.sale_price %> €</p><% } %>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+      </section>
+    <% } %>
+
+    <% if (websiteSettings.showLitters) { %>
+      <section class="public-section">
+        <div class="section-title compact">
+          <span class="section-kicker">Portées</span>
+          <h2>Portées en cours</h2>
+        </div>
+        <% if (!litters.length) { %>
+          <p class="muted">Aucune portée active affichée.</p>
+        <% } else { %>
+          <div class="public-card-grid premium-card-grid litter-public-grid">
+            <% litters.forEach((litter) => { const litterImages = (websiteSettings.litterGallery && websiteSettings.litterGallery[litter.id]) || []; %>
+              <article class="public-card premium-card litter-public-card">
+                <% if (litterImages[0]) { %><img class="litter-cover" src="<%= litterImages[0].url %>" alt="Photo portée"><% } %>
+                <h3>Portée de <%= litter.mother_name || 'mère non renseignée' %></h3>
+                <p>Née le <%= formatDate(litter.birth_date) %></p>
+                <p><%= litter.puppies_count_total || litter.puppies_count || litter.nb_puppies || 0 %> chiot(s)</p>
+                <% if (litterImages.length > 1) { %>
+                  <div class="litter-thumbs">
+                    <% litterImages.slice(1, 5).forEach((image) => { %><img src="<%= image.url %>" alt="Photo portée"><% }) %>
+                  </div>
+                <% } %>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+      </section>
+    <% } %>
+
+    <% if (websiteSettings.showDogs) { %>
+      <section id="selection" class="public-section">
+        <div class="section-title compact">
+          <span class="section-kicker">Sélection</span>
+          <h2>Nos chiens</h2>
+        </div>
+        <% if (!dogs.length) { %>
+          <p class="muted">Aucun chien affiché pour le moment.</p>
+        <% } else { %>
+          <div class="public-card-grid premium-card-grid dogs-grid">
+            <% dogs.forEach((dog) => { %>
+              <article class="public-card premium-card dog-card">
+                <span class="dog-sex"><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></span>
+                <h3><%= dog.name %></h3>
+                <p><%= dog.breed || 'Race non renseignée' %></p>
+                <% if (dog.lof) { %><p>LOF : <%= dog.lof %></p><% } %>
+                <% if (dog.notes) { %><p class="dog-note"><%= String(dog.notes).slice(0, 160) %><%= String(dog.notes).length > 160 ? '…' : '' %></p><% } %>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+      </section>
+    <% } %>
+
+    <% if (websiteSettings.showGallery && websiteSettings.gallery && websiteSettings.gallery.length) { %>
+      <section id="galerie" class="public-section">
+        <div class="section-title compact">
+          <span class="section-kicker">Galerie</span>
+          <h2>Photos de l’élevage</h2>
+        </div>
+        <div class="public-gallery-grid">
+          <% websiteSettings.gallery.forEach((image) => { %>
+            <img src="<%= image.url %>" alt="Photo élevage">
           <% }) %>
         </div>
-      <% } %>
-    </section>
+      </section>
+    <% } %>
 
-    <section class="public-section">
-      <div class="section-title compact">
-        <span class="section-kicker">Portées</span>
-        <h2>Portées en cours</h2>
-      </div>
-      <% if (!litters.length) { %>
-        <p class="muted">Aucune portée active affichée.</p>
-      <% } else { %>
-        <div class="public-card-grid premium-card-grid">
-          <% litters.forEach((litter) => { %>
-            <article class="public-card premium-card">
-              <h3>Portée de <%= litter.mother_name || 'mère non renseignée' %></h3>
-              <p>Née le <%= formatDate(litter.birth_date) %></p>
-              <p><%= litter.puppies_count_total || litter.puppies_count || litter.nb_puppies || 0 %> chiot(s)</p>
-            </article>
-          <% }) %>
+    <% if (websiteSettings.showContact) { %>
+      <section id="contact" class="public-section public-contact premium-contact">
+        <div>
+          <span class="section-kicker">Contact</span>
+          <h2>Contacter l’élevage</h2>
+          <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
+          <% if (websiteSettings.phone) { %><p>Téléphone : <a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
+          <% if (websiteSettings.publicEmail) { %><p>Email : <a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
+          <% if (websiteSettings.instagram) { %><p>Instagram : <%= websiteSettings.instagram %></p><% } %>
+          <% if (websiteSettings.facebook) { %><p>Facebook : <%= websiteSettings.facebook %></p><% } %>
+          <% if (breeder.siret) { %><p>SIRET : <%= breeder.siret %></p><% } %>
         </div>
-      <% } %>
-    </section>
-
-    <section id="selection" class="public-section">
-      <div class="section-title compact">
-        <span class="section-kicker">Sélection</span>
-        <h2>Nos chiens</h2>
-      </div>
-      <% if (!dogs.length) { %>
-        <p class="muted">Aucun chien affiché pour le moment.</p>
-      <% } else { %>
-        <div class="public-card-grid premium-card-grid dogs-grid">
-          <% dogs.forEach((dog) => { %>
-            <article class="public-card premium-card dog-card">
-              <span class="dog-sex"><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></span>
-              <h3><%= dog.name %></h3>
-              <p><%= dog.breed || 'Race non renseignée' %></p>
-              <% if (dog.lof) { %><p>LOF : <%= dog.lof %></p><% } %>
-              <% if (dog.notes) { %><p class="dog-note"><%= String(dog.notes).slice(0, 160) %><%= String(dog.notes).length > 160 ? '…' : '' %></p><% } %>
-            </article>
-          <% }) %>
+        <div class="contact-panel">
+          <strong>Engagement éleveur</strong>
+          <p>Un élevage sérieux ne vend pas seulement un chiot : il transmet une lignée, une méthode et un suivi.</p>
         </div>
-      <% } %>
-    </section>
-
-    <section id="contact" class="public-section public-contact premium-contact">
-      <div>
-        <span class="section-kicker">Contact</span>
-        <h2>Contacter l’élevage</h2>
-        <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
-        <% if (websiteSettings.phone) { %><p>Téléphone : <a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
-        <% if (websiteSettings.publicEmail) { %><p>Email : <a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
-        <% if (breeder.siret) { %><p>SIRET : <%= breeder.siret %></p><% } %>
-      </div>
-      <div class="contact-panel">
-        <strong>Engagement éleveur</strong>
-        <p>Un élevage sérieux ne vend pas seulement un chiot : il transmet une lignée, une méthode et un suivi.</p>
-      </div>
-    </section>
+      </section>
+    <% } %>
   </main>
 </body>
 </html>
