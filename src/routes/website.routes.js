@@ -51,9 +51,11 @@ async function ensureWebsiteSchema() {
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
-  await pool.query(`ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb`).catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS address TEXT').catch(() => {});
+  await pool.query("ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb").catch(() => {});
   await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS sale_price DECIMAL(10,2)').catch(() => {});
-  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT \'active\'').catch(() => {});
+  await pool.query("ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'").catch(() => {});
 }
 
 async function ensureBreederSlug(breeder) {
@@ -95,10 +97,10 @@ async function renderPublic(req, res) {
     const dogs = await pool.query(
       `
         SELECT id, name, sex, breed, chip_number, birth_date, status, notes,
-               COALESCE(lof, pedigree_number, id_scc) AS lof
+               COALESCE(lof, pedigree, id_scc) AS lof
         FROM dogs
         WHERE breeder_id = $1
-          AND COALESCE(lower(status), '') IN ('actif', 'active', 'reproducteur')
+          AND COALESCE(lower(status), '') IN ('actif', 'active', 'reproducteur', 'reproductrice')
         ORDER BY sex DESC, name ASC
         LIMIT 12
       `,
@@ -110,7 +112,7 @@ async function renderPublic(req, res) {
         SELECT p.*, l.birth_date, mother.name AS mother_name
         FROM puppies p
         LEFT JOIN litters l ON p.litter_id = l.id
-        LEFT JOIN dogs mother ON l.mother_id = mother.id
+        LEFT JOIN dogs mother ON l.female_id = mother.id
         WHERE p.breeder_id = $1
           AND COALESCE(lower(p.status), '') IN ('disponible', 'actif', 'active', 'réservé', 'reserve', 'reservé')
         ORDER BY l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
@@ -123,10 +125,10 @@ async function renderPublic(req, res) {
       `
         SELECT l.*, mother.name AS mother_name
         FROM litters l
-        LEFT JOIN dogs mother ON l.mother_id = mother.id
+        LEFT JOIN dogs mother ON l.female_id = mother.id
         WHERE l.breeder_id = $1
-          AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage')
-        ORDER BY l.birth_date DESC
+          AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage', 'née', 'nee')
+        ORDER BY l.birth_date DESC NULLS LAST
         LIMIT 8
       `,
       [breeder.id],
@@ -165,8 +167,8 @@ router.get('/', async (req, res) => {
     }
 
     const breeder = breederRes.rows[0];
-    const slug = await ensureBreederSlug(breeder);
-    return res.redirect(`/site/${slug || breeder.id}`);
+    const publicSlug = await ensureBreederSlug(breeder);
+    return res.redirect(`/site/${publicSlug || breeder.id}`);
   } catch (error) {
     console.error('Erreur route vitrine:', error);
     return res.status(500).send('Erreur lors de l’ouverture de la vitrine.');
