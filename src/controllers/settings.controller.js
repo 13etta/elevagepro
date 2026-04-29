@@ -5,6 +5,44 @@ const allowedThemes = ['prestige', 'clinical', 'nature'];
 const allowedLangs = ['fr', 'en'];
 const allowedWebsiteTemplates = ['heritage', 'field', 'luxury', 'minimal', 'breeder'];
 
+const websiteTemplatePalettes = {
+  heritage: {
+    primaryColor: '#6d7c45',
+    secondaryColor: '#c8b397',
+    accentColor: '#2b2014',
+    backgroundColor: '#f6f1e8',
+    textColor: '#2b2014',
+  },
+  field: {
+    primaryColor: '#41552b',
+    secondaryColor: '#9a7444',
+    accentColor: '#1f2a1d',
+    backgroundColor: '#eef1e8',
+    textColor: '#1f2a1d',
+  },
+  luxury: {
+    primaryColor: '#c79a45',
+    secondaryColor: '#7a4b28',
+    accentColor: '#0f0b08',
+    backgroundColor: '#17120d',
+    textColor: '#fff4df',
+  },
+  minimal: {
+    primaryColor: '#111827',
+    secondaryColor: '#d1d5db',
+    accentColor: '#111827',
+    backgroundColor: '#f8fafc',
+    textColor: '#111827',
+  },
+  breeder: {
+    primaryColor: '#9a3412',
+    secondaryColor: '#fed7aa',
+    accentColor: '#431407',
+    backgroundColor: '#fff7ed',
+    textColor: '#431407',
+  },
+};
+
 function defaultWebsiteSettings() {
   return {
     template: 'heritage',
@@ -197,15 +235,18 @@ exports.updateWebsiteSettings = async (req, res) => {
     const result = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
     const current = mergeWebsiteSettings(result.rows[0]?.website_settings);
     const files = groupedFiles(req.files);
+    const requestedTemplate = allowedWebsiteTemplates.includes(req.body.template) ? req.body.template : current.template;
+    const templateChanged = requestedTemplate !== current.template;
+    const templatePalette = websiteTemplatePalettes[requestedTemplate] || websiteTemplatePalettes.heritage;
 
     const settings = mergeWebsiteSettings({
       ...current,
-      template: allowedWebsiteTemplates.includes(req.body.template) ? req.body.template : current.template,
-      primaryColor: req.body.primaryColor || current.primaryColor,
-      secondaryColor: req.body.secondaryColor || current.secondaryColor,
-      accentColor: req.body.accentColor || current.accentColor,
-      backgroundColor: req.body.backgroundColor || current.backgroundColor,
-      textColor: req.body.textColor || current.textColor,
+      template: requestedTemplate,
+      primaryColor: templateChanged ? templatePalette.primaryColor : (req.body.primaryColor || current.primaryColor),
+      secondaryColor: templateChanged ? templatePalette.secondaryColor : (req.body.secondaryColor || current.secondaryColor),
+      accentColor: templateChanged ? templatePalette.accentColor : (req.body.accentColor || current.accentColor),
+      backgroundColor: templateChanged ? templatePalette.backgroundColor : (req.body.backgroundColor || current.backgroundColor),
+      textColor: templateChanged ? templatePalette.textColor : (req.body.textColor || current.textColor),
       heroTitle: req.body.heroTitle || '',
       heroSubtitle: req.body.heroSubtitle || '',
       introTitle: req.body.introTitle || '',
