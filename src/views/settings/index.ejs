@@ -8,6 +8,9 @@
       <h1><%= __('settings.heading') %></h1>
       <p><%= __('settings.subtitle') %></p>
     </div>
+    <% if (typeof publicSiteUrl !== 'undefined') { %>
+      <a class="btn btn-secondary" href="<%= publicSiteUrl %>" target="_blank">Voir la vitrine</a>
+    <% } %>
   </section>
 
   <section class="settings-grid">
@@ -22,7 +25,7 @@
 
         <div class="form-group">
           <label for="company_name"><%= __('settings.companyName') %></label>
-          <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name || '' %>" required>
+          <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name || breeder.name || '' %>" required>
         </div>
 
         <div class="form-group">
@@ -106,6 +109,119 @@
         <button type="submit" class="btn btn-secondary"><%= __('settings.uploadLogo') %></button>
       </form>
     </article>
+  </section>
+
+  <section class="card settings-card settings-logo-card">
+    <div class="section-title">
+      <span class="section-kicker">Site vitrine</span>
+      <h2>Paramètres de la vitrine publique</h2>
+      <p class="muted">Configurez l’accueil, les couleurs, les images, les sections et les informations de contact du site auto-généré.</p>
+    </div>
+
+    <form action="/settings/website" method="POST" enctype="multipart/form-data" class="stacked-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="dashboard-columns">
+        <div class="card" style="box-shadow:none; background:var(--surface-2);">
+          <div class="section-title compact">
+            <span class="section-kicker">Accueil</span>
+            <h3>Hero de page</h3>
+          </div>
+          <div class="form-group">
+            <label for="heroTitle">Titre principal</label>
+            <input type="text" id="heroTitle" name="heroTitle" value="<%= websiteSettings.heroTitle || '' %>" placeholder="Ex : Des Hautes Quêtes">
+          </div>
+          <div class="form-group">
+            <label for="heroSubtitle">Texte d’introduction</label>
+            <textarea id="heroSubtitle" name="heroSubtitle" rows="4"><%= websiteSettings.heroSubtitle || '' %></textarea>
+          </div>
+          <div class="form-group">
+            <label for="hero_image">Image d’accueil</label>
+            <input type="file" id="hero_image" name="hero_image" accept="image/png, image/jpeg, image/webp">
+          </div>
+        </div>
+
+        <div class="card" style="box-shadow:none; background:var(--surface-2);">
+          <div class="section-title compact">
+            <span class="section-kicker">Couleurs</span>
+            <h3>Palette vitrine</h3>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="primaryColor">Couleur principale</label>
+              <input type="color" id="primaryColor" name="primaryColor" value="<%= websiteSettings.primaryColor || '#3f6212' %>">
+            </div>
+            <div class="form-group">
+              <label for="secondaryColor">Couleur secondaire</label>
+              <input type="color" id="secondaryColor" name="secondaryColor" value="<%= websiteSettings.secondaryColor || '#b45309' %>">
+            </div>
+          </div>
+          <p class="muted">Ces couleurs alimentent les boutons, titres, accents et blocs de contact de la vitrine publique.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-columns">
+        <div class="card" style="box-shadow:none; background:var(--surface-2);">
+          <div class="section-title compact">
+            <span class="section-kicker">Sections</span>
+            <h3>Afficher / masquer</h3>
+          </div>
+          <label><input type="checkbox" name="servicesEnabled" <%= websiteSettings.servicesEnabled ? 'checked' : '' %>> Services</label><br>
+          <label><input type="checkbox" name="newsEnabled" <%= websiteSettings.newsEnabled ? 'checked' : '' %>> Actualités</label><br>
+          <label><input type="checkbox" name="strengthsEnabled" <%= websiteSettings.strengthsEnabled ? 'checked' : '' %>> Points forts</label><br>
+          <label><input type="checkbox" name="galleryEnabled" <%= websiteSettings.galleryEnabled ? 'checked' : '' %>> Galerie</label><br>
+          <label><input type="checkbox" name="contactEnabled" <%= websiteSettings.contactEnabled ? 'checked' : '' %>> Contact</label>
+        </div>
+
+        <div class="card" style="box-shadow:none; background:var(--surface-2);">
+          <div class="section-title compact">
+            <span class="section-kicker">Galerie</span>
+            <h3>Photos publiques</h3>
+          </div>
+          <div class="form-group">
+            <label for="gallery_images">Ajouter des photos</label>
+            <input type="file" id="gallery_images" name="gallery_images" accept="image/png, image/jpeg, image/webp" multiple>
+          </div>
+          <% if (websiteSettings.gallery && websiteSettings.gallery.length) { %>
+            <div class="mini-gallery">
+              <% websiteSettings.gallery.slice(-6).forEach((image) => { %>
+                <img src="<%= image.url %>" alt="Photo vitrine">
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="dashboard-columns">
+        <div class="card" style="box-shadow:none; background:var(--surface-2);">
+          <div class="section-title compact">
+            <span class="section-kicker">Services</span>
+            <h3>Blocs métier</h3>
+          </div>
+          <div class="form-group"><label>Service 1</label><input name="service1Title" value="<%= websiteSettings.service1Title || '' %>"><textarea name="service1Text" rows="2"><%= websiteSettings.service1Text || '' %></textarea></div>
+          <div class="form-group"><label>Service 2</label><input name="service2Title" value="<%= websiteSettings.service2Title || '' %>"><textarea name="service2Text" rows="2"><%= websiteSettings.service2Text || '' %></textarea></div>
+          <div class="form-group"><label>Service 3</label><input name="service3Title" value="<%= websiteSettings.service3Title || '' %>"><textarea name="service3Text" rows="2"><%= websiteSettings.service3Text || '' %></textarea></div>
+        </div>
+
+        <div class="card" style="box-shadow:none; background:var(--surface-2);">
+          <div class="section-title compact">
+            <span class="section-kicker">Actualités & contact</span>
+            <h3>Textes publics</h3>
+          </div>
+          <div class="form-group"><label>Titre actualité</label><input name="newsTitle" value="<%= websiteSettings.newsTitle || '' %>"></div>
+          <div class="form-group"><label>Texte actualité</label><textarea name="newsText" rows="3"><%= websiteSettings.newsText || '' %></textarea></div>
+          <div class="form-group"><label>Points forts — un par ligne</label><textarea name="strengths" rows="5"><%= websiteSettings.strengths || '' %></textarea></div>
+          <div class="form-grid">
+            <div class="form-group"><label>Téléphone</label><input name="phone" value="<%= websiteSettings.phone || '' %>"></div>
+            <div class="form-group"><label>Email public</label><input name="publicEmail" value="<%= websiteSettings.publicEmail || '' %>"></div>
+            <div class="form-group"><label>Instagram</label><input name="instagram" value="<%= websiteSettings.instagram || '' %>"></div>
+            <div class="form-group"><label>Facebook</label><input name="facebook" value="<%= websiteSettings.facebook || '' %>"></div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Enregistrer la vitrine publique</button>
+    </form>
   </section>
 </main>
 
