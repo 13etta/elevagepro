@@ -131,7 +131,7 @@
       <div class="section-title">
         <span class="section-kicker">Site vitrine</span>
         <h2>Générateur de site public</h2>
-        <p class="muted">Choisissez un template, personnalisez les couleurs, les textes, les images et les photos associées aux portées.</p>
+        <p class="muted">Le template Héritage est le modèle de référence : sérieux, traditionnel, professionnel et adapté à un élevage installé.</p>
       </div>
 
       <form action="/settings/website" method="POST" enctype="multipart/form-data" class="stacked-form">
@@ -143,7 +143,7 @@
             <h3>Choix graphique</h3>
           </div>
           <div class="template-picker">
-            <% const templateLabels = { heritage: 'Héritage', field: 'Field & chasse', luxury: 'Premium sombre', minimal: 'Minimal moderne', breeder: 'Catalogue élevage' }; %>
+            <% const templateLabels = { heritage: 'Héritage — recommandé', field: 'Field & chasse', luxury: 'Premium sombre', minimal: 'Minimal moderne', breeder: 'Catalogue élevage' }; %>
             <% websiteTemplates.forEach((tpl) => { %>
               <label class="template-option <%= websiteSettings.template === tpl ? 'selected' : '' %>">
                 <input type="radio" name="template" value="<%= tpl %>" <%= websiteSettings.template === tpl ? 'checked' : '' %>>
@@ -167,6 +167,10 @@
             <div class="form-group">
               <label for="heroSubtitle">Texte d’introduction</label>
               <textarea id="heroSubtitle" name="heroSubtitle" rows="4"><%= websiteSettings.heroSubtitle || '' %></textarea>
+            </div>
+            <div class="form-group">
+              <label for="siteSlogan">Slogan d’en-tête institutionnel</label>
+              <input type="text" id="siteSlogan" name="siteSlogan" value="<%= websiteSettings.siteSlogan || '' %>">
             </div>
             <% if (websiteSettings.heroImageUrl) { %>
               <div class="mini-gallery"><img src="<%= websiteSettings.heroImageUrl %>" alt="Image d’accueil"></div>
@@ -202,6 +206,7 @@
             <label><input type="checkbox" name="showDogs" <%= websiteSettings.showDogs ? 'checked' : '' %>> Chiens</label><br>
             <label><input type="checkbox" name="showServices" <%= websiteSettings.showServices ? 'checked' : '' %>> Services</label><br>
             <label><input type="checkbox" name="showGallery" <%= websiteSettings.showGallery ? 'checked' : '' %>> Galerie</label><br>
+            <label><input type="checkbox" name="showStrengths" <%= websiteSettings.showStrengths ? 'checked' : '' %>> Points forts</label><br>
             <label><input type="checkbox" name="showContact" <%= websiteSettings.showContact ? 'checked' : '' %>> Contact</label>
           </div>
 
@@ -214,6 +219,24 @@
 
         <div class="dashboard-columns">
           <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Barre contact</span><h3>Appel à l’action</h3></div>
+            <div class="form-group"><label>Titre barre contact</label><input name="contactStripTitle" value="<%= websiteSettings.contactStripTitle || '' %>"></div>
+            <div class="form-group"><label>Texte barre contact</label><textarea name="contactStripText" rows="3"><%= websiteSettings.contactStripText || '' %></textarea></div>
+            <div class="form-grid">
+              <div class="form-group"><label>Bouton principal</label><input name="primaryCtaLabel" value="<%= websiteSettings.primaryCtaLabel || '' %>"></div>
+              <div class="form-group"><label>Bouton secondaire</label><input name="secondaryCtaLabel" value="<%= websiteSettings.secondaryCtaLabel || '' %>"></div>
+            </div>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Services</span><h3>Titres de section</h3></div>
+            <div class="form-group"><label>Accroche services</label><input name="serviceSectionKicker" value="<%= websiteSettings.serviceSectionKicker || '' %>"></div>
+            <div class="form-group"><label>Titre services</label><input name="serviceSectionTitle" value="<%= websiteSettings.serviceSectionTitle || '' %>"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
             <div class="section-title compact"><span class="section-kicker">Services</span><h3>Blocs métier</h3></div>
             <div class="form-group"><label>Service 1</label><input name="service1Title" value="<%= websiteSettings.service1Title || '' %>"><textarea name="service1Text" rows="2"><%= websiteSettings.service1Text || '' %></textarea></div>
             <div class="form-group"><label>Service 2</label><input name="service2Title" value="<%= websiteSettings.service2Title || '' %>"><textarea name="service2Text" rows="2"><%= websiteSettings.service2Text || '' %></textarea></div>
@@ -221,16 +244,31 @@
           </div>
 
           <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Actualités & contact</span><h3>Textes publics</h3></div>
-            <div class="form-group"><label>Titre actualité</label><input name="newsTitle" value="<%= websiteSettings.newsTitle || '' %>"></div>
-            <div class="form-group"><label>Texte actualité</label><textarea name="newsText" rows="3"><%= websiteSettings.newsText || '' %></textarea></div>
+            <div class="section-title compact"><span class="section-kicker">Points forts & contact</span><h3>Textes publics</h3></div>
+            <div class="form-grid">
+              <div class="form-group"><label>Accroche points forts</label><input name="strengthsKicker" value="<%= websiteSettings.strengthsKicker || '' %>"></div>
+              <div class="form-group"><label>Titre points forts</label><input name="strengthsTitle" value="<%= websiteSettings.strengthsTitle || '' %>"></div>
+            </div>
             <div class="form-group"><label>Points forts — un par ligne</label><textarea name="strengths" rows="5"><%= websiteSettings.strengths || '' %></textarea></div>
             <div class="form-grid">
               <div class="form-group"><label>Téléphone</label><input name="phone" value="<%= websiteSettings.phone || '' %>"></div>
               <div class="form-group"><label>Email public</label><input name="publicEmail" value="<%= websiteSettings.publicEmail || '' %>"></div>
+              <div class="form-group"><label>Horaires</label><input name="openingHours" value="<%= websiteSettings.openingHours || '' %>"></div>
               <div class="form-group"><label>Instagram</label><input name="instagram" value="<%= websiteSettings.instagram || '' %>"></div>
               <div class="form-group"><label>Facebook</label><input name="facebook" value="<%= websiteSettings.facebook || '' %>"></div>
             </div>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Contact</span><h3>Bloc engagement</h3></div>
+            <div class="form-group"><label>Titre du panneau contact</label><input name="contactPanelTitle" value="<%= websiteSettings.contactPanelTitle || '' %>"></div>
+            <div class="form-group"><label>Texte du panneau contact</label><textarea name="contactPanelText" rows="4"><%= websiteSettings.contactPanelText || '' %></textarea></div>
+          </div>
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Footer</span><h3>Pied de page</h3></div>
+            <div class="form-group"><label>Texte du footer</label><textarea name="footerText" rows="4"><%= websiteSettings.footerText || '' %></textarea></div>
           </div>
         </div>
 
