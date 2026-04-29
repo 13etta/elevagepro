@@ -83,6 +83,31 @@ async function renderPublic(req, res) {
   }
 }
 
+router.get('/', async (req, res) => {
+  try {
+    if (!req.session?.user?.breeder_id) {
+      return res.redirect('/auth/login');
+    }
+
+    const breederRes = await pool.query('SELECT id, slug FROM breeder WHERE id = $1 LIMIT 1', [req.session.user.breeder_id]);
+    if (!breederRes.rows.length) {
+      return res.status(404).render('errors/404', {
+        title: 'Élevage introuvable',
+        user: req.session.user,
+      });
+    }
+
+    const breeder = breederRes.rows[0];
+    return res.redirect(`/site/${breeder.slug || breeder.id}`);
+  } catch (error) {
+    console.error('Erreur route vitrine:', error);
+    return res.status(500).render('errors/500', {
+      title: 'Erreur vitrine',
+      user: req.session?.user || null,
+    });
+  }
+});
+
 router.get('/elevage/:slug', renderPublic);
 router.get('/:slug', renderPublic);
 
