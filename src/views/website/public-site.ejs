@@ -5,25 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= title %></title>
   <meta name="description" content="<%= websiteSettings.heroSubtitle || 'Élevage canin familial, sélection, passion et accompagnement.' %>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Merriweather+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/phase5.css">
+  <link rel="stylesheet" href="/css/showcase-heritage.css">
 </head>
+<%
+  const siteTitle = breeder.company_name || breeder.name || 'Élevage canin';
+  const logoUrl = breeder.logo_url || breeder.logo || '';
+  const strengthsList = String(websiteSettings.strengths || '')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+%>
 <body
   data-theme="nature"
   class="public-website-body showcase-template-<%= websiteSettings.template || 'heritage' %>"
   style="--showcase-primary:<%= websiteSettings.primaryColor %>;--showcase-secondary:<%= websiteSettings.secondaryColor %>;--showcase-accent:<%= websiteSettings.accentColor || '#2b2014' %>;--showcase-bg:<%= websiteSettings.backgroundColor || '#f6f1e8' %>;--showcase-text:<%= websiteSettings.textColor || '#2b2014' %>;"
 >
   <main class="public-site premium-showcase">
+    <header class="institutional-header">
+      <div class="institutional-logo-block">
+        <% if (logoUrl) { %>
+          <img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>">
+        <% } else { %>
+          <span class="institutional-logo-fallback"><%= String(siteTitle).slice(0, 1) %></span>
+        <% } %>
+        <div>
+          <strong><%= siteTitle %></strong>
+          <% if (breeder.affix_name) { %><small><%= breeder.affix_name %></small><% } %>
+        </div>
+      </div>
+      <div class="institutional-info-block">
+        <p class="institutional-slogan"><%= websiteSettings.heroSubtitle || 'Élevage canin familial, sélection et accompagnement.' %></p>
+        <% if (breeder.address) { %><p class="institutional-address"><%= breeder.address %></p><% } %>
+        <% if (websiteSettings.phone) { %><p class="institutional-phone"><a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
+      </div>
+    </header>
+
     <nav class="showcase-nav" aria-label="Navigation vitrine">
       <a href="#accueil" class="showcase-brand">
-        <% if (breeder.logo_url || breeder.logo) { %>
-          <img src="<%= breeder.logo_url || breeder.logo %>" alt="Logo <%= breeder.company_name || breeder.name || 'élevage' %>">
+        <% if (logoUrl) { %>
+          <img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>">
         <% } else { %>
-          <span><%= String(breeder.company_name || breeder.name || 'Élevage').slice(0, 1) %></span>
+          <span><%= String(siteTitle).slice(0, 1) %></span>
         <% } %>
-        <strong><%= breeder.company_name || breeder.name || 'Élevage' %></strong>
+        <strong><%= siteTitle %></strong>
       </a>
       <div class="showcase-links">
+        <a href="#accueil">Accueil</a>
+        <% if (websiteSettings.showServices) { %><a href="#services">Services</a><% } %>
         <% if (websiteSettings.showDogs) { %><a href="#selection">Sélection</a><% } %>
         <% if (websiteSettings.showPuppies) { %><a href="#chiots">Chiots</a><% } %>
         <% if (websiteSettings.showGallery) { %><a href="#galerie">Galerie</a><% } %>
@@ -31,10 +64,21 @@
       </div>
     </nav>
 
+    <section class="contact-strip">
+      <div>
+        <strong>Besoin d’un renseignement ?</strong>
+        <span>Informations, réservation, projet de portée ou disponibilité.</span>
+      </div>
+      <div class="contact-strip-actions">
+        <% if (websiteSettings.showContact) { %><a class="showcase-btn primary" href="#contact">Contactez-nous</a><% } %>
+        <% if (websiteSettings.publicEmail) { %><a class="showcase-btn secondary" href="mailto:<%= websiteSettings.publicEmail %>">Envoyer un message</a><% } %>
+      </div>
+    </section>
+
     <section id="accueil" class="public-hero premium-hero">
       <div class="premium-hero-copy">
         <p class="eyebrow">Élevage canin · Sélection raisonnée</p>
-        <h1><%= websiteSettings.heroTitle || breeder.company_name || breeder.name || 'Élevage canin' %></h1>
+        <h1><%= websiteSettings.heroTitle || siteTitle %></h1>
         <% if (breeder.affix_name) { %><p class="public-affix"><%= breeder.affix_name %></p><% } %>
         <p class="hero-lead"><%= websiteSettings.heroSubtitle || 'Une vitrine claire pour présenter la sélection, les reproducteurs, les portées et la philosophie de l’élevage.' %></p>
         <div class="hero-actions">
@@ -45,14 +89,14 @@
       <aside class="hero-portrait" <% if (websiteSettings.heroImageUrl) { %>style="background-image:url('<%= websiteSettings.heroImageUrl %>')"<% } %>>
         <div class="hero-portrait-card">
           <span>Affixe</span>
-          <strong><%= breeder.company_name || breeder.name || 'Élevage' %></strong>
+          <strong><%= siteTitle %></strong>
           <% if (breeder.producer_number) { %><em>N° producteur : <%= breeder.producer_number %></em><% } %>
         </div>
       </aside>
     </section>
 
     <% if (websiteSettings.showIntro) { %>
-      <section class="showcase-intro public-section">
+      <section class="showcase-intro public-section editorial-intro">
         <div>
           <span class="section-kicker">Ligne d’élevage</span>
           <h2><%= websiteSettings.introTitle || 'Une sélection lisible, suivie et assumée' %></h2>
@@ -62,16 +106,19 @@
     <% } %>
 
     <% if (websiteSettings.showServices) { %>
-      <section class="public-section">
+      <section id="services" class="public-section services-showcase-section">
         <div class="section-title compact">
           <span class="section-kicker">Savoir-faire</span>
           <h2>Nos services</h2>
         </div>
-        <div class="public-card-grid premium-card-grid">
+        <div class="service-panel-grid">
           <% [1, 2, 3].forEach((index) => { const title = websiteSettings[`service${index}Title`]; const text = websiteSettings[`service${index}Text`]; if (title || text) { %>
-            <article class="public-card premium-card">
-              <h3><%= title || `Service ${index}` %></h3>
-              <p><%= text || '' %></p>
+            <article class="service-panel service-panel-<%= index %>">
+              <div>
+                <span>0<%= index %></span>
+                <h3><%= title || `Service ${index}` %></h3>
+                <p><%= text || '' %></p>
+              </div>
             </article>
           <% } }) %>
         </div>
@@ -168,6 +215,23 @@
       </section>
     <% } %>
 
+    <% if (strengthsList.length) { %>
+      <section class="public-section strengths-band">
+        <div class="section-title compact">
+          <span class="section-kicker">Nos points forts</span>
+          <h2>Pourquoi nous faire confiance</h2>
+        </div>
+        <div class="strengths-grid">
+          <% strengthsList.slice(0, 4).forEach((strength, index) => { %>
+            <article>
+              <span><%= index + 1 %></span>
+              <strong><%= strength %></strong>
+            </article>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
     <% if (websiteSettings.showContact) { %>
       <section id="contact" class="public-section public-contact premium-contact">
         <div>
@@ -186,6 +250,19 @@
         </div>
       </section>
     <% } %>
+
+    <footer class="showcase-footer">
+      <div>
+        <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>"><% } %>
+        <strong><%= siteTitle %></strong>
+        <p><%= websiteSettings.heroSubtitle || 'Élevage canin familial.' %></p>
+      </div>
+      <div>
+        <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
+        <% if (websiteSettings.phone) { %><p><a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
+        <% if (websiteSettings.publicEmail) { %><p><a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
+      </div>
+    </footer>
   </main>
 </body>
 </html>
