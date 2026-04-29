@@ -13,11 +13,45 @@ function buildSlug(input) {
     .slice(0, 120);
 }
 
+function defaultWebsiteSettings() {
+  return {
+    primaryColor: '#3f6212',
+    secondaryColor: '#b45309',
+    heroTitle: '',
+    heroSubtitle: 'Élevage canin familial, sélection, passion et accompagnement.',
+    heroImageUrl: '',
+    servicesEnabled: true,
+    newsEnabled: true,
+    strengthsEnabled: true,
+    galleryEnabled: true,
+    contactEnabled: true,
+    service1Title: 'Élevage canin',
+    service1Text: 'Sélection raisonnée, suivi des portées et accompagnement des familles.',
+    service2Title: 'Conseil & accompagnement',
+    service2Text: 'Aide au choix du chiot, socialisation et suivi après départ.',
+    service3Title: 'Sélection cynotechnique',
+    service3Text: 'Travail sur la santé, le tempérament, le type et les aptitudes naturelles.',
+    newsTitle: 'Actualités de l’élevage',
+    newsText: 'Retrouvez nos disponibilités, projets de portées et nouvelles de l’élevage.',
+    strengths: 'Sélection raisonnée\nSuivi sanitaire structuré\nAccompagnement après départ\nPassion cynophile',
+    phone: '',
+    publicEmail: '',
+    instagram: '',
+    facebook: '',
+    gallery: []
+  };
+}
+
+function mergeWebsiteSettings(settings) {
+  return { ...defaultWebsiteSettings(), ...(settings || {}) };
+}
+
 async function ensureWebsiteSchema() {
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS slug VARCHAR(180)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
+  await pool.query(`ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb`).catch(() => {});
   await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS sale_price DECIMAL(10,2)').catch(() => {});
   await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT \'active\'').catch(() => {});
 }
@@ -56,6 +90,7 @@ async function renderPublic(req, res) {
 
     const breeder = breederRes.rows[0];
     breeder.slug = await ensureBreederSlug(breeder);
+    const websiteSettings = mergeWebsiteSettings(breeder.website_settings);
 
     const dogs = await pool.query(
       `
@@ -102,6 +137,7 @@ async function renderPublic(req, res) {
       user: null,
       slug: breeder.slug,
       breeder,
+      websiteSettings,
       dogs: dogs.rows,
       puppies: puppies.rows,
       litters: litters.rows,
