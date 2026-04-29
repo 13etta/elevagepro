@@ -3,14 +3,28 @@ const supabase = require('../utils/supabase');
 
 const allowedThemes = ['prestige', 'clinical', 'nature'];
 const allowedLangs = ['fr', 'en'];
+const allowedWebsiteTemplates = ['heritage', 'field', 'luxury', 'minimal', 'breeder'];
 
 function defaultWebsiteSettings() {
   return {
-    primaryColor: '#3f6212',
-    secondaryColor: '#b45309',
+    template: 'heritage',
+    primaryColor: '#6d7c45',
+    secondaryColor: '#c8b397',
+    accentColor: '#2b2014',
+    backgroundColor: '#f6f1e8',
+    textColor: '#2b2014',
     heroTitle: '',
     heroSubtitle: 'Élevage canin familial, sélection, passion et accompagnement.',
     heroImageUrl: '',
+    introTitle: 'Une sélection lisible, suivie et assumée',
+    introText: 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.',
+    showIntro: true,
+    showPuppies: true,
+    showLitters: true,
+    showDogs: true,
+    showServices: true,
+    showGallery: true,
+    showContact: true,
     servicesEnabled: true,
     newsEnabled: true,
     strengthsEnabled: true,
@@ -29,7 +43,8 @@ function defaultWebsiteSettings() {
     publicEmail: '',
     instagram: '',
     facebook: '',
-    gallery: []
+    gallery: [],
+    litterGallery: {},
   };
 }
 
@@ -39,9 +54,12 @@ function mergeWebsiteSettings(settings) {
 
 async function ensureSettingsSchema() {
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS address TEXT').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS slug VARCHAR(180)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
-  await pool.query(`ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb`).catch(() => {});
+  await pool.query("ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb").catch(() => {});
 }
 
 async function uploadPublicImage(breederId, file, folder) {
@@ -62,6 +80,20 @@ async function uploadPublicImage(breederId, file, folder) {
   return data.publicUrl;
 }
 
+function groupedFiles(files) {
+  const map = {};
+  for (const file of files || []) {
+    if (!map[file.fieldname]) map[file.fieldname] = [];
+    map[file.fieldname].push(file);
+  }
+  return map;
+}
+
+function arrayFromBody(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 exports.getSettings = async (req, res) => {
   try {
     await ensureSettingsSchema();
@@ -69,11 +101,26 @@ exports.getSettings = async (req, res) => {
     const result = await pool.query('SELECT * FROM breeder WHERE id = $1', [breederId]);
     const breeder = result.rows[0];
 
+    const litters = await pool.query(
+      `
+        SELECT l.id, l.birth_date, l.status, l.puppies_count, l.nb_puppies, mother.name AS mother_name
+        FROM litters l
+        LEFT JOIN dogs mother ON l.female_id = mother.id
+        WHERE l.breeder_id = $1
+        ORDER BY l.birth_date DESC NULLS LAST
+        LIMIT 20
+      `,
+      [breederId],
+    ).catch(() => ({ rows: [] }));
+
     res.render('settings/index', {
       title: res.__('settings.title'),
       breeder,
       websiteSettings: mergeWebsiteSettings(breeder.website_settings),
       publicSiteUrl: `/site/${breeder.slug || breeder.id}`,
+      websiteTemplates: allowedWebsiteTemplates,
+      litters: litters.rows,
+      activeSettingsTab: req.query.tab === 'vitrine' ? 'vitrine' : 'application',
     });
   } catch (error) {
     console.error('Erreur lecture paramètres:', error);
@@ -85,7 +132,7 @@ exports.updateSettings = async (req, res) => {
   try {
     await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
-    const { company_name, affix_name, siret, address } = req.body;
+    const { company_name, affix_name, siret, producer_number, address } = req.body;
 
     await pool.query(
       `
@@ -94,14 +141,15 @@ exports.updateSettings = async (req, res) => {
             name = $1,
             affix_name = $2,
             siret = $3,
-            address = $4,
+            producer_number = $4,
+            address = $5,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $5
+        WHERE id = $6
       `,
-      [company_name, affix_name, siret, address, breederId],
+      [company_name, affix_name, siret, producer_number, address, breederId],
     );
 
-    res.redirect('/settings');
+    res.redirect('/settings?tab=application');
   } catch (error) {
     console.error('Erreur mise à jour paramètres:', error);
     res.status(500).send('Erreur lors de la sauvegarde.');
@@ -119,7 +167,7 @@ exports.updatePreferences = async (req, res) => {
   res.cookie('lang', requestedLang, { maxAge: 1000 * 60 * 60 * 24 * 365, sameSite: 'lax' });
   res.cookie('theme', requestedTheme, { maxAge: 1000 * 60 * 60 * 24 * 365, sameSite: 'lax' });
 
-  res.redirect('/settings');
+  res.redirect('/settings?tab=application');
 };
 
 exports.uploadLogo = async (req, res) => {
@@ -132,24 +180,10 @@ exports.uploadLogo = async (req, res) => {
       return res.status(400).send('Aucun fichier détecté.');
     }
 
-    const fileExtension = file.originalname.split('.').pop();
-    const fileName = `${breederId}-${Date.now()}.${fileExtension}`;
-
-    const { error } = await supabase.storage
-      .from('logos')
-      .upload(fileName, file.buffer, {
-        contentType: file.mimetype,
-        upsert: true,
-      });
-
-    if (error) throw error;
-
-    const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(fileName);
-    const logoUrl = publicUrlData.publicUrl;
-
+    const logoUrl = await uploadPublicImage(breederId, file, 'logos');
     await pool.query('UPDATE breeder SET logo_url = $1 WHERE id = $2', [logoUrl, breederId]);
 
-    res.redirect('/settings');
+    res.redirect('/settings?tab=application');
   } catch (error) {
     console.error('Erreur upload logo:', error);
     res.status(500).send('Erreur lors de la sauvegarde du logo.');
@@ -162,18 +196,30 @@ exports.updateWebsiteSettings = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const result = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
     const current = mergeWebsiteSettings(result.rows[0]?.website_settings);
+    const files = groupedFiles(req.files);
 
     const settings = mergeWebsiteSettings({
       ...current,
+      template: allowedWebsiteTemplates.includes(req.body.template) ? req.body.template : current.template,
       primaryColor: req.body.primaryColor || current.primaryColor,
       secondaryColor: req.body.secondaryColor || current.secondaryColor,
+      accentColor: req.body.accentColor || current.accentColor,
+      backgroundColor: req.body.backgroundColor || current.backgroundColor,
+      textColor: req.body.textColor || current.textColor,
       heroTitle: req.body.heroTitle || '',
       heroSubtitle: req.body.heroSubtitle || '',
-      servicesEnabled: req.body.servicesEnabled === 'on',
-      newsEnabled: req.body.newsEnabled === 'on',
-      strengthsEnabled: req.body.strengthsEnabled === 'on',
-      galleryEnabled: req.body.galleryEnabled === 'on',
-      contactEnabled: req.body.contactEnabled === 'on',
+      introTitle: req.body.introTitle || '',
+      introText: req.body.introText || '',
+      showIntro: req.body.showIntro === 'on',
+      showPuppies: req.body.showPuppies === 'on',
+      showLitters: req.body.showLitters === 'on',
+      showDogs: req.body.showDogs === 'on',
+      showServices: req.body.showServices === 'on',
+      showGallery: req.body.showGallery === 'on',
+      showContact: req.body.showContact === 'on',
+      servicesEnabled: req.body.showServices === 'on',
+      galleryEnabled: req.body.showGallery === 'on',
+      contactEnabled: req.body.showContact === 'on',
       service1Title: req.body.service1Title || '',
       service1Text: req.body.service1Text || '',
       service2Title: req.body.service2Title || '',
@@ -189,20 +235,39 @@ exports.updateWebsiteSettings = async (req, res) => {
       facebook: req.body.facebook || '',
     });
 
-    const heroFile = req.files?.hero_image?.[0];
-    const heroUrl = await uploadPublicImage(breederId, heroFile, 'hero');
+    if (req.body.clearHeroImage === 'on') settings.heroImageUrl = '';
+    const heroUrl = await uploadPublicImage(breederId, files.hero_image?.[0], 'hero');
     if (heroUrl) settings.heroImageUrl = heroUrl;
 
-    const galleryFiles = req.files?.gallery_images || [];
-    const gallery = Array.isArray(settings.gallery) ? settings.gallery : [];
-    for (const file of galleryFiles) {
+    const removeGallery = arrayFromBody(req.body.removeGallery);
+    let gallery = Array.isArray(settings.gallery) ? settings.gallery : [];
+    gallery = gallery.filter((image) => !removeGallery.includes(image.url));
+    for (const file of files.gallery_images || []) {
       const url = await uploadPublicImage(breederId, file, 'gallery');
       if (url) gallery.push({ url, title: file.originalname });
     }
-    settings.gallery = gallery.slice(-24);
+    settings.gallery = gallery.slice(-48);
+
+    const removeLitterImages = arrayFromBody(req.body.removeLitterImage);
+    const litterGallery = { ...(settings.litterGallery || {}) };
+    for (const litterId of Object.keys(litterGallery)) {
+      litterGallery[litterId] = (litterGallery[litterId] || []).filter((image) => !removeLitterImages.includes(image.url));
+    }
+
+    for (const [fieldName, litterFiles] of Object.entries(files)) {
+      if (!fieldName.startsWith('litter_images_')) continue;
+      const litterId = fieldName.replace('litter_images_', '');
+      if (!litterGallery[litterId]) litterGallery[litterId] = [];
+      for (const file of litterFiles) {
+        const url = await uploadPublicImage(breederId, file, `litters/${litterId}`);
+        if (url) litterGallery[litterId].push({ url, title: file.originalname });
+      }
+      litterGallery[litterId] = litterGallery[litterId].slice(-12);
+    }
+    settings.litterGallery = litterGallery;
 
     await pool.query('UPDATE breeder SET website_settings = $1 WHERE id = $2', [settings, breederId]);
-    res.redirect('/settings');
+    res.redirect('/settings?tab=vitrine');
   } catch (error) {
     console.error('Erreur paramètres vitrine:', error);
     res.status(500).send('Erreur lors de la sauvegarde de la vitrine.');
