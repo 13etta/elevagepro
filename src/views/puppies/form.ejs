@@ -4,11 +4,16 @@
 <main class="container">
     <div class="header-actions">
         <h1><%= puppy.id ? "Modifier le" : "Ajouter un" %> chiot</h1>
-        <% if (puppy.litter_id) { %>
-            <a href="/litters/<%= puppy.litter_id %>" class="btn btn-secondary">Retour à la portée</a>
-        <% } else { %>
-            <a href="/puppies" class="btn btn-secondary">Retour à la liste</a>
-        <% } %>
+        <div class="topbar-actions">
+            <% if (puppy.id) { %>
+                <a href="/puppies/<%= puppy.id %>" class="btn btn-primary">Fiche / IA</a>
+            <% } %>
+            <% if (puppy.litter_id) { %>
+                <a href="/litters/<%= puppy.litter_id %>" class="btn btn-secondary">Retour à la portée</a>
+            <% } else { %>
+                <a href="/puppies" class="btn btn-secondary">Retour à la liste</a>
+            <% } %>
+        </div>
     </div>
 
     <form id="puppyForm" action="<%= puppy.id ? '/puppies/' + puppy.id + '/edit' : '/puppies/new' %>" method="POST" class="card form-block needs-validation" novalidate>
