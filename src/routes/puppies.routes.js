@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const puppiesController = require('../controllers/puppies.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 router.use(requireAuth);
 
@@ -15,6 +16,8 @@ router.post('/save', puppiesController.savePuppy);
 router.get('/edit/:id', puppiesController.getForm);
 router.post('/save/:id', puppiesController.savePuppy);
 router.get('/delete/:id', puppiesController.deletePuppy);
+
+router.post('/:id/generate-ad', verifyCsrf, puppiesController.generatePuppyAd);
 
 router.get('/:id/edit', puppiesController.getForm);
 router.post('/:id/edit', puppiesController.savePuppy);
