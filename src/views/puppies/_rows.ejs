@@ -32,7 +32,12 @@
       <td><%= puppy.sale_price ? puppy.sale_price + ' €' : '-' %></td>
       <td class="table-actions">
         <a class="btn btn-secondary" href="/puppies/edit/<%= puppy.id %>">Modifier</a>
-        <a class="btn btn-secondary" href="/puppies/delete/<%= puppy.id %>" onclick="return confirm('Supprimer ce chiot ?')">Supprimer</a>
+        <button
+          type="button"
+          class="btn btn-secondary btn-danger-soft js-delete-puppy"
+          data-delete-url="/puppies/delete/<%= puppy.id %>"
+          data-puppy-name="<%= puppy.name || 'ce chiot' %>"
+        >Supprimer</button>
       </td>
     </tr>
   <% }) %>
