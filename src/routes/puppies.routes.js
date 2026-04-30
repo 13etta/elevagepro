@@ -6,6 +6,7 @@ const { requireAuth } = require('../middleware/auth');
 router.use(requireAuth);
 
 router.get('/', puppiesController.listPuppies);
+router.get('/fragment', puppiesController.listPuppiesFragment);
 
 router.get('/new', puppiesController.getForm);
 router.post('/new', puppiesController.savePuppy);

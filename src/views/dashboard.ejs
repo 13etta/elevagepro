@@ -22,14 +22,67 @@
     </section>
   <% } %>
 
-  <section class="kpi-grid">
-    <article class="kpi-card"><span><%= __('dashboard.activeDogs') %></span><strong><%= kpis.activeDogs %></strong></article>
-    <article class="kpi-card"><span><%= __('dashboard.availablePuppies') %></span><strong><%= kpis.availablePuppies %></strong></article>
-    <article class="kpi-card"><span><%= __('dashboard.activeLitters') %></span><strong><%= kpis.activeLitters %></strong></article>
-    <article class="kpi-card"><span><%= __('dashboard.ongoingPregnancies') %></span><strong><%= kpis.ongoingPregnancies %></strong></article>
+  <section class="dashboard-kpi-grid">
+    <article class="kpi-card kpi-gauge-card">
+      <span>Occupation des box</span>
+      <div class="dashboard-gauge" style="--value:<%= kpis.boxOccupancyRate %>;">
+        <div class="dashboard-gauge-inner">
+          <strong><%= kpis.boxOccupancyRate %>%</strong>
+          <small><%= kpis.activeDogs %> / <%= kpis.boxCapacity %> places</small>
+        </div>
+      </div>
+      <p class="muted">Capacité configurable via KENNEL_BOX_CAPACITY.</p>
+    </article>
+
+    <article class="kpi-card">
+      <span>Chiots disponibles</span>
+      <strong><%= kpis.availablePuppies %></strong>
+      <small class="muted"><%= kpis.reservedPuppies %> réservé(s) ou sous option</small>
+    </article>
+
+    <article class="kpi-card">
+      <span>Ventes du mois</span>
+      <strong><%= formatCurrency(kpis.currentMonthSales) %></strong>
+      <small class="muted"><%= kpis.incompleteSales %> vente(s) à finaliser</small>
+    </article>
+
+    <article class="kpi-card">
+      <span>Rappels à 7 jours</span>
+      <strong><%= kpis.upcomingReminders %></strong>
+      <small class="muted">Priorités sanitaires et administratives</small>
+    </article>
+
+    <article class="kpi-card">
+      <span>Portées actives</span>
+      <strong><%= kpis.activeLitters %></strong>
+      <small class="muted"><%= kpis.ongoingPregnancies %> gestation(s) en cours</small>
+    </article>
   </section>
 
   <section class="dashboard-columns dashboard-priority-zone">
+    <article class="table-block dashboard-sales-panel">
+      <div class="section-title compact">
+        <span class="section-kicker">Pilotage commercial</span>
+        <h2>Ventes mensuelles</h2>
+      </div>
+
+      <% if (!salesSeries || !salesSeries.length) { %>
+        <p class="muted">Aucune donnée de vente à afficher.</p>
+      <% } else { %>
+        <div class="mini-bar-chart" aria-label="Graphique des ventes mensuelles">
+          <% salesSeries.forEach((item) => { %>
+            <div class="mini-bar-item">
+              <div class="mini-bar-track">
+                <div class="mini-bar-fill" style="height:<%= Math.max(5, Math.round((item.total / maxMonthlySales) * 100)) %>%"></div>
+              </div>
+              <small><%= item.label %></small>
+              <strong><%= formatCurrency(item.total) %></strong>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
     <article class="table-block">
       <div class="section-title compact">
         <span class="section-kicker"><%= __('dashboard.priority') %></span>
@@ -52,7 +105,9 @@
         </table>
       <% } %>
     </article>
+  </section>
 
+  <section class="dashboard-columns dashboard-priority-zone">
     <article class="table-block">
       <div class="section-title compact">
         <span class="section-kicker"><%= __('dashboard.recent') %></span>
@@ -69,6 +124,29 @@
                 <td><%= formatDate(row.event_date) %></td>
                 <td><%= row.label || row.type %></td>
                 <td><%= row.dog_name || __('common.general') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Commercial</span>
+        <h2>Dernières ventes</h2>
+      </div>
+      <% if (!sales.length) { %>
+        <p class="muted">Aucune vente récente.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Acquéreur</th><th>Montant</th></tr></thead>
+          <tbody>
+            <% sales.forEach((sale) => { %>
+              <tr>
+                <td><%= formatDate(sale.sale_date) %></td>
+                <td><%= sale.buyer_firstname || '-' %></td>
+                <td><%= formatCurrency(sale.total_price) %></td>
               </tr>
             <% }) %>
           </tbody>
@@ -94,7 +172,7 @@
                 <tr>
                   <td><%= sale.animal_name || '-' %></td>
                   <td><%= sale.buyer_name || '-' %></td>
-                  <td><%= Math.max(Number(sale.price || 0) - Number(sale.deposit_amount || 0), 0).toFixed(2) %> €</td>
+                  <td><%= formatCurrency(Math.max(Number(sale.price || 0) - Number(sale.deposit_amount || 0), 0)) %></td>
                   <td><a class="btn btn-secondary" href="/sales/<%= sale.id %>/edit">Finaliser</a></td>
                 </tr>
               <% }) %>
