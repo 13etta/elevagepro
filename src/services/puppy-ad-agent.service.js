@@ -77,7 +77,7 @@ function buildStructuredContext(data, options = {}) {
   };
 }
 
-function buildFallbackAd(context) {
+function buildFallbackAd(context, providerError = '') {
   const puppyName = context.puppy.name || 'ce chiot';
   const sex = sexLabel(context.puppy.sex);
   const color = context.puppy.color || 'robe à préciser';
@@ -121,6 +121,7 @@ function buildFallbackAd(context) {
 
   return {
     provider: 'local-fallback',
+    provider_error: providerError,
     missing_information: buildMissingInformation(context),
     title,
     short_ad: shortAd,
@@ -182,6 +183,8 @@ async function callOpenAI(prompt) {
   });
 
   if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.error('OpenAI response body:', body.slice(0, 500));
     throw new Error(`OPENAI_ERROR_${response.status}`);
   }
 
@@ -212,6 +215,8 @@ async function callGemini(prompt) {
   });
 
   if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.error('Gemini response body:', body.slice(0, 500));
     throw new Error(`GEMINI_ERROR_${response.status}`);
   }
 
@@ -223,6 +228,7 @@ async function callGemini(prompt) {
 function normalizeAiResult(result, fallback, provider) {
   return {
     provider,
+    provider_error: '',
     missing_information: Array.isArray(result?.missing_information) ? result.missing_information : fallback.missing_information,
     title: cleanText(result?.title) || fallback.title,
     short_ad: cleanText(result?.short_ad) || fallback.short_ad,
@@ -234,31 +240,32 @@ function normalizeAiResult(result, fallback, provider) {
 
 async function generatePuppyAd(data, options = {}) {
   const context = buildStructuredContext(data, options);
-  const fallback = buildFallbackAd(context);
   const prompt = buildPrompt(context);
   const provider = cleanText(process.env.AI_PROVIDER).toLowerCase();
+  let providerError = '';
 
   try {
     if (provider === 'openai') {
       const result = await callOpenAI(prompt);
-      if (result) return normalizeAiResult(result, fallback, 'openai');
+      if (result) return normalizeAiResult(result, buildFallbackAd(context), 'openai');
     }
 
     if (provider === 'gemini') {
       const result = await callGemini(prompt);
-      if (result) return normalizeAiResult(result, fallback, 'gemini');
+      if (result) return normalizeAiResult(result, buildFallbackAd(context), 'gemini');
     }
 
     const geminiResult = await callGemini(prompt);
-    if (geminiResult) return normalizeAiResult(geminiResult, fallback, 'gemini');
+    if (geminiResult) return normalizeAiResult(geminiResult, buildFallbackAd(context), 'gemini');
 
     const openAiResult = await callOpenAI(prompt);
-    if (openAiResult) return normalizeAiResult(openAiResult, fallback, 'openai');
+    if (openAiResult) return normalizeAiResult(openAiResult, buildFallbackAd(context), 'openai');
   } catch (error) {
+    providerError = error.message;
     console.error('Erreur agent IA annonce chiot:', error.message);
   }
 
-  return fallback;
+  return buildFallbackAd(context, providerError || 'Aucun fournisseur IA disponible côté serveur');
 }
 
 module.exports = {
