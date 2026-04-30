@@ -153,7 +153,8 @@ function buildFallbackAd(context, providerError = '') {
     social_post: socialPost,
     legal_caution: 'Annonce générée automatiquement à relire par l’éleveur. Ne pas ajouter de promesse sanitaire, génétique ou comportementale non vérifiée.',
   };
-}\n
+}
+
 function buildPrompt(context) {
   return [
     'Tu es l’agent IA interne d’ElevagePro spécialisé dans la rédaction d’annonces de vente de chiots.',
