@@ -5,7 +5,13 @@
     "commandCenter": "Cockpit d’élevage"
   },
   "auth": {
-    "logout": "Déconnexion"
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "register": "Créer mon élevage",
+    "forgotPassword": "Mot de passe oublié"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -49,14 +55,21 @@
     "primaryAction": "Ouvrir le cheptel",
     "activeDogs": "Chiens actifs",
     "availablePuppies": "Chiots disponibles",
+    "reservedPuppies": "Chiots réservés",
     "activeLitters": "Portées actives",
     "ongoingPregnancies": "Gestations en cours",
+    "monthlySales": "Ventes du mois",
+    "upcomingReminders": "Rappels à 7 jours",
+    "boxOccupancy": "Occupation des box",
     "modulesKicker": "Modules",
     "modulesTitle": "Accès rapide aux fonctions métier",
     "priority": "Prioritaire",
     "recent": "Récent",
     "reminders": "Rappels prioritaires",
-    "care": "Soins récents"
+    "care": "Soins récents",
+    "lastSales": "Dernières ventes",
+    "incompleteSales": "Ventes incomplètes",
+    "missingActions": "Actions manquantes"
   },
   "modules": {
     "dashboard": { "description": "Vue de synthèse des indicateurs, alertes et actions prioritaires." },
@@ -78,6 +91,77 @@
     "website": { "description": "Configurez votre vitrine web et votre présence publique." },
     "settings": { "description": "Réglez l’apparence, la langue et les paramètres de l’application." }
   },
+  "dogs": {
+    "title": "Chiens",
+    "new": "Ajouter un chien",
+    "edit": "Modifier le chien",
+    "name": "Nom",
+    "sex": "Sexe",
+    "breed": "Race",
+    "birthDate": "Date de naissance",
+    "chipNumber": "Numéro de puce",
+    "lof": "LOF",
+    "pedigree": "Pedigree",
+    "status": "Statut",
+    "notes": "Notes"
+  },
+  "puppies": {
+    "title": "Chiots",
+    "new": "Ajouter un chiot",
+    "edit": "Modifier le chiot",
+    "name": "Nom ou collier",
+    "sex": "Sexe",
+    "color": "Robe",
+    "chipNumber": "Numéro de puce",
+    "birthDate": "Date de naissance",
+    "litter": "Portée",
+    "status": "Statut",
+    "salePrice": "Prix de vente",
+    "owner": "Adoptant",
+    "available": "Disponible",
+    "reserved": "Réservé",
+    "sold": "Vendu",
+    "deleteConfirm": "Confirmer la suppression du chiot"
+  },
+  "litters": {
+    "title": "Portées",
+    "new": "Nouvelle portée",
+    "edit": "Modifier la portée",
+    "mother": "Mère",
+    "mating": "Saillie",
+    "birthDate": "Date de naissance",
+    "puppiesCount": "Nombre de chiots",
+    "status": "Statut",
+    "notes": "Notes"
+  },
+  "sales": {
+    "title": "Ventes & contrats",
+    "buyer": "Acquéreur",
+    "buyerFirstname": "Prénom acquéreur",
+    "buyerAddress": "Adresse acquéreur",
+    "saleDate": "Date de vente",
+    "deliveryDate": "Date de départ",
+    "price": "Prix",
+    "deposit": "Acompte",
+    "paymentMethod": "Mode de paiement",
+    "invoiceNumber": "Numéro de facture",
+    "documents": "Documents remis",
+    "guarantees": "Garanties"
+  },
+  "care": {
+    "title": "Soins",
+    "type": "Type",
+    "label": "Libellé",
+    "eventDate": "Date de soin",
+    "nextDue": "Prochaine échéance",
+    "notes": "Notes"
+  },
+  "reminders": {
+    "title": "Rappels",
+    "dueDate": "Échéance",
+    "completed": "Terminé",
+    "pending": "À faire"
+  },
   "settings": {
     "title": "Configuration de l’application",
     "heading": "Paramètres de l’élevage",
@@ -93,22 +177,74 @@
     "companyName": "Nom de l’entreprise / élevage",
     "affixName": "Nom d’affixe SCC / FCI",
     "siret": "Numéro SIRET",
+    "producerNumber": "N° producteur",
     "address": "Adresse postale complète",
+    "boxCapacity": "Capacité des box / places disponibles",
+    "boxCapacityHelp": "Cette valeur pilote la jauge d’occupation du dashboard.",
     "saveIdentity": "Enregistrer l’identité",
     "savePreferences": "Enregistrer les préférences",
     "noLogo": "Aucun logo configuré",
     "chooseLogo": "Choisir une image PNG, JPG ou WEBP",
-    "uploadLogo": "Uploader le logo"
+    "uploadLogo": "Uploader le logo",
+    "website": "Site vitrine",
+    "application": "Application"
+  },
+  "website": {
+    "testimonials": "Témoignages",
+    "socialProof": "Preuve sociale",
+    "createKennel": "Créer mon élevage",
+    "freeTrial": "Essayer gratuitement",
+    "contact": "Contact",
+    "gallery": "Galerie",
+    "services": "Services",
+    "puppies": "Chiots",
+    "selection": "Sélection"
+  },
+  "agents": {
+    "puppyAdWriter": "Agent annonces chiots",
+    "generateAd": "Générer une annonce",
+    "copyAd": "Copier l’annonce",
+    "toneProfessional": "Professionnel",
+    "toneWarm": "Chaleureux",
+    "tonePremium": "Premium"
   },
   "common": {
+    "actions": "Actions",
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "search": "Recherche",
+    "filters": "Filtres",
+    "reset": "Réinitialiser",
     "date": "Date",
     "label": "Libellé",
     "dog": "Chien",
+    "puppy": "Chiot",
+    "litter": "Portée",
     "type": "Type",
-    "general": "Général"
+    "status": "Statut",
+    "price": "Prix",
+    "general": "Général",
+    "male": "Mâle",
+    "female": "Femelle",
+    "unknown": "Non renseigné",
+    "loading": "Chargement",
+    "saving": "Sauvegarde en cours...",
+    "empty": "Aucun résultat"
+  },
+  "flash": {
+    "saved": "Les modifications ont été enregistrées.",
+    "deleted": "La suppression a été effectuée.",
+    "error": "Une erreur technique est survenue.",
+    "notFound": "L’élément demandé est introuvable."
   },
   "errors": {
     "notFound": "Page introuvable",
-    "serverError": "Erreur serveur"
+    "serverError": "Erreur serveur",
+    "required": "Ce champ est obligatoire",
+    "invalid": "Valeur invalide"
   }
 }
