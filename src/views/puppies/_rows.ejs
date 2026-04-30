@@ -31,6 +31,7 @@
       </td>
       <td><%= puppy.sale_price ? puppy.sale_price + ' €' : '-' %></td>
       <td class="table-actions">
+        <a class="btn btn-primary" href="/puppies/<%= puppy.id %>">Fiche / IA</a>
         <a class="btn btn-secondary" href="/puppies/edit/<%= puppy.id %>">Modifier</a>
         <button
           type="button"
