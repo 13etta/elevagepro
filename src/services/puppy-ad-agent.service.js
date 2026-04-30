@@ -25,6 +25,20 @@ function toneLabel(tone) {
   return allowed[tone] || allowed.professional;
 }
 
+function uniqueValues(values) {
+  return [...new Set(values.map(cleanText).filter(Boolean))];
+}
+
+function buildGeminiModelCandidates() {
+  return uniqueValues([
+    process.env.GEMINI_MODEL,
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-pro-latest',
+  ]);
+}
+
 function buildMissingInformation(context) {
   const missing = [];
 
@@ -192,11 +206,10 @@ async function callOpenAI(prompt) {
   return parseJsonFromText(payload.choices?.[0]?.message?.content || '');
 }
 
-async function callGemini(prompt) {
+async function callSingleGeminiModel(prompt, model) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
-  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -216,8 +229,8 @@ async function callGemini(prompt) {
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
-    console.error('Gemini response body:', body.slice(0, 500));
-    throw new Error(`GEMINI_ERROR_${response.status}`);
+    console.error(`Gemini response body for ${model}:`, body.slice(0, 500));
+    throw new Error(`GEMINI_ERROR_${response.status}_${model}`);
   }
 
   const payload = await response.json();
@@ -225,9 +238,35 @@ async function callGemini(prompt) {
   return parseJsonFromText(text);
 }
 
-function normalizeAiResult(result, fallback, provider) {
+async function callGemini(prompt) {
+  if (!process.env.GEMINI_API_KEY) return null;
+
+  const attempted = [];
+  let lastError = null;
+
+  for (const model of buildGeminiModelCandidates()) {
+    try {
+      attempted.push(model);
+      const result = await callSingleGeminiModel(prompt, model);
+      if (result) {
+        return { result, model };
+      }
+    } catch (error) {
+      lastError = error;
+      if (!String(error.message).includes('GEMINI_ERROR_404')) {
+        throw error;
+      }
+    }
+  }
+
+  const error = new Error(`${lastError?.message || 'GEMINI_ERROR'}; attempted=${attempted.join(',')}`);
+  throw error;
+}
+
+function normalizeAiResult(result, fallback, provider, model = '') {
   return {
     provider,
+    provider_model: model,
     provider_error: '',
     missing_information: Array.isArray(result?.missing_information) ? result.missing_information : fallback.missing_information,
     title: cleanText(result?.title) || fallback.title,
@@ -247,19 +286,19 @@ async function generatePuppyAd(data, options = {}) {
   try {
     if (provider === 'openai') {
       const result = await callOpenAI(prompt);
-      if (result) return normalizeAiResult(result, buildFallbackAd(context), 'openai');
+      if (result) return normalizeAiResult(result, buildFallbackAd(context), 'openai', process.env.OPENAI_MODEL || '');
     }
 
     if (provider === 'gemini') {
-      const result = await callGemini(prompt);
-      if (result) return normalizeAiResult(result, buildFallbackAd(context), 'gemini');
+      const gemini = await callGemini(prompt);
+      if (gemini?.result) return normalizeAiResult(gemini.result, buildFallbackAd(context), 'gemini', gemini.model);
     }
 
-    const geminiResult = await callGemini(prompt);
-    if (geminiResult) return normalizeAiResult(geminiResult, buildFallbackAd(context), 'gemini');
+    const gemini = await callGemini(prompt);
+    if (gemini?.result) return normalizeAiResult(gemini.result, buildFallbackAd(context), 'gemini', gemini.model);
 
     const openAiResult = await callOpenAI(prompt);
-    if (openAiResult) return normalizeAiResult(openAiResult, buildFallbackAd(context), 'openai');
+    if (openAiResult) return normalizeAiResult(openAiResult, buildFallbackAd(context), 'openai', process.env.OPENAI_MODEL || '');
   } catch (error) {
     providerError = error.message;
     console.error('Erreur agent IA annonce chiot:', error.message);
