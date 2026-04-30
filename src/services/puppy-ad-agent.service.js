@@ -32,11 +32,21 @@ function uniqueValues(values) {
 function buildGeminiModelCandidates() {
   return uniqueValues([
     process.env.GEMINI_MODEL,
-    'gemini-2.5-flash',
     'gemini-2.0-flash',
+    'gemini-2.5-flash',
     'gemini-1.5-flash-latest',
     'gemini-1.5-pro-latest',
   ]);
+}
+
+function isRetryableGeminiModelError(error) {
+  const message = String(error?.message || '');
+  return message.includes('GEMINI_ERROR_404')
+    || message.includes('GEMINI_ERROR_429')
+    || message.includes('GEMINI_ERROR_500')
+    || message.includes('GEMINI_ERROR_502')
+    || message.includes('GEMINI_ERROR_503')
+    || message.includes('GEMINI_ERROR_504');
 }
 
 function buildMissingInformation(context) {
@@ -143,8 +153,7 @@ function buildFallbackAd(context, providerError = '') {
     social_post: socialPost,
     legal_caution: 'Annonce générée automatiquement à relire par l’éleveur. Ne pas ajouter de promesse sanitaire, génétique ou comportementale non vérifiée.',
   };
-}
-
+}\n
 function buildPrompt(context) {
   return [
     'Tu es l’agent IA interne d’ElevagePro spécialisé dans la rédaction d’annonces de vente de chiots.',
@@ -253,7 +262,7 @@ async function callGemini(prompt) {
       }
     } catch (error) {
       lastError = error;
-      if (!String(error.message).includes('GEMINI_ERROR_404')) {
+      if (!isRetryableGeminiModelError(error)) {
         throw error;
       }
     }
