@@ -1,4 +1,5 @@
 const { pool } = require('../db');
+const { generatePuppyAd } = require('../services/puppy-ad-agent.service');
 
 function buildPuppyFilters(query, breederId) {
   const values = [breederId];
@@ -111,6 +112,61 @@ async function fetchFilterOptions(breederId) {
   };
 }
 
+async function fetchPuppyAdContext(breederId, puppyId) {
+  const puppyResult = await pool.query(
+    `
+      SELECT
+        p.*,
+        l.birth_date AS litter_birth_date,
+        l.notes AS litter_notes,
+        l.puppies_count_total,
+        l.status AS litter_status,
+        mother.name AS mother_name,
+        mother.breed AS mother_breed,
+        father.name AS father_name,
+        father.breed AS father_breed
+      FROM puppies p
+      LEFT JOIN litters l ON p.litter_id = l.id
+      LEFT JOIN dogs mother ON l.mother_id = mother.id
+      LEFT JOIN matings m ON l.mating_id = m.id
+      LEFT JOIN dogs father ON m.male_id = father.id
+      WHERE p.id = $1 AND p.breeder_id = $2
+      LIMIT 1
+    `,
+    [puppyId, breederId],
+  );
+
+  if (!puppyResult.rows.length) return null;
+
+  const breederResult = await pool.query(
+    `
+      SELECT id, company_name, name, affix_name, siret, producer_number, website_settings
+      FROM breeder
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [breederId],
+  );
+
+  const puppy = puppyResult.rows[0];
+
+  return {
+    puppy,
+    litter: {
+      birth_date: puppy.litter_birth_date,
+      notes: puppy.litter_notes,
+      puppies_count_total: puppy.puppies_count_total,
+      status: puppy.litter_status,
+    },
+    parents: {
+      mother_name: puppy.mother_name,
+      father_name: puppy.father_name,
+      breed: puppy.mother_breed || puppy.father_breed,
+    },
+    breeder: breederResult.rows[0] || {},
+  };
+}
+
 exports.listPuppies = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
@@ -159,7 +215,8 @@ exports.showPuppy = async (req, res) => {
         FROM puppies p
         LEFT JOIN litters l ON p.litter_id = l.id
         LEFT JOIN dogs mother ON l.mother_id = mother.id
-        LEFT JOIN dogs father ON l.father_id = father.id
+        LEFT JOIN matings m ON l.mating_id = m.id
+        LEFT JOIN dogs father ON m.male_id = father.id
         WHERE p.id = $1 AND p.breeder_id = $2
       `,
       [puppyId, breederId],
@@ -217,6 +274,28 @@ exports.showPuppy = async (req, res) => {
   } catch (error) {
     console.error('Erreur fiche chiot:', error);
     res.status(500).send('Erreur lors du chargement de la fiche chiot.');
+  }
+};
+
+exports.generatePuppyAd = async (req, res) => {
+  try {
+    const breederId = req.session.user.breeder_id;
+    const puppyId = req.params.id;
+    const context = await fetchPuppyAdContext(breederId, puppyId);
+
+    if (!context) {
+      return res.status(404).json({ error: 'Chiot introuvable.' });
+    }
+
+    const result = await generatePuppyAd(context, {
+      tone: req.body.tone || 'professional',
+      showChipNumber: req.body.show_chip_number,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Erreur génération annonce chiot:', error);
+    return res.status(500).json({ error: 'Erreur lors de la génération de l’annonce.' });
   }
 };
 
