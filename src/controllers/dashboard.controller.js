@@ -16,33 +16,9 @@ function buildMonthLabel(monthKey) {
   });
 }
 
-async function ensureDashboardSchema() {
-  const migrations = [
-    `ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE`,
-    `ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'`,
-    `ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS result VARCHAR(50) DEFAULT 'En cours'`,
-    `ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE`,
-    `ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2) DEFAULT 0`,
-    `ALTER TABLE sales ADD COLUMN IF NOT EXISTS dog_id UUID REFERENCES dogs(id) ON DELETE SET NULL`,
-    `ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`,
-    `ALTER TABLE sales ADD COLUMN IF NOT EXISTS documents_checked JSONB DEFAULT '{}'::jsonb`,
-    `ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE`,
-    `ALTER TABLE reminders ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE`,
-    `ALTER TABLE soins ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE`,
-  ];
-
-  for (const sql of migrations) {
-    await pool.query(sql).catch((error) => {
-      console.warn('Migration dashboard ignorée:', sql, error.message);
-    });
-  }
-}
-
 exports.getDashboard = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
-
-    await ensureDashboardSchema();
 
     const activeDogs = await pool.query(
       `
@@ -90,13 +66,18 @@ exports.getDashboard = async (req, res) => {
         SELECT count(*)
         FROM pregnancies
         WHERE breeder_id = $1
-          AND COALESCE(lower(result), lower(status), 'en cours') IN ('en cours', 'en_cours', 'active', 'confirmée', 'confirmee')
+          AND COALESCE(lower(result), 'en cours') IN ('en cours', 'en_cours', 'active', 'confirmée', 'confirmee')
       `,
       [breederId],
     );
 
     const incompleteSales = await pool.query(
-      `SELECT count(*) FROM sales WHERE breeder_id = $1 AND COALESCE(is_reservation, FALSE) = TRUE`,
+      `
+        SELECT count(*)
+        FROM sales
+        WHERE breeder_id = $1
+          AND COALESCE(is_reservation, FALSE) = TRUE
+      `,
       [breederId],
     );
 
@@ -185,7 +166,8 @@ exports.getDashboard = async (req, res) => {
         LEFT JOIN puppies p ON r.puppy_id = p.id
         LEFT JOIN litters l ON r.litter_id = l.id
         LEFT JOIN dogs lm ON l.mother_id = lm.id
-        WHERE r.breeder_id = $1 AND COALESCE(r.is_completed, FALSE) = FALSE
+        WHERE r.breeder_id = $1
+          AND COALESCE(r.is_completed, FALSE) = FALSE
         ORDER BY r.due_date ASC
         LIMIT 8
       `,
@@ -207,7 +189,12 @@ exports.getDashboard = async (req, res) => {
 
     const salesRes = await pool.query(
       `
-        SELECT sale_date, buyer_name AS buyer_firstname, price AS total_price, is_reservation, deposit_amount
+        SELECT
+          sale_date,
+          buyer_name AS buyer_firstname,
+          price AS total_price,
+          is_reservation,
+          deposit_amount
         FROM sales
         WHERE breeder_id = $1
         ORDER BY COALESCE(sale_date, created_at::date) DESC
@@ -220,11 +207,17 @@ exports.getDashboard = async (req, res) => {
 
     const salesToFinalize = await pool.query(
       `
-        SELECT s.id, s.buyer_name, s.price, s.deposit_amount, COALESCE(p.name, d.name) AS animal_name
+        SELECT
+          s.id,
+          s.buyer_name,
+          s.price,
+          s.deposit_amount,
+          COALESCE(p.name, d.name) AS animal_name
         FROM sales s
         LEFT JOIN puppies p ON s.puppy_id = p.id
         LEFT JOIN dogs d ON s.dog_id = d.id
-        WHERE s.breeder_id = $1 AND COALESCE(s.is_reservation, FALSE) = TRUE
+        WHERE s.breeder_id = $1
+          AND COALESCE(s.is_reservation, FALSE) = TRUE
         ORDER BY COALESCE(s.sale_date, s.created_at::date) ASC
         LIMIT 5
       `,
