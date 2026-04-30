@@ -95,6 +95,19 @@
   </section>
 </main>
 
+<div id="deletePuppyModal" class="confirm-modal" aria-hidden="true">
+  <div class="confirm-modal-backdrop" data-modal-close></div>
+  <div class="confirm-modal-card" role="dialog" aria-modal="true" aria-labelledby="deletePuppyTitle">
+    <span class="confirm-modal-icon">!</span>
+    <h2 id="deletePuppyTitle">Confirmer la suppression</h2>
+    <p id="deletePuppyText">Cette action est définitive. Elle supprimera la fiche du chiot sélectionné.</p>
+    <div class="confirm-modal-actions">
+      <button type="button" class="btn btn-secondary" data-modal-close>Annuler</button>
+      <a id="confirmDeletePuppy" class="btn btn-primary btn-danger" href="#">Supprimer définitivement</a>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
   const form = document.getElementById('puppyFilters');
@@ -102,6 +115,9 @@
   const count = document.getElementById('puppyCount');
   const status = document.getElementById('puppyFilterStatus');
   const resetButton = document.getElementById('resetPuppyFilters');
+  const modal = document.getElementById('deletePuppyModal');
+  const modalText = document.getElementById('deletePuppyText');
+  const confirmDelete = document.getElementById('confirmDeletePuppy');
 
   let timer = null;
   let controller = null;
@@ -119,12 +135,32 @@
     return clean;
   }
 
+  function bindDeleteButtons() {
+    document.querySelectorAll('.js-delete-puppy').forEach((button) => {
+      button.addEventListener('click', () => {
+        const puppyName = button.dataset.puppyName || 'ce chiot';
+        confirmDelete.href = button.dataset.deleteUrl;
+        modalText.textContent = `Vous allez supprimer ${puppyName}. Cette action est définitive.`;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        confirmDelete.focus();
+      });
+    });
+  }
+
+  function closeModal() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    confirmDelete.href = '#';
+  }
+
   async function refreshPuppies() {
     if (controller) controller.abort();
     controller = new AbortController();
 
     const params = cleanParams();
     status.classList.add('is-loading');
+    rows.classList.add('is-refreshing');
 
     try {
       const response = await fetch(`/puppies/fragment?${params.toString()}`, {
@@ -136,12 +172,14 @@
 
       rows.innerHTML = await response.text();
       count.textContent = rows.querySelectorAll('[data-puppy-row]').length;
+      bindDeleteButtons();
 
       window.history.replaceState({}, '', params.toString() ? `/puppies?${params.toString()}` : '/puppies');
     } catch (error) {
       if (error.name !== 'AbortError') console.error(error);
     } finally {
       status.classList.remove('is-loading');
+      rows.classList.remove('is-refreshing');
     }
   }
 
@@ -157,6 +195,16 @@
     form.reset();
     refreshPuppies();
   });
+
+  modal.querySelectorAll('[data-modal-close]').forEach((element) => {
+    element.addEventListener('click', closeModal);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+  });
+
+  bindDeleteButtons();
 })();
 </script>
 
