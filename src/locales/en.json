@@ -5,7 +5,13 @@
     "commandCenter": "Breeding cockpit"
   },
   "auth": {
-    "logout": "Log out"
+    "login": "Login",
+    "logout": "Log out",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "register": "Create my kennel",
+    "forgotPassword": "Forgot password"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -49,14 +55,21 @@
     "primaryAction": "Open kennel",
     "activeDogs": "Active dogs",
     "availablePuppies": "Available puppies",
+    "reservedPuppies": "Reserved puppies",
     "activeLitters": "Active litters",
     "ongoingPregnancies": "Ongoing pregnancies",
+    "monthlySales": "Monthly sales",
+    "upcomingReminders": "7-day reminders",
+    "boxOccupancy": "Box occupancy",
     "modulesKicker": "Modules",
     "modulesTitle": "Quick access to professional tools",
     "priority": "Priority",
     "recent": "Recent",
     "reminders": "Priority reminders",
-    "care": "Recent care"
+    "care": "Recent care",
+    "lastSales": "Latest sales",
+    "incompleteSales": "Incomplete sales",
+    "missingActions": "Missing actions"
   },
   "modules": {
     "dashboard": { "description": "Overview of key indicators, alerts and priority actions." },
@@ -78,6 +91,77 @@
     "website": { "description": "Configure your public website and online presence." },
     "settings": { "description": "Configure appearance, language and application preferences." }
   },
+  "dogs": {
+    "title": "Dogs",
+    "new": "Add a dog",
+    "edit": "Edit dog",
+    "name": "Name",
+    "sex": "Sex",
+    "breed": "Breed",
+    "birthDate": "Birth date",
+    "chipNumber": "Microchip number",
+    "lof": "LOF",
+    "pedigree": "Pedigree",
+    "status": "Status",
+    "notes": "Notes"
+  },
+  "puppies": {
+    "title": "Puppies",
+    "new": "Add a puppy",
+    "edit": "Edit puppy",
+    "name": "Name or collar",
+    "sex": "Sex",
+    "color": "Coat color",
+    "chipNumber": "Microchip number",
+    "birthDate": "Birth date",
+    "litter": "Litter",
+    "status": "Status",
+    "salePrice": "Sale price",
+    "owner": "Owner",
+    "available": "Available",
+    "reserved": "Reserved",
+    "sold": "Sold",
+    "deleteConfirm": "Confirm puppy deletion"
+  },
+  "litters": {
+    "title": "Litters",
+    "new": "New litter",
+    "edit": "Edit litter",
+    "mother": "Dam",
+    "mating": "Mating",
+    "birthDate": "Birth date",
+    "puppiesCount": "Number of puppies",
+    "status": "Status",
+    "notes": "Notes"
+  },
+  "sales": {
+    "title": "Sales & contracts",
+    "buyer": "Buyer",
+    "buyerFirstname": "Buyer first name",
+    "buyerAddress": "Buyer address",
+    "saleDate": "Sale date",
+    "deliveryDate": "Delivery date",
+    "price": "Price",
+    "deposit": "Deposit",
+    "paymentMethod": "Payment method",
+    "invoiceNumber": "Invoice number",
+    "documents": "Documents provided",
+    "guarantees": "Guarantees"
+  },
+  "care": {
+    "title": "Care",
+    "type": "Type",
+    "label": "Label",
+    "eventDate": "Care date",
+    "nextDue": "Next due date",
+    "notes": "Notes"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "dueDate": "Due date",
+    "completed": "Completed",
+    "pending": "Pending"
+  },
   "settings": {
     "title": "Application settings",
     "heading": "Breeding kennel settings",
@@ -93,22 +177,74 @@
     "companyName": "Company / kennel name",
     "affixName": "Kennel affix SCC / FCI",
     "siret": "SIRET number",
+    "producerNumber": "Producer number",
     "address": "Full postal address",
+    "boxCapacity": "Box / available place capacity",
+    "boxCapacityHelp": "This value powers the dashboard occupancy gauge.",
     "saveIdentity": "Save identity",
     "savePreferences": "Save preferences",
     "noLogo": "No logo configured",
     "chooseLogo": "Choose a PNG, JPG or WEBP image",
-    "uploadLogo": "Upload logo"
+    "uploadLogo": "Upload logo",
+    "website": "Public website",
+    "application": "Application"
+  },
+  "website": {
+    "testimonials": "Testimonials",
+    "socialProof": "Social proof",
+    "createKennel": "Create my kennel",
+    "freeTrial": "Try for free",
+    "contact": "Contact",
+    "gallery": "Gallery",
+    "services": "Services",
+    "puppies": "Puppies",
+    "selection": "Selection"
+  },
+  "agents": {
+    "puppyAdWriter": "Puppy ad writer agent",
+    "generateAd": "Generate ad",
+    "copyAd": "Copy ad",
+    "toneProfessional": "Professional",
+    "toneWarm": "Warm",
+    "tonePremium": "Premium"
   },
   "common": {
+    "actions": "Actions",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filters": "Filters",
+    "reset": "Reset",
     "date": "Date",
     "label": "Label",
     "dog": "Dog",
+    "puppy": "Puppy",
+    "litter": "Litter",
     "type": "Type",
-    "general": "General"
+    "status": "Status",
+    "price": "Price",
+    "general": "General",
+    "male": "Male",
+    "female": "Female",
+    "unknown": "Unknown",
+    "loading": "Loading",
+    "saving": "Saving...",
+    "empty": "No results"
+  },
+  "flash": {
+    "saved": "Changes have been saved.",
+    "deleted": "Deletion completed.",
+    "error": "A technical error occurred.",
+    "notFound": "The requested item could not be found."
   },
   "errors": {
     "notFound": "Page not found",
-    "serverError": "Server error"
+    "serverError": "Server error",
+    "required": "This field is required",
+    "invalid": "Invalid value"
   }
 }
