@@ -32,8 +32,9 @@ function uniqueValues(values) {
 function buildGeminiModelCandidates() {
   return uniqueValues([
     process.env.GEMINI_MODEL,
-    'gemini-2.0-flash',
     'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash',
     'gemini-1.5-flash-latest',
     'gemini-1.5-pro-latest',
   ]);
@@ -220,9 +221,12 @@ async function callSingleGeminiModel(prompt, model) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    },
     body: JSON.stringify({
       generationConfig: {
         temperature: 0.35,
