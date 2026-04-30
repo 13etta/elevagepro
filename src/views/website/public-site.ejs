@@ -19,6 +19,7 @@
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);
+  const trialUrl = '/auth/register';
 %>
 <body
   data-theme="nature"
@@ -60,8 +61,10 @@
         <% if (websiteSettings.showServices) { %><a href="#services">Services</a><% } %>
         <% if (websiteSettings.showDogs) { %><a href="#selection">Sélection</a><% } %>
         <% if (websiteSettings.showPuppies) { %><a href="#chiots">Chiots</a><% } %>
+        <a href="#temoignages">Témoignages</a>
         <% if (websiteSettings.showGallery) { %><a href="#galerie">Galerie</a><% } %>
         <% if (websiteSettings.showContact) { %><a href="#contact">Contact</a><% } %>
+        <a class="showcase-nav-cta" href="<%= trialUrl %>">Créer mon élevage</a>
       </div>
     </nav>
 
@@ -71,8 +74,8 @@
         <span><%= websiteSettings.contactStripText || 'Informations, réservation, projet de portée ou disponibilité.' %></span>
       </div>
       <div class="contact-strip-actions">
-        <% if (websiteSettings.showContact) { %><a class="showcase-btn primary" href="#contact"><%= websiteSettings.primaryCtaLabel || 'Contactez-nous' %></a><% } %>
-        <% if (websiteSettings.publicEmail) { %><a class="showcase-btn secondary" href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.secondaryCtaLabel || 'Envoyer un message' %></a><% } %>
+        <a class="showcase-btn primary" href="<%= trialUrl %>">Essayer gratuitement</a>
+        <% if (websiteSettings.showContact) { %><a class="showcase-btn secondary" href="#contact"><%= websiteSettings.primaryCtaLabel || 'Contactez-nous' %></a><% } %>
       </div>
     </section>
 
@@ -83,7 +86,8 @@
         <% if (breeder.affix_name) { %><p class="public-affix"><%= breeder.affix_name %></p><% } %>
         <p class="hero-lead"><%= websiteSettings.heroSubtitle || 'Une vitrine claire pour présenter la sélection, les reproducteurs, les portées et la philosophie de l’élevage.' %></p>
         <div class="hero-actions">
-          <% if (websiteSettings.showPuppies) { %><a class="showcase-btn primary" href="#chiots">Voir les disponibilités</a><% } %>
+          <a class="showcase-btn primary" href="<%= trialUrl %>">Créer mon élevage</a>
+          <% if (websiteSettings.showPuppies) { %><a class="showcase-btn secondary" href="#chiots">Voir les disponibilités</a><% } %>
           <% if (websiteSettings.showContact) { %><a class="showcase-btn secondary" href="#contact">Contacter l’élevage</a><% } %>
         </div>
       </div>
@@ -125,6 +129,28 @@
         </div>
       </section>
     <% } %>
+
+    <section id="temoignages" class="public-section social-proof-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Preuve sociale</span>
+        <h2>Les problèmes que les éleveurs veulent enfin régler</h2>
+        <p class="muted">Des situations fréquentes du terrain, transformées en axes concrets de pilotage.</p>
+      </div>
+      <div class="testimonial-grid">
+        <article class="testimonial-card">
+          <p>“Entre les vermifuges, les vaccins et les départs chiots, tout finit dans des carnets différents. Il me faut une vision claire, pas un tableau bricolé.”</p>
+          <strong>Suivi sanitaire structuré</strong>
+        </article>
+        <article class="testimonial-card">
+          <p>“Le vrai risque, ce n’est pas de manquer de passion. C’est d’oublier une échéance administrative ou de vendre un chiot avec un document incomplet.”</p>
+          <strong>Alertes et documents maîtrisés</strong>
+        </article>
+        <article class="testimonial-card">
+          <p>“Je veux savoir où en sont mes portées, mes réservations et ma trésorerie sans ouvrir dix fichiers. Un élevage sérieux doit se piloter proprement.”</p>
+          <strong>Dashboard métier</strong>
+        </article>
+      </div>
+    </section>
 
     <% if (websiteSettings.showPuppies) { %>
       <section id="chiots" class="public-section">
@@ -252,6 +278,15 @@
         </div>
       </section>
     <% } %>
+
+    <section class="final-cta-section">
+      <div>
+        <span class="section-kicker">ElevagePro</span>
+        <h2>Pilotez votre élevage avec une vraie méthode.</h2>
+        <p>Chiens, portées, chiots, soins, rappels, ventes et vitrine : centralisez votre activité dans un outil pensé pour le terrain.</p>
+      </div>
+      <a class="showcase-btn primary" href="<%= trialUrl %>">Créer mon élevage</a>
+    </section>
 
     <footer class="showcase-footer">
       <div>
