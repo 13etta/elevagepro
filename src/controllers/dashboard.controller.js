@@ -16,9 +16,20 @@ function buildMonthLabel(monthKey) {
   });
 }
 
+function resolveBoxCapacity(settings) {
+  const configured = Number.parseInt(settings?.kennelBoxCapacity, 10);
+  if (Number.isFinite(configured) && configured > 0) return configured;
+
+  const envValue = Number.parseInt(process.env.KENNEL_BOX_CAPACITY || process.env.BOX_CAPACITY || '12', 10);
+  return Number.isFinite(envValue) && envValue > 0 ? envValue : 12;
+}
+
 exports.getDashboard = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
+
+    const breederSettingsRes = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
+    const breederSettings = breederSettingsRes.rows[0]?.website_settings || {};
 
     const activeDogs = await pool.query(
       `
@@ -123,7 +134,7 @@ exports.getDashboard = async (req, res) => {
     );
 
     const activeDogsCount = toNumber(activeDogs.rows[0].count);
-    const boxCapacity = Math.max(toNumber(process.env.KENNEL_BOX_CAPACITY || process.env.BOX_CAPACITY || 12), 1);
+    const boxCapacity = Math.max(resolveBoxCapacity(breederSettings), 1);
     const boxOccupancyRate = Math.min(100, Math.round((activeDogsCount / boxCapacity) * 100));
 
     const salesSeries = monthlySales.rows.map((row) => ({
@@ -245,7 +256,7 @@ exports.getDashboard = async (req, res) => {
     if (salesToFinalize.rows.length) alerts.push({ level: 'warning', title: `${salesToFinalize.rows.length} réservation(s) à finaliser`, href: '/sales' });
     if (littersWithoutPuppies.rows.length) alerts.push({ level: 'warning', title: `${littersWithoutPuppies.rows.length} portée(s) sans chiots enregistrés`, href: '/litters' });
     if (Number(kpis.puppiesWithoutChip) > 0) alerts.push({ level: 'info', title: `${kpis.puppiesWithoutChip} chiot(s) sans identification`, href: '/puppies' });
-    if (kpis.boxOccupancyRate >= 90) alerts.push({ level: 'warning', title: `Occupation des box à ${kpis.boxOccupancyRate}%`, href: '/dogs' });
+    if (kpis.boxOccupancyRate >= 90) alerts.push({ level: 'warning', title: `Occupation des box à ${kpis.boxOccupancyRate}%`, href: '/settings?tab=application' });
 
     const formatDate = (dateString) => {
       if (!dateString) return '-';
