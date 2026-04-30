@@ -1,6 +1,39 @@
 const { pool } = require('../db');
 const { generatePuppyAd } = require('../services/puppy-ad-agent.service');
 
+function normalizePuppyStatus(value) {
+  const raw = String(value || '').trim().toLowerCase();
+
+  if (['vendu', 'vendue', 'sold'].includes(raw)) return 'Vendu';
+  if (['réservé', 'reserve', 'reserved', 'reservation', 'réservation', 'option'].includes(raw)) return 'Reserve';
+  if (['décédé', 'decede', 'dead'].includes(raw)) return 'Decede';
+  if (['actif', 'active', 'disponible', 'available', 'disponible (actif)'].includes(raw)) return 'Actif';
+
+  return 'Actif';
+}
+
+function normalizeSex(value) {
+  const raw = String(value || '').trim().toUpperCase();
+  if (raw === 'M' || raw.startsWith('MÂ') || raw.startsWith('MA')) return 'M';
+  if (raw === 'F' || raw.startsWith('FE') || raw.startsWith('FÉ')) return 'F';
+  return null;
+}
+
+function normalizeSalePrice(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const normalized = raw.replace(/\s/g, '').replace(',', '.');
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+}
+
+function normalizeNullableText(value, maxLength = null) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  return maxLength ? text.slice(0, maxLength) : text;
+}
+
 function buildPuppyFilters(query, breederId) {
   const values = [breederId];
   const where = ['p.breeder_id = $1'];
@@ -342,7 +375,19 @@ exports.savePuppy = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const puppyId = req.params.id;
-    const { litter_id, name, sex, color, chip_number, status, sale_price } = req.body;
+    const puppyData = {
+      litter_id: req.body.litter_id,
+      name: normalizeNullableText(req.body.name, 120),
+      sex: normalizeSex(req.body.sex),
+      color: normalizeNullableText(req.body.color, 80),
+      chip_number: normalizeNullableText(req.body.chip_number, 30),
+      status: normalizePuppyStatus(req.body.status),
+      sale_price: normalizeSalePrice(req.body.sale_price),
+    };
+
+    if (!puppyData.litter_id || !puppyData.name || !puppyData.sex) {
+      return res.status(400).send('Portée, nom et sexe du chiot sont obligatoires.');
+    }
 
     if (puppyId) {
       await pool.query(
@@ -357,7 +402,17 @@ exports.savePuppy = async (req, res) => {
               sale_price = $7
           WHERE id = $8 AND breeder_id = $9
         `,
-        [litter_id, name, sex, color, chip_number, status, sale_price || null, puppyId, breederId],
+        [
+          puppyData.litter_id,
+          puppyData.name,
+          puppyData.sex,
+          puppyData.color,
+          puppyData.chip_number,
+          puppyData.status,
+          puppyData.sale_price,
+          puppyId,
+          breederId,
+        ],
       );
     } else {
       await pool.query(
@@ -365,7 +420,16 @@ exports.savePuppy = async (req, res) => {
           INSERT INTO puppies (breeder_id, litter_id, name, sex, color, chip_number, status, sale_price)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `,
-        [breederId, litter_id, name, sex, color, chip_number, status, sale_price || null],
+        [
+          breederId,
+          puppyData.litter_id,
+          puppyData.name,
+          puppyData.sex,
+          puppyData.color,
+          puppyData.chip_number,
+          puppyData.status,
+          puppyData.sale_price,
+        ],
       );
     }
 
