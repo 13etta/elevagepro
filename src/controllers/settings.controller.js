@@ -46,6 +46,7 @@ const websiteTemplatePalettes = {
 function defaultWebsiteSettings() {
   return {
     template: 'heritage',
+    kennelBoxCapacity: 12,
     primaryColor: '#6d7c45',
     secondaryColor: '#c8b397',
     accentColor: '#2b2014',
@@ -104,11 +105,18 @@ function mergeWebsiteSettings(settings) {
   return { ...defaultWebsiteSettings(), ...(settings || {}) };
 }
 
+function normalizeBoxCapacity(value, fallback = 12) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1, Math.min(parsed, 500));
+}
+
 async function ensureSettingsSchema() {
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS address TEXT').catch(() => {});
+  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS producer_number VARCHAR(100)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS slug VARCHAR(180)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
   await pool.query("ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb").catch(() => {});
@@ -186,6 +194,13 @@ exports.updateSettings = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const { company_name, affix_name, siret, producer_number, address } = req.body;
 
+    const currentResult = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
+    const currentSettings = mergeWebsiteSettings(currentResult.rows[0]?.website_settings);
+    const settings = mergeWebsiteSettings({
+      ...currentSettings,
+      kennelBoxCapacity: normalizeBoxCapacity(req.body.kennelBoxCapacity, currentSettings.kennelBoxCapacity),
+    });
+
     await pool.query(
       `
         UPDATE breeder
@@ -195,10 +210,11 @@ exports.updateSettings = async (req, res) => {
             siret = $3,
             producer_number = $4,
             address = $5,
+            website_settings = $6,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $6
+        WHERE id = $7
       `,
-      [company_name, affix_name, siret, producer_number, address, breederId],
+      [company_name, affix_name, siret, producer_number, address, settings, breederId],
     );
 
     res.redirect('/settings?tab=application');
@@ -256,6 +272,7 @@ exports.updateWebsiteSettings = async (req, res) => {
     const settings = mergeWebsiteSettings({
       ...current,
       template: requestedTemplate,
+      kennelBoxCapacity: normalizeBoxCapacity(current.kennelBoxCapacity, 12),
       primaryColor: templateChanged ? templatePalette.primaryColor : (req.body.primaryColor || current.primaryColor),
       secondaryColor: templateChanged ? templatePalette.secondaryColor : (req.body.secondaryColor || current.secondaryColor),
       accentColor: templateChanged ? templatePalette.accentColor : (req.body.accentColor || current.accentColor),
