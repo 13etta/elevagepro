@@ -31,9 +31,6 @@ exports.listDogs = async (req, res) => {
     }
 };
 
-<<<<<<< HEAD
-exports.getForm = async (req, res) => {
-=======
 exports.showDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
@@ -119,7 +116,7 @@ exports.showDog = async (req, res) => {
 
 // 2. Affiche le formulaire de création
 exports.getCreateForm = async (req, res) => {
->>>>>>> 9730011f8ccf2389b4537049da406798bac68cf1
+
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
@@ -186,10 +183,6 @@ exports.saveDog = async (req, res) => {
     }
 };
 
-<<<<<<< HEAD
-=======
-// 6. Supprime un chien
->>>>>>> 9730011f8ccf2389b4537049da406798bac68cf1
 exports.deleteDog = async (req, res) => {
     try {
         await pool.query('DELETE FROM dogs WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);
