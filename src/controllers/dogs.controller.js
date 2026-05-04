@@ -1,11 +1,10 @@
 const { pool } = require('../db');
 
-// 1. Liste tous les chiens
 exports.listDogs = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const { q, sex, status } = req.query;
-
+        
         let query = 'SELECT * FROM dogs WHERE breeder_id = $1';
         let params = [breederId];
 
@@ -28,104 +27,80 @@ exports.listDogs = async (req, res) => {
         res.render('dogs/index', { dogs: result.rows, filters: req.query });
     } catch (error) {
         console.error('Erreur liste chiens:', error);
-        res.status(500).send('Erreur lors du chargement des chiens.');
+        res.status(500).send('Erreur lors du chargement de la liste.');
     }
 };
 
-// 2. Affiche le formulaire de création
-exports.getCreateForm = async (req, res) => {
+exports.getForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
+        const dogId = req.params.id;
         
-        const fathers = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'M' ORDER BY name ASC", [breederId]);
-        const mothers = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ORDER BY name ASC", [breederId]);
+        let dog = { status: 'actif' };
 
-        res.render('dogs/new', { fathers: fathers.rows, mothers: mothers.rows });
+        if (dogId) {
+            const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
+            if (dogRes.rows.length > 0) dog = dogRes.rows[0];
+        }
+
+        // Exclusion du chien lui-même de la liste de ses parents potentiels s'il est en cours de modification
+        let excludeCondition = dogId ? `AND id != $2` : '';
+        let queryParams = dogId ? [breederId, dogId] : [breederId];
+
+        const males = await pool.query(`SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'M' ${excludeCondition} ORDER BY name ASC`, queryParams);
+        const females = await pool.query(`SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ${excludeCondition} ORDER BY name ASC`, queryParams);
+
+        res.render('dogs/form', { dog, males: males.rows, females: females.rows });
     } catch (error) {
-        console.error('Erreur ouverture formulaire:', error);
+        console.error('Erreur formulaire chien:', error);
         res.status(500).send('Erreur serveur.');
     }
 };
 
-// 3. Enregistre un nouveau chien
-exports.createDog = async (req, res) => {
-    try {
-        const breederId = req.session.user.breeder_id;
-        const { name, sex, breed, lof, chip_number, id_scc, birth_date, status, father_id, mother_id, pedigree, notes } = req.body;
-
-        await pool.query(`
-            INSERT INTO dogs (
-                breeder_id, name, sex, breed, lof, chip_number, id_scc, 
-                birth_date, status, father_id, mother_id, pedigree, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        `, [
-            breederId, name, sex, breed, lof, chip_number, id_scc, 
-            birth_date || null, status, father_id || null, mother_id || null, pedigree, notes
-        ]);
-
-        res.redirect('/dogs');
-    } catch (error) {
-        console.error('Erreur création chien:', error);
-        res.status(500).send('Erreur lors de la sauvegarde.');
-    }
-};
-
-// 4. Affiche le formulaire d'édition
-exports.getEditForm = async (req, res) => {
+exports.saveDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
+        
+        let { 
+            name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
+            father_id, mother_id, father_name_external, mother_name_external
+        } = req.body;
 
-        const dogResult = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
-        if (dogResult.rows.length === 0) return res.status(404).send('Chien introuvable.');
+        // Assainissement des données : on écrase le texte si un lien interne est sélectionné
+        if (father_id) father_name_external = null;
+        if (mother_id) mother_name_external = null;
 
-        const fathers = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'M' AND id != $2 ORDER BY name ASC", [breederId, dogId]);
-        const mothers = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND id != $2 ORDER BY name ASC", [breederId, dogId]);
-
-        res.render('dogs/edit', { 
-            dog: dogResult.rows[0],
-            fathers: fathers.rows,
-            mothers: mothers.rows
-        });
-    } catch (error) {
-        console.error('Erreur formulaire édition:', error);
-        res.status(500).send('Erreur serveur.');
-    }
-};
-
-// 5. Met à jour un chien existant
-exports.updateDog = async (req, res) => {
-    try {
-        const breederId = req.session.user.breeder_id;
-        const dogId = req.params.id;
-        const { name, sex, breed, lof, chip_number, id_scc, birth_date, status, father_id, mother_id, pedigree, notes } = req.body;
-
-        await pool.query(`
-            UPDATE dogs SET 
-                name = $1, sex = $2, breed = $3, lof = $4, chip_number = $5, 
-                id_scc = $6, birth_date = $7, status = $8, father_id = $9, 
-                mother_id = $10, pedigree = $11, notes = $12, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $13 AND breeder_id = $14
-        `, [
-            name, sex, breed, lof, chip_number, id_scc, 
-            birth_date || null, status, father_id || null, mother_id || null, pedigree, notes, 
-            dogId, breederId
-        ]);
+        if (dogId) {
+            await pool.query(`
+                UPDATE dogs 
+                SET name = $1, sex = $2, breed = $3, birth_date = $4, chip_number = $5, 
+                    id_scc = $6, pedigree_number = $7, lof = $8, status = $9, notes = $10,
+                    father_id = $11, mother_id = $12, father_name_external = $13, mother_name_external = $14,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $15 AND breeder_id = $16
+            `, [name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes, 
+                father_id || null, mother_id || null, father_name_external, mother_name_external, dogId, breederId]);
+        } else {
+            await pool.query(`
+                INSERT INTO dogs (
+                    breeder_id, name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
+                    father_id, mother_id, father_name_external, mother_name_external
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            `, [breederId, name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes,
+                father_id || null, mother_id || null, father_name_external, mother_name_external]);
+        }
 
         res.redirect('/dogs');
     } catch (error) {
-        console.error('Erreur mise à jour chien:', error);
-        res.status(500).send('Erreur lors de la sauvegarde.');
+        console.error('Erreur sauvegarde chien:', error);
+        res.status(500).send('Erreur lors de la sauvegarde du profil.');
     }
 };
 
-// 6. Supprime un chien (La fonction qui manquait et causait le crash)
 exports.deleteDog = async (req, res) => {
     try {
-        const breederId = req.session.user.breeder_id;
-        const dogId = req.params.id;
-
-        await pool.query('DELETE FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
+        await pool.query('DELETE FROM dogs WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);
         res.redirect('/dogs');
     } catch (error) {
         console.error('Erreur suppression chien:', error);
