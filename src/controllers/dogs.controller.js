@@ -3,17 +3,127 @@ const { pool } = require('../db');
 exports.listDogs = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        const result = await pool.query('SELECT * FROM dogs WHERE breeder_id = $1 ORDER BY name ASC', [breederId]);
-        res.render('dogs/index', { dogs: result.rows });
+        const { q, sex, status } = req.query;
+        
+        let query = 'SELECT * FROM dogs WHERE breeder_id = $1';
+        let params = [breederId];
+
+        if (q) {
+            params.push(`%${q}%`);
+            query += ` AND (name ILIKE $${params.length} OR chip_number ILIKE $${params.length})`;
+        }
+        if (sex) {
+            params.push(sex);
+            query += ` AND sex = $${params.length}`;
+        }
+        if (status) {
+            params.push(status);
+            query += ` AND status = $${params.length}`;
+        }
+
+        query += ' ORDER BY name ASC';
+        const result = await pool.query(query, params);
+
+        res.render('dogs/index', { dogs: result.rows, filters: req.query });
     } catch (error) {
-        res.status(500).send('Erreur chargement.');
+        console.error('Erreur liste chiens:', error);
+        res.status(500).send('Erreur lors du chargement de la liste.');
     }
 };
 
+<<<<<<< HEAD
 exports.getForm = async (req, res) => {
+=======
+exports.showDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
+
+        const dogResult = await pool.query(
+            `
+              SELECT d.*,
+                     father.name AS father_name,
+                     mother.name AS mother_name
+              FROM dogs d
+              LEFT JOIN dogs father ON d.father_id = father.id
+              LEFT JOIN dogs mother ON d.mother_id = mother.id
+              WHERE d.id = $1 AND d.breeder_id = $2
+            `,
+            [dogId, breederId]
+        );
+
+        if (!dogResult.rows.length) {
+            return res.status(404).render('errors/404', {
+                title: 'Chien introuvable',
+                user: req.session.user,
+            });
+        }
+
+        const soins = await pool.query(
+            `
+              SELECT id, type, label, event_date, next_due
+              FROM soins
+              WHERE breeder_id = $1 AND dog_id = $2
+              ORDER BY event_date DESC
+              LIMIT 10
+            `,
+            [breederId, dogId]
+        );
+
+        const reminders = await pool.query(
+            `
+              SELECT id, type, title, due_date, is_completed
+              FROM reminders
+              WHERE breeder_id = $1 AND dog_id = $2 AND is_completed = FALSE
+              ORDER BY due_date ASC
+              LIMIT 10
+            `,
+            [breederId, dogId]
+        );
+
+        const litters = await pool.query(
+            `
+              SELECT id, birth_date, puppies_count_total, notes
+              FROM litters
+              WHERE breeder_id = $1 AND mother_id = $2
+              ORDER BY birth_date DESC
+            `,
+            [breederId, dogId]
+        );
+
+        const puppies = await pool.query(
+            `
+              SELECT p.id, p.name, p.sex, p.color, p.chip_number, p.status, p.sale_price, l.birth_date
+              FROM puppies p
+              JOIN litters l ON p.litter_id = l.id
+              WHERE p.breeder_id = $1 AND l.mother_id = $2
+              ORDER BY l.birth_date DESC, p.name ASC NULLS LAST
+              LIMIT 20
+            `,
+            [breederId, dogId]
+        );
+
+        res.render('dogs/show', {
+            title: dogResult.rows[0].name,
+            dog: dogResult.rows[0],
+            soins: soins.rows,
+            reminders: reminders.rows,
+            litters: litters.rows,
+            puppies: puppies.rows,
+        });
+    } catch (error) {
+        console.error('Erreur fiche chien:', error);
+        res.status(500).send('Erreur lors du chargement de la fiche chien.');
+    }
+};
+
+// 2. Affiche le formulaire de création
+exports.getCreateForm = async (req, res) => {
+>>>>>>> 9730011f8ccf2389b4537049da406798bac68cf1
+    try {
+        const breederId = req.session.user.breeder_id;
+        const dogId = req.params.id;
+        
         let dog = { status: 'actif' };
 
         if (dogId) {
@@ -21,6 +131,7 @@ exports.getForm = async (req, res) => {
             if (dogRes.rows.length > 0) dog = dogRes.rows[0];
         }
 
+        // Exclusion du chien lui-même de la liste de ses parents potentiels s'il est en cours de modification
         let excludeCondition = dogId ? `AND id != $2` : '';
         let queryParams = dogId ? [breederId, dogId] : [breederId];
 
@@ -29,6 +140,7 @@ exports.getForm = async (req, res) => {
 
         res.render('dogs/form', { dog, males: males.rows, females: females.rows });
     } catch (error) {
+        console.error('Erreur formulaire chien:', error);
         res.status(500).send('Erreur serveur.');
     }
 };
@@ -43,6 +155,7 @@ exports.saveDog = async (req, res) => {
             father_id, mother_id, father_name_external, mother_name_external
         } = req.body;
 
+        // Assainissement des données : on écrase le texte si un lien interne est sélectionné
         if (father_id) father_name_external = null;
         if (mother_id) mother_name_external = null;
 
@@ -65,17 +178,24 @@ exports.saveDog = async (req, res) => {
             `, [breederId, name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes,
                 father_id || null, mother_id || null, father_name_external, mother_name_external]);
         }
+
         res.redirect('/dogs');
     } catch (error) {
-        res.status(500).send('Erreur sauvegarde.');
+        console.error('Erreur sauvegarde chien:', error);
+        res.status(500).send('Erreur lors de la sauvegarde du profil.');
     }
 };
 
+<<<<<<< HEAD
+=======
+// 6. Supprime un chien
+>>>>>>> 9730011f8ccf2389b4537049da406798bac68cf1
 exports.deleteDog = async (req, res) => {
     try {
         await pool.query('DELETE FROM dogs WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);
         res.redirect('/dogs');
     } catch (error) {
-        res.status(500).send('Erreur suppression.');
+        console.error('Erreur suppression chien:', error);
+        res.status(500).send('Erreur lors de la suppression.');
     }
 };
