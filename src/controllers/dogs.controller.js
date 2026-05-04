@@ -199,3 +199,8 @@ exports.deleteDog = async (req, res) => {
         res.status(500).send('Erreur lors de la suppression.');
     }
 };
+// version finale propre
+const dog = await Dog.findById(id);
+if (!dog) {
+  return res.status(404).json({ message: "Dog not found" });
+}
