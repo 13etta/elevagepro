@@ -1,0 +1,147 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Pilotage économique</p>
+      <h1>Analyse de rentabilité</h1>
+      <p>Suivez les revenus, les acomptes, les charges et la marge réelle ou prévisionnelle par portée.</p>
+    </div>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Portée</span>
+        <h2>Sélection</h2>
+      </div>
+      <form method="GET" action="/profitability" class="stacked-form">
+        <div class="form-group">
+          <label for="litter_id">Portée analysée</label>
+          <select id="litter_id" name="litter_id" onchange="this.form.submit()">
+            <% litters.forEach((litter) => { %>
+              <option value="<%= litter.id %>" <%= selectedLitter && selectedLitter.id === litter.id ? 'selected' : '' %>>
+                <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Chiots</span>
+        <h2>État commercial</h2>
+      </div>
+      <section class="kpi-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 0;">
+        <article class="kpi-card"><span>Total</span><strong><%= puppyStats.total || 0 %></strong></article>
+        <article class="kpi-card"><span>Réservés</span><strong><%= puppyStats.reserved || 0 %></strong></article>
+        <article class="kpi-card"><span>Vendus</span><strong><%= puppyStats.sold || 0 %></strong></article>
+      </section>
+    </article>
+  </section>
+
+  <section class="kpi-grid">
+    <article class="kpi-card"><span>Chiffre d'affaires signé</span><strong><%= bookedRevenue.toFixed(2) %> €</strong></article>
+    <article class="kpi-card"><span>Encaissement réel</span><strong><%= paidRevenue.toFixed(2) %> €</strong></article>
+    <article class="kpi-card"><span>Charges</span><strong><%= totalExpenses.toFixed(2) %> €</strong></article>
+    <article class="kpi-card"><span>Marge prévisionnelle</span><strong><%= projectedProfit.toFixed(2) %> €</strong></article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Charges</span>
+        <h2>Ajouter une dépense</h2>
+      </div>
+      <form action="/profitability/expenses" method="POST" class="stacked-form">
+        <input type="hidden" name="litter_id" value="<%= selectedLitter ? selectedLitter.id : '' %>">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select name="category" required>
+              <option value="alimentation">Alimentation</option>
+              <option value="veterinaire">Vétérinaire</option>
+              <option value="vermifuge">Vermifuge</option>
+              <option value="vaccin">Vaccin</option>
+              <option value="administratif">Administratif</option>
+              <option value="materiel">Matériel</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Libellé</label>
+          <input type="text" name="label" required placeholder="Ex : croquettes chiots, visite vétérinaire, vaccin...">
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Montant (€)</label>
+            <input type="number" step="0.01" name="amount" required>
+          </div>
+          <div class="form-group">
+            <label>Note</label>
+            <input type="text" name="notes">
+          </div>
+        </div>
+        <button class="btn btn-primary" type="submit">Ajouter la charge</button>
+      </form>
+    </article>
+
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Ventes</span>
+        <h2>Revenus de la portée</h2>
+      </div>
+      <% if (!sales.length) { %>
+        <%- include('../partials/empty-state', { emptyTitle: 'Aucune vente', emptyText: 'Aucune vente ou réservation rattachée à cette portée.' }) %>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Chiot</th><th>Acquéreur</th><th>Prix</th><th>Statut</th></tr></thead>
+          <tbody>
+            <% sales.forEach((sale) => { %>
+              <tr>
+                <td><%= sale.puppy_name || '-' %></td>
+                <td><%= sale.buyer_name || '-' %></td>
+                <td><%= sale.price || 0 %> €</td>
+                <td><span class="badge"><%= sale.is_reservation ? 'Réservation' : 'Vente définitive' %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact">
+      <span class="section-kicker">Historique</span>
+      <h2>Charges enregistrées</h2>
+    </div>
+    <% if (!expenses.length) { %>
+      <%- include('../partials/empty-state', { emptyTitle: 'Aucune charge', emptyText: 'Ajoutez les charges liées à la portée pour calculer une marge réaliste.' }) %>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Montant</th></tr></thead>
+        <tbody>
+          <% expenses.forEach((expense) => { %>
+            <tr>
+              <td><%= formatDate(expense.expense_date) %></td>
+              <td><span class="badge"><%= expense.category %></span></td>
+              <td><%= expense.label %></td>
+              <td><strong><%= Number(expense.amount || 0).toFixed(2) %> €</strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>

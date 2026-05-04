@@ -1,49 +1,92 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
-<main class="container">
-    <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Registre des Ventes</h1>
-        <a href="/sales/new" class="btn btn-primary">Déclarer une vente</a>
-    </div>
-    
-    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-        <span style="color: #7f8c8d;">Chiffre d'affaires totalisé :</span>
-        <h2 style="color: var(--accent-color); margin: 0;"><%= totalRevenue %> €</h2>
-    </div>
 
-    <section class="card">
-        <% if (sales.length === 0) { %>
-            <p style="text-align: center; color: #7f8c8d;">Aucune vente enregistrée pour le moment.</p>
-        <% } else { %>
-            <table class="table" style="width: 100%; text-align: left;">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Chiot</th>
-                        <th>Acquéreur</th>
-                        <th>Prix</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% sales.forEach(sale => { %>
-                        <tr>
-                            <td><%= new Date(sale.sale_date).toLocaleDateString('fr-FR') %></td>
-                            <td><strong><%= sale.puppy_name %></strong></td>
-                            <td><%= sale.buyer_name %></td>
-                            <td><%= sale.price %> €</td>
-                            <td>
-                               <div class="btn-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-    <a href="/sales/<%= sale.id %>/document/reservation" class="btn btn-secondary btn-sm" target="_blank" style="background-color: #f39c12; border-color: #e67e22;">Réservation</a>
-    <a href="/sales/<%= sale.id %>/document/cession" class="btn btn-primary btn-sm" target="_blank">Attestation</a>
-    <a href="/sales/<%= sale.id %>/document/facture" class="btn btn-secondary btn-sm" target="_blank" style="background-color: #7f8c8d;">Facture</a>
-</div>
-                            </td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        <% } %>
-    </section>
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Registre commercial</p>
+      <h1>Ventes & réservations</h1>
+      <p>Suivez les réservations, les ventes définitives, les soldes et les documents de cession.</p>
+    </div>
+    <a href="/sales/new" class="btn btn-primary">Déclarer une vente</a>
+  </section>
+
+  <section class="kpi-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+    <article class="kpi-card">
+      <span>Chiffre d'affaires encaissé</span>
+      <strong><%= totalRevenue %> €</strong>
+    </article>
+    <article class="kpi-card">
+      <span>Transactions</span>
+      <strong><%= sales.length %></strong>
+    </article>
+    <article class="kpi-card">
+      <span>Réservations</span>
+      <strong><%= sales.filter(s => s.is_reservation).length %></strong>
+    </article>
+  </section>
+
+  <section class="table-block">
+    <% if (sales.length === 0) { %>
+      <div class="empty-logo-preview">
+        <strong>0</strong>
+        <p>Aucune transaction enregistrée pour le moment.</p>
+      </div>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Animal</th>
+            <th>Catégorie</th>
+            <th>Acquéreur</th>
+            <th>Prix</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% sales.forEach(sale => { %>
+            <tr>
+              <td><%= formatDate(sale.sale_date) %></td>
+              <td>
+                <strong><%= sale.animal_name || '-' %></strong>
+                <% if (sale.animal_chip_number) { %><br><small><%= sale.animal_chip_number %></small><% } %>
+              </td>
+              <td><%= sale.animal_category || '-' %></td>
+              <td><%= sale.buyer_name || '-' %></td>
+              <td>
+                <%= sale.price || 0 %> €
+                <% if (sale.is_reservation && sale.deposit_amount) { %>
+                  <br><small>Acompte : <%= sale.deposit_amount %> €</small>
+                <% } %>
+              </td>
+              <td>
+                <% if (sale.is_reservation) { %>
+                  <span class="badge">Réservation</span>
+                <% } else { %>
+                  <span class="badge">Vente définitive</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a href="/sales/<%= sale.id %>/edit" class="btn btn-secondary">Modifier</a>
+                  <a href="/sales/<%= sale.id %>/document/information" class="btn btn-secondary" target="_blank">Info besoins</a>
+                  <% if (sale.is_reservation) { %>
+                    <a href="/sales/<%= sale.id %>/document/reservation" class="btn btn-secondary" target="_blank">Réservation</a>
+                  <% } %>
+                  <a href="/sales/<%= sale.id %>/document/facture" class="btn btn-secondary" target="_blank"><%= sale.is_reservation ? 'Facture provisoire' : 'Facture acquittée' %></a>
+                  <% if (!sale.is_reservation) { %>
+                    <a href="/sales/<%= sale.id %>/document/cession" class="btn btn-primary" target="_blank">Cession</a>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
 </main>
+
 <%- include('../partials/foot') %>

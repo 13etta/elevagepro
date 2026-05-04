@@ -1,19 +1,44 @@
-<nav class="sidebar">
-    <div class="logo">ELEVAGE PRO</div>
-    <ul>
-        <li><a href="/dashboard">Tableau de bord</a></li>
-        <li><a href="/dogs">Mes Chiens</a></li>
-        <li><a href="/soins">Soins & Santé</a></li>
-        <li><a href="/reproduction">Reproduction</a></li>
-        <li><a href="/heats">Chaleurs</a></li>
-        <li><a href="/litters">Naissances & Portées</a></li>
-        <li class="nav-item">
-    <a href="/sales" class="nav-link">Ventes & Contrats</a>
-</li>
-        <li><a href="/settings">Parametre</a></li>
+<aside class="sidebar">
+  <a class="brand" href="/dashboard" aria-label="ElevagePro">
+    <span class="brand-mark">EP</span>
+    <span>
+      <strong>ElevagePro</strong>
+      <small><%= __('app.tagline') %></small>
+    </span>
+  </a>
 
-    </ul>
-    <div class="user-info">
-        <a href="/auth/logout">Déconnexion</a>
+  <nav class="nav-sections" aria-label="Navigation principale">
+    <% moduleGroups.forEach((group) => { %>
+      <% const groupModules = modules.filter((module) => module.group === group.key); %>
+      <% if (groupModules.length) { %>
+        <section class="nav-group">
+          <p class="nav-group-title"><%= __(group.labelKey) %></p>
+          <% groupModules.forEach((module) => { %>
+            <a class="nav-link <%= currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'active' : '' %>" href="<%= module.href %>">
+              <span class="nav-icon"><%= module.icon %></span>
+              <span><%= __(module.labelKey) %></span>
+            </a>
+          <% }) %>
+        </section>
+      <% } %>
+    <% }) %>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a class="settings-chip" href="/settings"><%= __('nav.settings') %></a>
+    <a class="logout-link" href="/auth/logout"><%= __('auth.logout') %></a>
+  </div>
+</aside>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow"><%= __('app.name') %></p>
+      <strong><%= __('app.commandCenter') %></strong>
     </div>
-</nav>
+    <div class="topbar-actions">
+      <a class="lang-link <%= currentLang === 'fr' ? 'active' : '' %>" href="?lang=fr">FR</a>
+      <a class="lang-link <%= currentLang === 'en' ? 'active' : '' %>" href="?lang=en">EN</a>
+      <span class="theme-pill"><%= __('themes.' + (theme || 'prestige')) %></span>
+    </div>
+  </header>

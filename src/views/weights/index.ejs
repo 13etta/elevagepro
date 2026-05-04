@@ -1,0 +1,107 @@
+<%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/phase5.css">
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Croissance</p>
+      <h1>Suivi de poids chiots</h1>
+      <p>Surveillez la croissance des chiots, détectez les stagnations et conservez une traçabilité propre portée par portée.</p>
+    </div>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Saisie</span>
+        <h2>Nouveau poids</h2>
+      </div>
+
+      <form action="/weights" method="POST" class="stacked-form">
+        <div class="form-group">
+          <label for="puppy_id">Chiot</label>
+          <select id="puppy_id" name="puppy_id" required onchange="window.location='/weights?puppy_id=' + this.value">
+            <% puppies.forEach((puppy) => { %>
+              <option value="<%= puppy.id %>" <%= selectedPuppy && selectedPuppy.id === puppy.id ? 'selected' : '' %>>
+                <%= puppy.name || 'Chiot sans nom' %>
+                <% if (puppy.mother_name) { %> — portée de <%= puppy.mother_name %><% } %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="weight_date">Date</label>
+            <input type="date" id="weight_date" name="weight_date" required value="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+          <div class="form-group">
+            <label for="weight_grams">Poids en grammes</label>
+            <input type="number" id="weight_grams" name="weight_grams" min="1" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Observation</label>
+          <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer le poids</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Lecture</span>
+        <h2><%= selectedPuppy ? (selectedPuppy.name || 'Chiot sans nom') : 'Aucun chiot' %></h2>
+      </div>
+
+      <section class="kpi-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 0;">
+        <article class="kpi-card">
+          <span>Dernier poids</span>
+          <strong><%= weights.length ? weights[weights.length - 1].weight_grams + ' g' : '-' %></strong>
+        </article>
+        <article class="kpi-card">
+          <span>Évolution</span>
+          <strong><%= gain === null ? '-' : (gain >= 0 ? '+' : '') + gain + ' g' %></strong>
+        </article>
+      </section>
+    </article>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact">
+      <span class="section-kicker">Historique</span>
+      <h2>Courbe de croissance</h2>
+    </div>
+
+    <% if (!weights.length) { %>
+      <%- include('../partials/empty-state', { emptyTitle: 'Aucun poids enregistré', emptyText: 'Ajoutez le premier poids du chiot pour démarrer le suivi de croissance.' }) %>
+    <% } else { %>
+      <div class="growth-chart" data-labels='<%- JSON.stringify(chartLabels) %>' data-values='<%- JSON.stringify(chartValues) %>'>
+        <% const maxWeight = Math.max(...chartValues); %>
+        <% weights.forEach((weight) => { %>
+          <div class="growth-bar" style="height:<%= Math.max(20, Math.round((weight.weight_grams / maxWeight) * 180)) %>px">
+            <span><%= weight.weight_grams %> g</span>
+          </div>
+        <% }) %>
+      </div>
+
+      <table>
+        <thead><tr><th>Date</th><th>Poids</th><th>Observation</th></tr></thead>
+        <tbody>
+          <% weights.slice().reverse().forEach((weight) => { %>
+            <tr>
+              <td><%= formatDate(weight.weight_date) %></td>
+              <td><strong><%= weight.weight_grams %> g</strong></td>
+              <td><%= weight.notes || '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>

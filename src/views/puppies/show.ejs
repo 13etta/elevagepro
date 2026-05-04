@@ -1,0 +1,251 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Fiche chiot</p>
+      <h1><%= puppy.name || 'Chiot sans nom' %></h1>
+      <p><%= puppy.sex || '-' %> — <%= puppy.color || 'Robe non renseignée' %></p>
+    </div>
+    <div class="topbar-actions">
+      <a class="btn btn-secondary" href="/puppies">Retour</a>
+      <button type="button" class="btn btn-secondary" id="openAiAdModal">Générer une annonce IA</button>
+      <a class="btn btn-primary" href="/puppies/edit/<%= puppy.id %>">Modifier</a>
+    </div>
+  </section>
+
+  <section class="kpi-grid">
+    <article class="kpi-card"><span>Statut</span><strong><%= puppy.status || '-' %></strong></article>
+    <article class="kpi-card"><span>Puce</span><strong><%= puppy.chip_number || '-' %></strong></article>
+    <article class="kpi-card"><span>Prix</span><strong><%= puppy.sale_price ? puppy.sale_price + ' €' : '-' %></strong></article>
+    <article class="kpi-card"><span>Portée</span><strong><%= puppy.litter_birth_date ? formatDate(puppy.litter_birth_date) : '-' %></strong></article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Origines</span>
+        <h2>Portée</h2>
+      </div>
+      <p><strong>Mère :</strong> <%= puppy.mother_name || '-' %></p>
+      <p><strong>Père :</strong> <%= puppy.father_name || '-' %></p>
+      <p><strong>Date portée :</strong> <%= puppy.litter_birth_date ? formatDate(puppy.litter_birth_date) : '-' %></p>
+    </article>
+
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Commercial</span>
+        <h2>Vente / réservation</h2>
+      </div>
+      <% if (!sales.length) { %>
+        <p class="muted">Aucune vente ou réservation enregistrée.</p>
+        <a class="btn btn-primary" href="/sales/new">Créer une réservation</a>
+      <% } else { %>
+        <% sales.forEach((sale) => { %>
+          <p>
+            <strong><%= sale.is_reservation ? 'Réservation' : 'Vente définitive' %></strong>
+            — <%= sale.buyer_name || '-' %>
+            — <a href="/sales/<%= sale.id %>/edit">Modifier</a>
+          </p>
+        <% }) %>
+      <% } %>
+    </article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Santé</span>
+        <h2>Soins</h2>
+      </div>
+      <% if (!soins.length) { %>
+        <p class="muted">Aucun soin enregistré.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Acte</th><th>Échéance</th></tr></thead>
+          <tbody>
+            <% soins.forEach((soin) => { %>
+              <tr>
+                <td><%= formatDate(soin.event_date) %></td>
+                <td><%= soin.label %> <small>(<%= soin.type %>)</small></td>
+                <td><%= soin.next_due ? formatDate(soin.next_due) : '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Prioritaire</span>
+        <h2>Rappels</h2>
+      </div>
+      <% if (!reminders.length) { %>
+        <p class="muted">Aucun rappel actif.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Libellé</th></tr></thead>
+          <tbody>
+            <% reminders.forEach((reminder) => { %>
+              <tr>
+                <td><%= formatDate(reminder.due_date) %></td>
+                <td><%= reminder.title %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+  </section>
+</main>
+
+<div id="aiAdModal" class="confirm-modal" aria-hidden="true">
+  <div class="confirm-modal-backdrop" data-ai-close></div>
+  <div class="confirm-modal-card ai-ad-modal-card" role="dialog" aria-modal="true" aria-labelledby="aiAdTitle">
+    <span class="confirm-modal-icon">IA</span>
+    <h2 id="aiAdTitle">Générer une annonce de vente</h2>
+    <p class="muted">L’agent utilise les données saisies sur le chiot, la portée, les parents et l’élevage. Le texte doit toujours être relu avant publication.</p>
+
+    <form id="aiAdForm" class="stacked-form ai-ad-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-group">
+        <label for="aiTone">Ton de l’annonce</label>
+        <select id="aiTone" name="tone">
+          <option value="professional">Professionnel</option>
+          <option value="warm">Chaleureux</option>
+          <option value="premium">Premium / sélection</option>
+        </select>
+      </div>
+
+      <label class="ai-checkbox">
+        <input type="checkbox" name="show_chip_number" value="true">
+        Afficher le numéro de puce dans l’annonce
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-loading" id="generateAiAdButton">
+        <span class="btn-label">Générer l’annonce</span>
+        <span class="btn-spinner" aria-hidden="true"></span>
+      </button>
+    </form>
+
+    <div id="aiAdResult" class="ai-ad-result" hidden>
+      <div class="ai-ad-meta">
+        <span id="aiAdProvider" class="badge"></span>
+        <span id="aiAdMissing" class="badge badge-warning"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="aiAdTitleOutput">Titre</label>
+        <input id="aiAdTitleOutput" readonly>
+      </div>
+
+      <div class="form-group">
+        <label for="aiAdLongOutput">Annonce longue</label>
+        <textarea id="aiAdLongOutput" rows="10"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="aiAdSocialOutput">Post réseaux sociaux</label>
+        <textarea id="aiAdSocialOutput" rows="5"></textarea>
+      </div>
+
+      <p id="aiAdCaution" class="muted"></p>
+
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-secondary" id="copyAiAdButton">Copier l’annonce longue</button>
+        <button type="button" class="btn btn-secondary" data-ai-close>Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const modal = document.getElementById('aiAdModal');
+  const openButton = document.getElementById('openAiAdModal');
+  const form = document.getElementById('aiAdForm');
+  const submitButton = document.getElementById('generateAiAdButton');
+  const resultBlock = document.getElementById('aiAdResult');
+  const provider = document.getElementById('aiAdProvider');
+  const missing = document.getElementById('aiAdMissing');
+  const titleOutput = document.getElementById('aiAdTitleOutput');
+  const longOutput = document.getElementById('aiAdLongOutput');
+  const socialOutput = document.getElementById('aiAdSocialOutput');
+  const caution = document.getElementById('aiAdCaution');
+  const copyButton = document.getElementById('copyAiAdButton');
+
+  function openModal() {
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('aiTone').focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  openButton.addEventListener('click', openModal);
+  modal.querySelectorAll('[data-ai-close]').forEach((element) => element.addEventListener('click', closeModal));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    submitButton.disabled = true;
+    submitButton.classList.add('is-loading');
+    submitButton.querySelector('.btn-label').textContent = 'Génération en cours...';
+    resultBlock.hidden = true;
+
+    try {
+      const formData = new FormData(form);
+      const response = await fetch('/puppies/<%= puppy.id %>/generate-ad', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRF-Token': '<%= csrfToken %>',
+        },
+        body: new URLSearchParams(formData),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Erreur de génération.');
+
+      provider.textContent = payload.provider === 'local-fallback' ? 'Mode local' : `IA : ${payload.provider}`;
+      missing.textContent = payload.missing_information?.length
+        ? `Infos manquantes : ${payload.missing_information.join(', ')}`
+        : 'Données suffisantes';
+      titleOutput.value = payload.title || '';
+      longOutput.value = payload.long_ad || '';
+      socialOutput.value = payload.social_post || '';
+      caution.textContent = payload.legal_caution || '';
+      resultBlock.hidden = false;
+    } catch (error) {
+      provider.textContent = 'Erreur';
+      missing.textContent = error.message;
+      titleOutput.value = '';
+      longOutput.value = '';
+      socialOutput.value = '';
+      caution.textContent = 'La génération a échoué. Vérifiez la configuration IA ou réessayez.';
+      resultBlock.hidden = false;
+    } finally {
+      submitButton.disabled = false;
+      submitButton.classList.remove('is-loading');
+      submitButton.querySelector('.btn-label').textContent = 'Générer l’annonce';
+    }
+  });
+
+  copyButton.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(longOutput.value || '');
+    copyButton.textContent = 'Annonce copiée';
+    setTimeout(() => { copyButton.textContent = 'Copier l’annonce longue'; }, 1600);
+  });
+})();
+</script>
+
+<%- include('../partials/foot') %>

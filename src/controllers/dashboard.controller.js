@@ -1,72 +1,290 @@
 const { pool } = require('../db');
 
+function toNumber(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function buildMonthLabel(monthKey) {
+  if (!monthKey) return '-';
+  const [year, month] = monthKey.split('-').map(Number);
+  const date = new Date(year, month - 1, 1);
+
+  return date.toLocaleDateString('fr-FR', {
+    month: 'short',
+    year: '2-digit',
+  });
+}
+
+function resolveBoxCapacity(settings) {
+  const configured = Number.parseInt(settings?.kennelBoxCapacity, 10);
+  if (Number.isFinite(configured) && configured > 0) return configured;
+
+  const envValue = Number.parseInt(process.env.KENNEL_BOX_CAPACITY || process.env.BOX_CAPACITY || '12', 10);
+  return Number.isFinite(envValue) && envValue > 0 ? envValue : 12;
+}
+
 exports.getDashboard = async (req, res) => {
-    try {
-        const breederId = req.session.user.breeder_id;
+  try {
+    const breederId = req.session.user.breeder_id;
 
-        // 1. Calcul des KPIs avec la bonne casse et les bonnes conditions
-        const activeDogs = await pool.query(`SELECT count(*) FROM dogs WHERE breeder_id = $1 AND status = 'Actif'`, [breederId]);
-        
-        // J'utilise ILIKE pour que 'disponible' ou 'Disponible' soient tous les deux comptés
-        const availablePuppies = await pool.query(`SELECT count(*) FROM puppies WHERE breeder_id = $1 AND status ILIKE 'disponible'`, [breederId]);
-        
-        // Correction du KPI : on ne compte que les portées nécessitant une action
-        const activeLitters = await pool.query(`SELECT count(*) FROM litters WHERE breeder_id = $1 AND status IN ('active', 'sevrage')`, [breederId]);
-        const ongoingPregnancies = await pool.query(`SELECT count(*) FROM pregnancies WHERE breeder_id = $1 AND result = 'En cours'`, [breederId]);
+    const breederSettingsRes = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
+    const breederSettings = breederSettingsRes.rows[0]?.website_settings || {};
 
-        const kpis = {
-            activeDogs: activeDogs.rows[0].count,
-            availablePuppies: availablePuppies.rows[0].count,
-            activeLitters: activeLitters.rows[0].count,
-            ongoingPregnancies: ongoingPregnancies.rows[0].count
-        };
+    const activeDogs = await pool.query(
+      `
+        SELECT count(*)
+        FROM dogs
+        WHERE breeder_id = $1
+          AND COALESCE(lower(status), 'actif') NOT IN ('archivé', 'archive', 'archived', 'inactif')
+      `,
+      [breederId],
+    );
 
-        // 2. Récupération des rappels
-        const remindersRes = await pool.query(`
-            SELECT r.due_date, r.title AS label, d.name AS dog_name
-            FROM reminders r
-            LEFT JOIN dogs d ON r.dog_id = d.id
-            WHERE r.breeder_id = $1 AND r.is_completed = FALSE
-            ORDER BY r.due_date ASC
-            LIMIT 5
-        `, [breederId]);
+    const availablePuppies = await pool.query(
+      `
+        SELECT count(*)
+        FROM puppies
+        WHERE breeder_id = $1
+          AND COALESCE(is_sold, false) = false
+          AND COALESCE(lower(status), 'disponible') NOT IN ('vendu', 'vendue', 'sold')
+      `,
+      [breederId],
+    );
 
-        // 3. Récupération des soins récents
-        const soinsRes = await pool.query(`
-            SELECT s.event_date, s.type, s.label, d.name AS dog_name
-            FROM soins s
-            LEFT JOIN dogs d ON s.dog_id = d.id
-            WHERE s.breeder_id = $1
-            ORDER BY s.event_date DESC
-            LIMIT 5
-        `, [breederId]);
+    const reservedPuppies = await pool.query(
+      `
+        SELECT count(*)
+        FROM puppies
+        WHERE breeder_id = $1
+          AND COALESCE(lower(status), '') IN ('réservé', 'reserve', 'reserved', 'option', 'réservation')
+      `,
+      [breederId],
+    );
 
-        // 4. Récupération des ventes
-        const salesRes = await pool.query(`
-            SELECT sale_date, buyer_name AS buyer_firstname, price AS total_price
-            FROM sales
-            WHERE breeder_id = $1
-            ORDER BY sale_date DESC
-            LIMIT 5
-        `, [breederId]);
+    const activeLitters = await pool.query(
+      `
+        SELECT count(*)
+        FROM litters
+        WHERE breeder_id = $1
+          AND COALESCE(lower(status), 'active') IN ('active', 'sevrage', 'en cours', 'en_cours')
+      `,
+      [breederId],
+    );
 
-        // 5. Utilitaire de formatage
-        const formatDate = (dateString) => {
-            if (!dateString) return '-';
-            return new Date(dateString).toLocaleDateString('fr-FR');
-        };
+    const ongoingPregnancies = await pool.query(
+      `
+        SELECT count(*)
+        FROM pregnancies
+        WHERE breeder_id = $1
+          AND COALESCE(lower(result), 'en cours') IN ('en cours', 'en_cours', 'active', 'confirmée', 'confirmee')
+      `,
+      [breederId],
+    );
 
-        res.render('dashboard', {
-            kpis,
-            reminders: remindersRes.rows,
-            soins: soinsRes.rows,
-            sales: salesRes.rows,
-            formatDate,
-            user: req.session.user
-        });
+    const incompleteSales = await pool.query(
+      `
+        SELECT count(*)
+        FROM sales
+        WHERE breeder_id = $1
+          AND COALESCE(is_reservation, FALSE) = TRUE
+      `,
+      [breederId],
+    );
 
-    } catch (error) {
-        console.error('Erreur lors du chargement du Dashboard:', error);
-        res.status(500).send('Erreur serveur lors de la génération du tableau de bord.');
-    }
+    const puppiesWithoutChip = await pool.query(
+      `
+        SELECT count(*)
+        FROM puppies
+        WHERE breeder_id = $1
+          AND COALESCE(chip_number, '') = ''
+          AND COALESCE(lower(status), '') NOT IN ('vendu', 'vendue', 'sold')
+      `,
+      [breederId],
+    );
+
+    const monthlySales = await pool.query(
+      `
+        SELECT
+          to_char(months.month_start, 'YYYY-MM') AS month_key,
+          COALESCE(SUM(s.price), 0)::numeric AS total
+        FROM generate_series(
+          date_trunc('month', CURRENT_DATE)::timestamp - INTERVAL '5 months',
+          date_trunc('month', CURRENT_DATE)::timestamp,
+          INTERVAL '1 month'
+        ) AS months(month_start)
+        LEFT JOIN sales s
+          ON s.breeder_id = $1
+         AND date_trunc('month', COALESCE(s.sale_date, s.created_at::date)::timestamp) = months.month_start
+        GROUP BY months.month_start
+        ORDER BY months.month_start ASC
+      `,
+      [breederId],
+    );
+
+    const upcomingRemindersCount = await pool.query(
+      `
+        SELECT count(*)
+        FROM reminders
+        WHERE breeder_id = $1
+          AND COALESCE(is_completed, FALSE) = FALSE
+          AND due_date <= CURRENT_DATE + INTERVAL '7 days'
+      `,
+      [breederId],
+    );
+
+    const activeDogsCount = toNumber(activeDogs.rows[0].count);
+    const boxCapacity = Math.max(resolveBoxCapacity(breederSettings), 1);
+    const boxOccupancyRate = Math.min(100, Math.round((activeDogsCount / boxCapacity) * 100));
+
+    const salesSeries = monthlySales.rows.map((row) => ({
+      month: row.month_key,
+      label: buildMonthLabel(row.month_key),
+      total: toNumber(row.total),
+    }));
+
+    const currentMonthSales = salesSeries.length ? salesSeries[salesSeries.length - 1].total : 0;
+    const maxMonthlySales = Math.max(...salesSeries.map((row) => row.total), 1);
+
+    const kpis = {
+      activeDogs: activeDogsCount,
+      availablePuppies: toNumber(availablePuppies.rows[0].count),
+      reservedPuppies: toNumber(reservedPuppies.rows[0].count),
+      activeLitters: toNumber(activeLitters.rows[0].count),
+      ongoingPregnancies: toNumber(ongoingPregnancies.rows[0].count),
+      incompleteSales: toNumber(incompleteSales.rows[0].count),
+      puppiesWithoutChip: toNumber(puppiesWithoutChip.rows[0].count),
+      boxCapacity,
+      boxOccupancyRate,
+      currentMonthSales,
+      upcomingReminders: toNumber(upcomingRemindersCount.rows[0].count),
+    };
+
+    const remindersRes = await pool.query(
+      `
+        SELECT
+          r.due_date,
+          r.title AS label,
+          COALESCE(d.name, p.name, lm.name) AS dog_name,
+          CASE
+            WHEN r.puppy_id IS NOT NULL THEN 'Chiot'
+            WHEN r.litter_id IS NOT NULL THEN 'Portée'
+            WHEN r.dog_id IS NOT NULL THEN 'Chien'
+            ELSE 'Général'
+          END AS scope
+        FROM reminders r
+        LEFT JOIN dogs d ON r.dog_id = d.id
+        LEFT JOIN puppies p ON r.puppy_id = p.id
+        LEFT JOIN litters l ON r.litter_id = l.id
+        LEFT JOIN dogs lm ON l.mother_id = lm.id
+        WHERE r.breeder_id = $1
+          AND COALESCE(r.is_completed, FALSE) = FALSE
+        ORDER BY r.due_date ASC
+        LIMIT 8
+      `,
+      [breederId],
+    );
+
+    const soinsRes = await pool.query(
+      `
+        SELECT s.event_date, s.type, s.label, COALESCE(d.name, p.name) AS dog_name
+        FROM soins s
+        LEFT JOIN dogs d ON s.dog_id = d.id
+        LEFT JOIN puppies p ON s.puppy_id = p.id
+        WHERE s.breeder_id = $1
+        ORDER BY s.event_date DESC
+        LIMIT 5
+      `,
+      [breederId],
+    ).catch(() => ({ rows: [] }));
+
+    const salesRes = await pool.query(
+      `
+        SELECT
+          sale_date,
+          buyer_name AS buyer_firstname,
+          price AS total_price,
+          is_reservation,
+          deposit_amount
+        FROM sales
+        WHERE breeder_id = $1
+        ORDER BY COALESCE(sale_date, created_at::date) DESC
+        LIMIT 5
+      `,
+      [breederId],
+    );
+
+    const lateReminders = remindersRes.rows.filter((r) => r.due_date && new Date(r.due_date) < new Date());
+
+    const salesToFinalize = await pool.query(
+      `
+        SELECT
+          s.id,
+          s.buyer_name,
+          s.price,
+          s.deposit_amount,
+          COALESCE(p.name, d.name) AS animal_name
+        FROM sales s
+        LEFT JOIN puppies p ON s.puppy_id = p.id
+        LEFT JOIN dogs d ON s.dog_id = d.id
+        WHERE s.breeder_id = $1
+          AND COALESCE(s.is_reservation, FALSE) = TRUE
+        ORDER BY COALESCE(s.sale_date, s.created_at::date) ASC
+        LIMIT 5
+      `,
+      [breederId],
+    );
+
+    const littersWithoutPuppies = await pool.query(
+      `
+        SELECT l.id, l.birth_date, d.name AS mother_name
+        FROM litters l
+        LEFT JOIN dogs d ON l.mother_id = d.id
+        LEFT JOIN puppies p ON p.litter_id = l.id
+        WHERE l.breeder_id = $1
+          AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage', 'en cours', 'en_cours')
+        GROUP BY l.id, d.name
+        HAVING count(p.id) = 0
+        ORDER BY l.birth_date DESC
+        LIMIT 5
+      `,
+      [breederId],
+    );
+
+    const alerts = [];
+    if (lateReminders.length) alerts.push({ level: 'danger', title: `${lateReminders.length} rappel(s) en retard`, href: '/reminders' });
+    if (salesToFinalize.rows.length) alerts.push({ level: 'warning', title: `${salesToFinalize.rows.length} réservation(s) à finaliser`, href: '/sales' });
+    if (littersWithoutPuppies.rows.length) alerts.push({ level: 'warning', title: `${littersWithoutPuppies.rows.length} portée(s) sans chiots enregistrés`, href: '/litters' });
+    if (Number(kpis.puppiesWithoutChip) > 0) alerts.push({ level: 'info', title: `${kpis.puppiesWithoutChip} chiot(s) sans identification`, href: '/puppies' });
+    if (kpis.boxOccupancyRate >= 90) alerts.push({ level: 'warning', title: `Occupation des box à ${kpis.boxOccupancyRate}%`, href: '/settings?tab=application' });
+
+    const formatDate = (dateString) => {
+      if (!dateString) return '-';
+      return new Date(dateString).toLocaleDateString('fr-FR');
+    };
+
+    const formatCurrency = (value) => new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(toNumber(value));
+
+    res.render('dashboard', {
+      kpis,
+      alerts,
+      reminders: remindersRes.rows,
+      soins: soinsRes.rows,
+      sales: salesRes.rows,
+      salesToFinalize: salesToFinalize.rows,
+      littersWithoutPuppies: littersWithoutPuppies.rows,
+      salesSeries,
+      maxMonthlySales,
+      formatDate,
+      formatCurrency,
+      user: req.session.user,
+    });
+  } catch (error) {
+    console.error('Erreur lors du chargement du Dashboard:', error);
+    res.status(500).send('Erreur serveur lors de la génération du tableau de bord.');
+  }
 };

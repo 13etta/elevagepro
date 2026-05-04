@@ -1,0 +1,7 @@
+<div class="empty-state">
+  <strong><%= typeof emptyTitle !== 'undefined' ? emptyTitle : 'Aucune donnée' %></strong>
+  <p><%= typeof emptyText !== 'undefined' ? emptyText : 'Aucun élément à afficher pour le moment.' %></p>
+  <% if (typeof emptyHref !== 'undefined' && emptyHref) { %>
+    <a class="btn btn-primary" href="<%= emptyHref %>"><%= typeof emptyAction !== 'undefined' ? emptyAction : 'Ajouter' %></a>
+  <% } %>
+</div>

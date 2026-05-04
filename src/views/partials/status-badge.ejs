@@ -1,0 +1,5 @@
+<% const rawStatus = typeof status !== 'undefined' && status ? String(status) : '-'; %>
+<% const normalizedStatus = rawStatus.toLowerCase(); %>
+<span class="badge status-badge status-<%= normalizedStatus.replace(/[^a-z0-9]+/g, '-') %>">
+  <%= rawStatus %>
+</span>

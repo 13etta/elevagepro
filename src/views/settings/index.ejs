@@ -1,95 +1,328 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
-<main class="container">
-  <div class="header-actions">
-      <h1>Paramètres de l'élevage</h1>
-  </div>
-  <p style="color: #7f8c8d; margin-top:-1rem; margin-bottom: 2rem;">
-      Ces informations apparaîtront automatiquement sur les contrats, factures et attestations de cession.
-  </p>
 
-  <div class="form-grid" style="align-items: start;">
-      
-      <section class="form-block card">
-          <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Informations Légales</h3>
-          <form action="/settings" method="POST">
-              <div class="form-group">
-                  <label for="company_name">Nom de l'entreprise / Élevage *</label>
-                  <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name %>" required>
-              </div>
-              
-              <div class="form-group">
-                  <label for="affix_name">Nom d'Affixe (FCI/SCC)</label>
-                  <input type="text" id="affix_name" name="affix_name" value="<%= breeder.affix_name || '' %>">
-              </div>
-
-              <div class="form-group">
-                  <label for="siret">Numéro de SIRET</label>
-                  <input type="text" id="siret" name="siret" value="<%= breeder.siret || '' %>">
-              </div>
-
-              <div class="form-group">
-                  <label for="address">Adresse postale complète</label>
-                  <textarea id="address" name="address" rows="3" required><%= breeder.address || '' %></textarea>
-              </div>
-
-              <button type="submit" class="btn btn-primary">Enregistrer les informations</button>
-          </form>
-      </section>
-
-      <section class="form-block card" style="background-color: #fdfdfd;">
-          <h3 style="color: var(--accent-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Identité Visuelle</h3>
-          <p style="font-size: 0.9rem; color: #7f8c8d;">Téléchargez votre logo pour personnaliser vos PDF.</p>
-          
-          <form action="/settings/logo" method="POST" enctype="multipart/form-data">
-    <% if (breeder.logo_url) { %>
-        <div style="text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-            <img src="<%= breeder.logo_url %>" alt="Logo de l'élevage" style="max-height: 120px; max-width: 100%; object-fit: contain;">
-        </div>
-    <% } else { %>
-        <div style="text-align: center; padding: 2rem; border: 2px dashed #bdc3c7; border-radius: 8px; margin-bottom: 1rem;">
-            <span style="font-size: 2rem;">[IMAGE]</span>
-            <p>Aucun logo configuré.</p>
-        </div>
+<main class="container settings-builder-page">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow"><%= __('settings.title') %></p>
+      <h1>Centre de réglage ElevagePro</h1>
+      <p>Un espace pour séparer clairement les paramètres internes de l’application et le générateur de site vitrine public.</p>
+    </div>
+    <% if (typeof publicSiteUrl !== 'undefined') { %>
+      <a class="btn btn-secondary" href="<%= publicSiteUrl %>" target="_blank">Voir la vitrine</a>
     <% } %>
-    
-    <div class="form-group">
-        <label for="logo">Choisir une image (PNG, JPG, WEBP)</label>
-        <input type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/webp" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-    </div>
-    
-    <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">Uploader et Sauvegarder</button>
-</form>
-      </section>
+  </section>
 
-  </div>
-  <section class="settings-module card">
-  <h2><%= __('settings.appearance') %></h2>
-  
-  <div class="setting-item">
-    <label><%= __('settings.language') %></label>
-    <select onchange="window.location.href='?lang=' + this.value">
-      <option value="fr" <%= currentLang === 'fr' ? 'selected' : '' %>>Français</option>
-      <option value="en" <%= currentLang === 'en' ? 'selected' : '' %>>English</option>
-    </select>
-  </div>
+  <nav class="settings-tabs" aria-label="Onglets paramètres">
+    <a class="settings-tab <%= activeSettingsTab === 'application' ? 'active' : '' %>" href="/settings?tab=application">Application</a>
+    <a class="settings-tab <%= activeSettingsTab === 'vitrine' ? 'active' : '' %>" href="/settings?tab=vitrine">Site vitrine</a>
+  </nav>
 
-  <div class="setting-item">
-    <label>Couleur de l'application</label>
-    <div class="theme-selector">
-      <button onclick="setTheme('default')" class="btn-theme nature">Nature</button>
-      <button onclick="setTheme('professional')" class="btn-theme pro">Pro</button>
-      <button onclick="setTheme('dark')" class="btn-theme dark">Sombre</button>
-    </div>
-  </div>
-</section>
+  <% if (activeSettingsTab === 'application') { %>
+    <section class="settings-grid">
+      <article class="card settings-card">
+        <div class="section-title">
+          <span class="section-kicker">Application</span>
+          <h2>Identité de l’élevage</h2>
+          <p class="muted">Ces informations alimentent ElevagePro et peuvent aussi être reprises par la vitrine.</p>
+        </div>
 
-<script>
-  function setTheme(themeName) {
-    document.cookie = "theme=" + themeName + ";path=/;max-age=31536000";
-    document.documentElement.setAttribute('data-theme', themeName);
-    location.reload(); // Pour appliquer partout immédiatement
-  }
-</script>
+        <form action="/settings" method="POST" class="stacked-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-group">
+            <label for="company_name"><%= __('settings.companyName') %></label>
+            <input type="text" id="company_name" name="company_name" value="<%= breeder.company_name || breeder.name || '' %>" required>
+          </div>
+
+          <div class="form-group">
+            <label for="affix_name"><%= __('settings.affixName') %></label>
+            <input type="text" id="affix_name" name="affix_name" value="<%= breeder.affix_name || '' %>">
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="siret"><%= __('settings.siret') %></label>
+              <input type="text" id="siret" name="siret" value="<%= breeder.siret || '' %>">
+            </div>
+            <div class="form-group">
+              <label for="producer_number">N° producteur</label>
+              <input type="text" id="producer_number" name="producer_number" value="<%= breeder.producer_number || '' %>">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address"><%= __('settings.address') %></label>
+            <textarea id="address" name="address" rows="4"><%= breeder.address || '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="kennelBoxCapacity">Capacité des box / places disponibles</label>
+            <input type="number" id="kennelBoxCapacity" name="kennelBoxCapacity" min="1" max="500" step="1" value="<%= websiteSettings.kennelBoxCapacity || 12 %>" required>
+            <small class="muted">Cette valeur pilote la jauge d’occupation du dashboard : chiens actifs / capacité déclarée.</small>
+          </div>
+
+          <button type="submit" class="btn btn-primary"><%= __('settings.saveIdentity') %></button>
+        </form>
+      </article>
+
+      <article class="card settings-card">
+        <div class="section-title">
+          <span class="section-kicker"><%= __('settings.appearance') %></span>
+          <h2>Préférences internes</h2>
+          <p class="muted">Ces réglages ne concernent que l’interface de gestion ElevagePro.</p>
+        </div>
+
+        <form action="/settings/preferences" method="POST" class="stacked-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-group">
+            <label for="lang"><%= __('settings.language') %></label>
+            <select id="lang" name="lang">
+              <option value="fr" <%= currentLang === 'fr' ? 'selected' : '' %>>Français</option>
+              <option value="en" <%= currentLang === 'en' ? 'selected' : '' %>>English</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="theme"><%= __('settings.theme') %></label>
+            <select id="theme" name="theme">
+              <option value="prestige" <%= theme === 'prestige' ? 'selected' : '' %>><%= __('themes.prestige') %></option>
+              <option value="clinical" <%= theme === 'clinical' ? 'selected' : '' %>><%= __('themes.clinical') %></option>
+              <option value="nature" <%= theme === 'nature' ? 'selected' : '' %>><%= __('themes.nature') %></option>
+            </select>
+          </div>
+
+          <div class="theme-preview-grid">
+            <div class="theme-preview prestige"><span></span><strong><%= __('themes.prestige') %></strong></div>
+            <div class="theme-preview clinical"><span></span><strong><%= __('themes.clinical') %></strong></div>
+            <div class="theme-preview nature"><span></span><strong><%= __('themes.nature') %></strong></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary"><%= __('settings.savePreferences') %></button>
+        </form>
+      </article>
+
+      <article class="card settings-card settings-logo-card">
+        <div class="section-title">
+          <span class="section-kicker"><%= __('settings.visualIdentity') %></span>
+          <h2><%= __('settings.logo') %></h2>
+        </div>
+
+        <% if (breeder.logo_url || breeder.logo) { %>
+          <div class="logo-preview">
+            <img src="<%= breeder.logo_url || breeder.logo %>" alt="<%= __('settings.logo') %>">
+          </div>
+        <% } else { %>
+          <div class="empty-logo-preview">
+            <strong>EP</strong>
+            <p><%= __('settings.noLogo') %></p>
+          </div>
+        <% } %>
+
+        <form action="/settings/logo" method="POST" enctype="multipart/form-data" class="stacked-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="form-group">
+            <label for="logo"><%= __('settings.chooseLogo') %></label>
+            <input type="file" id="logo" name="logo" accept="image/png, image/jpeg, image/webp" required>
+          </div>
+          <button type="submit" class="btn btn-secondary"><%= __('settings.uploadLogo') %></button>
+        </form>
+      </article>
+    </section>
+  <% } %>
+
+  <% if (activeSettingsTab === 'vitrine') { %>
+    <section class="card settings-card settings-logo-card">
+      <div class="section-title">
+        <span class="section-kicker">Site vitrine</span>
+        <h2>Générateur de site public</h2>
+        <p class="muted">Le template Héritage est le modèle de référence : sérieux, traditionnel, professionnel et adapté à un élevage installé.</p>
+      </div>
+
+      <form action="/settings/website" method="POST" enctype="multipart/form-data" class="stacked-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="settings-panel">
+          <div class="section-title compact">
+            <span class="section-kicker">Template</span>
+            <h3>Choix graphique</h3>
+          </div>
+          <div class="template-picker">
+            <% const templateLabels = { heritage: 'Héritage — recommandé', field: 'Field & chasse', luxury: 'Premium sombre', minimal: 'Minimal moderne', breeder: 'Catalogue élevage' }; %>
+            <% websiteTemplates.forEach((tpl) => { %>
+              <label class="template-option <%= websiteSettings.template === tpl ? 'selected' : '' %>">
+                <input type="radio" name="template" value="<%= tpl %>" <%= websiteSettings.template === tpl ? 'checked' : '' %>>
+                <strong><%= templateLabels[tpl] || tpl %></strong>
+                <span><%= tpl %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact">
+              <span class="section-kicker">Accueil</span>
+              <h3>Hero de page</h3>
+            </div>
+            <div class="form-group">
+              <label for="heroTitle">Titre principal</label>
+              <input type="text" id="heroTitle" name="heroTitle" value="<%= websiteSettings.heroTitle || '' %>">
+            </div>
+            <div class="form-group">
+              <label for="heroSubtitle">Texte d’introduction</label>
+              <textarea id="heroSubtitle" name="heroSubtitle" rows="4"><%= websiteSettings.heroSubtitle || '' %></textarea>
+            </div>
+            <div class="form-group">
+              <label for="siteSlogan">Slogan d’en-tête institutionnel</label>
+              <input type="text" id="siteSlogan" name="siteSlogan" value="<%= websiteSettings.siteSlogan || '' %>">
+            </div>
+            <% if (websiteSettings.heroImageUrl) { %>
+              <div class="mini-gallery"><img src="<%= websiteSettings.heroImageUrl %>" alt="Image d’accueil"></div>
+              <label><input type="checkbox" name="clearHeroImage"> Supprimer l’image d’accueil</label>
+            <% } %>
+            <div class="form-group">
+              <label for="hero_image">Remplacer / ajouter l’image d’accueil</label>
+              <input type="file" id="hero_image" name="hero_image" accept="image/png, image/jpeg, image/webp">
+            </div>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact">
+              <span class="section-kicker">Couleurs</span>
+              <h3>Palette complète</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group"><label>Principale</label><input type="color" name="primaryColor" value="<%= websiteSettings.primaryColor || '#6d7c45' %>"></div>
+              <div class="form-group"><label>Secondaire</label><input type="color" name="secondaryColor" value="<%= websiteSettings.secondaryColor || '#c8b397' %>"></div>
+              <div class="form-group"><label>Accent</label><input type="color" name="accentColor" value="<%= websiteSettings.accentColor || '#2b2014' %>"></div>
+              <div class="form-group"><label>Fond</label><input type="color" name="backgroundColor" value="<%= websiteSettings.backgroundColor || '#f6f1e8' %>"></div>
+              <div class="form-group"><label>Texte</label><input type="color" name="textColor" value="<%= websiteSettings.textColor || '#2b2014' %>"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Sections</span><h3>Afficher / masquer</h3></div>
+            <label><input type="checkbox" name="showIntro" <%= websiteSettings.showIntro ? 'checked' : '' %>> Introduction</label><br>
+            <label><input type="checkbox" name="showPuppies" <%= websiteSettings.showPuppies ? 'checked' : '' %>> Chiots</label><br>
+            <label><input type="checkbox" name="showLitters" <%= websiteSettings.showLitters ? 'checked' : '' %>> Portées</label><br>
+            <label><input type="checkbox" name="showDogs" <%= websiteSettings.showDogs ? 'checked' : '' %>> Chiens</label><br>
+            <label><input type="checkbox" name="showServices" <%= websiteSettings.showServices ? 'checked' : '' %>> Services</label><br>
+            <label><input type="checkbox" name="showGallery" <%= websiteSettings.showGallery ? 'checked' : '' %>> Galerie</label><br>
+            <label><input type="checkbox" name="showStrengths" <%= websiteSettings.showStrengths ? 'checked' : '' %>> Points forts</label><br>
+            <label><input type="checkbox" name="showContact" <%= websiteSettings.showContact ? 'checked' : '' %>> Contact</label>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Introduction</span><h3>Texte éditorial</h3></div>
+            <div class="form-group"><label>Titre introduction</label><input name="introTitle" value="<%= websiteSettings.introTitle || '' %>"></div>
+            <div class="form-group"><label>Texte introduction</label><textarea name="introText" rows="5"><%= websiteSettings.introText || '' %></textarea></div>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Barre contact</span><h3>Appel à l’action</h3></div>
+            <div class="form-group"><label>Titre barre contact</label><input name="contactStripTitle" value="<%= websiteSettings.contactStripTitle || '' %>"></div>
+            <div class="form-group"><label>Texte barre contact</label><textarea name="contactStripText" rows="3"><%= websiteSettings.contactStripText || '' %></textarea></div>
+            <div class="form-grid">
+              <div class="form-group"><label>Bouton principal</label><input name="primaryCtaLabel" value="<%= websiteSettings.primaryCtaLabel || '' %>"></div>
+              <div class="form-group"><label>Bouton secondaire</label><input name="secondaryCtaLabel" value="<%= websiteSettings.secondaryCtaLabel || '' %>"></div>
+            </div>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Services</span><h3>Titres de section</h3></div>
+            <div class="form-group"><label>Accroche services</label><input name="serviceSectionKicker" value="<%= websiteSettings.serviceSectionKicker || '' %>"></div>
+            <div class="form-group"><label>Titre services</label><input name="serviceSectionTitle" value="<%= websiteSettings.serviceSectionTitle || '' %>"></div>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Services</span><h3>Blocs métier</h3></div>
+            <div class="form-group"><label>Service 1</label><input name="service1Title" value="<%= websiteSettings.service1Title || '' %>"><textarea name="service1Text" rows="2"><%= websiteSettings.service1Text || '' %></textarea></div>
+            <div class="form-group"><label>Service 2</label><input name="service2Title" value="<%= websiteSettings.service2Title || '' %>"><textarea name="service2Text" rows="2"><%= websiteSettings.service2Text || '' %></textarea></div>
+            <div class="form-group"><label>Service 3</label><input name="service3Title" value="<%= websiteSettings.service3Title || '' %>"><textarea name="service3Text" rows="2"><%= websiteSettings.service3Text || '' %></textarea></div>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Points forts & contact</span><h3>Textes publics</h3></div>
+            <div class="form-grid">
+              <div class="form-group"><label>Accroche points forts</label><input name="strengthsKicker" value="<%= websiteSettings.strengthsKicker || '' %>"></div>
+              <div class="form-group"><label>Titre points forts</label><input name="strengthsTitle" value="<%= websiteSettings.strengthsTitle || '' %>"></div>
+            </div>
+            <div class="form-group"><label>Points forts — un par ligne</label><textarea name="strengths" rows="5"><%= websiteSettings.strengths || '' %></textarea></div>
+            <div class="form-grid">
+              <div class="form-group"><label>Téléphone</label><input name="phone" value="<%= websiteSettings.phone || '' %>"></div>
+              <div class="form-group"><label>Email public</label><input name="publicEmail" value="<%= websiteSettings.publicEmail || '' %>"></div>
+              <div class="form-group"><label>Horaires</label><input name="openingHours" value="<%= websiteSettings.openingHours || '' %>"></div>
+              <div class="form-group"><label>Instagram</label><input name="instagram" value="<%= websiteSettings.instagram || '' %>"></div>
+              <div class="form-group"><label>Facebook</label><input name="facebook" value="<%= websiteSettings.facebook || '' %>"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-columns">
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Contact</span><h3>Bloc engagement</h3></div>
+            <div class="form-group"><label>Titre du panneau contact</label><input name="contactPanelTitle" value="<%= websiteSettings.contactPanelTitle || '' %>"></div>
+            <div class="form-group"><label>Texte du panneau contact</label><textarea name="contactPanelText" rows="4"><%= websiteSettings.contactPanelText || '' %></textarea></div>
+          </div>
+          <div class="card" style="box-shadow:none; background:var(--surface-2);">
+            <div class="section-title compact"><span class="section-kicker">Footer</span><h3>Pied de page</h3></div>
+            <div class="form-group"><label>Texte du footer</label><textarea name="footerText" rows="4"><%= websiteSettings.footerText || '' %></textarea></div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <div class="section-title compact"><span class="section-kicker">Galerie</span><h3>Photos générales du site</h3></div>
+          <div class="form-group"><label>Ajouter des photos</label><input type="file" name="gallery_images" accept="image/png, image/jpeg, image/webp" multiple></div>
+          <% if (websiteSettings.gallery && websiteSettings.gallery.length) { %>
+            <div class="image-manage-grid">
+              <% websiteSettings.gallery.forEach((image) => { %>
+                <label class="image-manage-card">
+                  <img src="<%= image.url %>" alt="Photo vitrine">
+                  <span><input type="checkbox" name="removeGallery" value="<%= image.url %>"> Supprimer</span>
+                </label>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="settings-panel">
+          <div class="section-title compact"><span class="section-kicker">Portées</span><h3>Photos par portée</h3></div>
+          <% if (!litters.length) { %>
+            <p class="muted">Aucune portée à enrichir pour le moment.</p>
+          <% } %>
+          <% litters.forEach((litter) => { const litterImages = (websiteSettings.litterGallery && websiteSettings.litterGallery[litter.id]) || []; %>
+            <article class="litter-photo-settings">
+              <div>
+                <strong>Portée de <%= litter.mother_name || 'mère non renseignée' %></strong>
+                <p class="muted">Naissance : <%= formatDate(litter.birth_date) %> — <%= litter.puppies_count || litter.nb_puppies || 0 %> chiot(s)</p>
+              </div>
+              <div class="form-group"><label>Ajouter des photos pour cette portée</label><input type="file" name="litter_images_<%= litter.id %>" accept="image/png, image/jpeg, image/webp" multiple></div>
+              <% if (litterImages.length) { %>
+                <div class="image-manage-grid">
+                  <% litterImages.forEach((image) => { %>
+                    <label class="image-manage-card">
+                      <img src="<%= image.url %>" alt="Photo portée">
+                      <span><input type="checkbox" name="removeLitterImage" value="<%= image.url %>"> Supprimer</span>
+                    </label>
+                  <% }) %>
+                </div>
+              <% } %>
+            </article>
+          <% }) %>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer le site vitrine</button>
+      </form>
+    </section>
+  <% } %>
 </main>
+
 <%- include('../partials/foot') %>

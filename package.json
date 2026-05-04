@@ -5,6 +5,7 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
+    "start": "node server.js",
     "db:migrate": "node sql/migrate.js"
   },
   "engines": {

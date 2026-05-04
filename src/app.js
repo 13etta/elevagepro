@@ -4,7 +4,9 @@ const session = require('express-session');
 const connectPgSimple = require('connect-pg-simple');
 
 const db = require('./db');
+const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
+const { modules, moduleGroups } = require('./config/modules');
 
 const authRoutes = require('./routes/auth.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
@@ -19,16 +21,35 @@ const puppiesRoutes = require('./routes/puppies.routes');
 const salesRoutes = require('./routes/sales.routes');
 const breederRoutes = require('./routes/breeder.routes');
 const websiteRoutes = require('./routes/website.routes');
+const weightsRoutes = require('./routes/weights.routes');
+const profitabilityRoutes = require('./routes/profitability.routes');
+const strategyRoutes = require('./routes/strategy.routes');
 
 const app = express();
-app.set('trust proxy', 1);
 const PgSession = connectPgSimple(session);
 
+app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: false }));
+
+app.use((req, res, next) => {
+  req.cookies = Object.fromEntries(
+    (req.headers.cookie || '')
+      .split(';')
+      .filter(Boolean)
+      .map((cookie) => {
+        const [rawKey, ...rawValue] = cookie.trim().split('=');
+        const key = decodeURIComponent(rawKey || '');
+        const value = decodeURIComponent(rawValue.join('=') || '');
+        return [key, value];
+      }),
+  );
+  next();
+});
+
 app.use(
   session({
     store: new PgSession({
@@ -50,15 +71,44 @@ app.use(
   }),
 );
 
+app.use(i18n.init);
+
 app.use((req, res, next) => {
+  const requestedLang = ['fr', 'en'].includes(req.query.lang) ? req.query.lang : null;
+  const sessionLang = req.session?.preferences?.lang;
+  const cookieLang = ['fr', 'en'].includes(req.cookies.lang) ? req.cookies.lang : null;
+  const currentLang = requestedLang || sessionLang || cookieLang || 'fr';
+
+  if (!req.session.preferences) req.session.preferences = {};
+  req.session.preferences.lang = currentLang;
+  req.setLocale(currentLang);
+  res.cookie('lang', currentLang, { maxAge: 1000 * 60 * 60 * 24 * 365, sameSite: 'lax' });
+
+  const sessionTheme = req.session.preferences.theme;
+  const cookieTheme = req.cookies.theme;
+  const allowedThemes = ['prestige', 'clinical', 'nature'];
+  const theme = allowedThemes.includes(sessionTheme)
+    ? sessionTheme
+    : allowedThemes.includes(cookieTheme)
+      ? cookieTheme
+      : 'prestige';
+
+  req.session.preferences.theme = theme;
+
+  res.locals.__ = res.__.bind(req);
+  res.locals.currentLang = currentLang;
+  res.locals.theme = theme;
+  res.locals.modules = modules;
+  res.locals.moduleGroups = moduleGroups;
   res.locals.currentPath = req.path;
   res.locals.user = req.session?.user || null;
   res.locals.formatDate = (value) => {
     if (!value) return '-';
     const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return date.toISOString().slice(0, 10);
+    return date.toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR');
   };
+
   next();
 });
 
@@ -79,23 +129,26 @@ app.get('/healthz', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/dogs', dogsRoutes);
-app.use('/soins', require('./routes/soins.routes'))
+app.use('/soins', soinsRoutes);
 app.use('/reminders', remindersRoutes);
-app.use('/heats', require('./routes/heats.routes'));
-app.use('/matings', require('./routes/matings.routes'));
-app.use('/pregnancies', require('./routes/pregnancies.routes'));
-app.use('/litters', require('./routes/litters.routes'));
-app.use('/puppies', require('./routes/puppies.routes'));
-app.use('/sales', require('./routes/sales.routes'));
+app.use('/heats', heatsRoutes);
+app.use('/matings', matingsRoutes);
+app.use('/pregnancies', pregnanciesRoutes);
+app.use('/litters', littersRoutes);
+app.use('/puppies', puppiesRoutes);
+app.use('/sales', salesRoutes);
 app.use('/breeder', breederRoutes);
 app.use('/site', websiteRoutes);
+app.use('/weights', weightsRoutes);
+app.use('/profitability', profitabilityRoutes);
+app.use('/strategy', strategyRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
 app.use('/genetics', require('./routes/genetics.routes'));
 app.use('/settings', require('./routes/settings.routes'));
 
 app.use((req, res) => {
   res.status(404).render('errors/404', {
-    title: 'Page introuvable',
+    title: res.__('errors.notFound'),
     user: req.session?.user || null,
   });
 });
@@ -108,20 +161,9 @@ app.use((error, req, res, next) => {
   }
 
   return res.status(500).render('errors/500', {
-    title: 'Erreur serveur',
+    title: res.__('errors.serverError'),
     user: req.session?.user || null,
   });
 });
-const i18n = require('./src/middleware/i18n');
-const cookieParser = require('cookie-parser');
 
-app.use(cookieParser());
-app.use(i18n.init);
-
-// Middleware pour injecter les préférences (langue et thème) dans toutes les vues
-app.use((req, res, next) => {
-  res.locals.theme = req.cookies.theme || 'default';
-  res.locals.currentLang = req.locale;
-  next();
-});
 module.exports = app;

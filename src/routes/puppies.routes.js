@@ -1,22 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const puppiesController = require('../controllers/puppies.controller');
+const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
-// Vérifie le nom exact dans src/middleware/auth.js. 
-// Si c'est ensureAuthenticated, utilise ce nom ci-dessous :
-const { ensureAuthenticated } = require('../middleware/auth'); 
+router.use(requireAuth);
 
-// Application du middleware (On utilise le nom importé ci-dessus)
-router.use(ensureAuthenticated);
+router.get('/', puppiesController.listPuppies);
+router.get('/fragment', puppiesController.listPuppiesFragment);
 
-// Route pour la vue d'ensemble (Redirection temporaire si listPuppies n'existe pas)
-router.get('/', (req, res) => res.redirect('/dashboard'));
-
-// Routes pour l'ajout, l'édition et la suppression
 router.get('/new', puppiesController.getForm);
-router.post('/save', puppiesController.savePuppy); // POST pour la création
+router.post('/new', puppiesController.savePuppy);
+router.post('/save', puppiesController.savePuppy);
+
 router.get('/edit/:id', puppiesController.getForm);
-router.post('/save/:id', puppiesController.savePuppy); // POST pour la modification
+router.post('/save/:id', puppiesController.savePuppy);
 router.get('/delete/:id', puppiesController.deletePuppy);
+
+router.post('/:id/generate-ad', verifyCsrf, puppiesController.generatePuppyAd);
+
+router.get('/:id/edit', puppiesController.getForm);
+router.post('/:id/edit', puppiesController.savePuppy);
+router.get('/:id/delete', puppiesController.deletePuppy);
+router.post('/:id/delete', puppiesController.deletePuppy);
+
+router.get('/:id', puppiesController.showPuppy);
 
 module.exports = router;

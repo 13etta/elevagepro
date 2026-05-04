@@ -1,77 +1,150 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
+
 <main class="container">
-  <div class="header-actions">
-      <h1>Fiche : <%= dog.name %></h1>
-      <a href="/dogs" class="btn btn-secondary">Retour à la meute</a>
-  </div>
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Fiche cynotechnique</p>
+      <h1><%= dog.name %></h1>
+      <p>
+        <%= dog.breed || 'Race non renseignée' %>
+        —
+        <%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %>
+      </p>
+    </div>
+    <div class="topbar-actions">
+      <a class="btn btn-secondary" href="/dogs">Retour</a>
+      <a class="btn btn-primary" href="/dogs/<%= dog.id %>/edit">Modifier</a>
+    </div>
+  </section>
 
-  <div class="form-grid" style="align-items: start;">
-      
-      <section class="card">
-          <h3 style="color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Identité & Origines</h3>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-              <div>
-                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Sexe</strong>
-                  <p style="margin: 0.2rem 0 1rem 0;"><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></p>
-              </div>
-              <div>
-                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Statut</strong>
-                  <p style="margin: 0.2rem 0 1rem 0;"><span class="badge <%= dog.status %>"><%= dog.status %></span></p>
-              </div>
-              <div>
-                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Race</strong>
-                  <p style="margin: 0.2rem 0 1rem 0;"><%= dog.breed || 'Non renseignée' %></p>
-              </div>
-              <div>
-                  <strong style="color: #7f8c8d; font-size: 0.8rem; text-transform: uppercase;">Date de naissance</strong>
-                  <p style="margin: 0.2rem 0 1rem 0;"><%= dog.birth_date ? new Date(dog.birth_date).toLocaleDateString('fr-FR') : 'Inconnue' %></p>
-              </div>
-          </div>
+  <section class="kpi-grid">
+    <article class="kpi-card"><span>Statut</span><strong><%= dog.status || '-' %></strong></article>
+    <article class="kpi-card"><span>Puce</span><strong><%= dog.chip_number || '-' %></strong></article>
+    <article class="kpi-card"><span>Naissance</span><strong><%= dog.birth_date ? formatDate(dog.birth_date) : '-' %></strong></article>
+    <article class="kpi-card"><span>LOF</span><strong><%= dog.lof || dog.pedigree_number || '-' %></strong></article>
+  </section>
 
-          <h4 style="color: var(--secondary-color); margin-top: 1.5rem;">Identification</h4>
-          <ul style="list-style: none; padding: 0; margin: 0;">
-              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>Puce :</strong> <%= dog.chip_number || '-' %></li>
-              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>LOF / Pedigree :</strong> <%= dog.pedigree_number || '-' %></li>
-              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>SCC :</strong> <%= dog.id_scc || '-' %></li>
-          </ul>
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Identité</span>
+        <h2>Informations générales</h2>
+      </div>
+      <p><strong>Nom :</strong> <%= dog.name %></p>
+      <p><strong>Race :</strong> <%= dog.breed || '-' %></p>
+      <p><strong>Sexe :</strong> <%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></p>
+      <p><strong>N° puce :</strong> <%= dog.chip_number || '-' %></p>
+      <p><strong>ID SCC :</strong> <%= dog.id_scc || '-' %></p>
+      <p><strong>Père :</strong> <%= dog.father_name || '-' %></p>
+      <p><strong>Mère :</strong> <%= dog.mother_name || '-' %></p>
+    </article>
 
-          <h4 style="color: var(--secondary-color); margin-top: 1.5rem;">Généalogie</h4>
-          <ul style="list-style: none; padding: 0; margin: 0;">
-              <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;"><strong>Père :</strong> <%= dog.father_name || 'Inconnu / Externe' %></li>
-              <li style="padding: 0.5rem 0;"><strong>Mère :</strong> <%= dog.mother_name || 'Inconnue / Externe' %></li>
-          </ul>
-      </section>
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Notes</span>
+        <h2>Observations</h2>
+      </div>
+      <p><%= dog.notes || 'Aucune observation renseignée.' %></p>
+    </article>
+  </section>
 
-      <section class="card">
-          <h3 style="color: var(--accent-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">Carnet de santé récent</h3>
-          
-          <% if (soins.length === 0) { %>
-              <p style="color: #7f8c8d; font-style: italic; margin-top: 1rem;">Aucun soin enregistré pour ce chien.</p>
-          <% } else { %>
-              <ul style="list-style: none; padding: 0; margin-top: 1rem;">
-                  <% soins.forEach(soin => { %>
-                      <li style="padding: 0.8rem; border: 1px solid #eee; border-radius: 5px; margin-bottom: 0.5rem; background: #fafafa;">
-                          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
-                              <strong style="color: var(--primary-color);"><%= soin.label %></strong>
-                              <span style="font-size: 0.8rem; color: #7f8c8d;"><%= new Date(soin.event_date).toLocaleDateString('fr-FR') %></span>
-                          </div>
-                          <div style="font-size: 0.85rem;">
-                              <span style="background: #e0e0e0; padding: 0.1rem 0.4rem; border-radius: 3px;"><%= soin.type %></span>
-                              <% if (soin.next_due) { %>
-                                  <span style="color: var(--accent-color); margin-left: 0.5rem;">Prochain : <%= new Date(soin.next_due).toLocaleDateString('fr-FR') %></span>
-                              <% } %>
-                          </div>
-                      </li>
-                  <% }) %>
-              </ul>
-          <% } %>
-          <div style="margin-top: 1.5rem; text-align: center;">
-              <a href="/soins" class="btn btn-primary" style="font-size: 0.8rem;">Ajouter un soin</a>
-          </div>
-      </section>
+  <section class="dashboard-columns">
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Santé</span>
+        <h2>Soins récents</h2>
+      </div>
+      <% if (!soins.length) { %>
+        <p class="muted">Aucun soin enregistré pour ce chien.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Acte</th><th>Échéance</th></tr></thead>
+          <tbody>
+            <% soins.forEach((soin) => { %>
+              <tr>
+                <td><%= formatDate(soin.event_date) %></td>
+                <td><%= soin.label %> <small>(<%= soin.type %>)</small></td>
+                <td><%= soin.next_due ? formatDate(soin.next_due) : '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+      <div style="margin-top: 1rem;">
+        <a class="btn btn-secondary" href="/soins">Ajouter un soin</a>
+      </div>
+    </article>
 
-  </div>
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Prioritaire</span>
+        <h2>Rappels à venir</h2>
+      </div>
+      <% if (!reminders.length) { %>
+        <p class="muted">Aucun rappel actif.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Libellé</th></tr></thead>
+          <tbody>
+            <% reminders.forEach((reminder) => { %>
+              <tr>
+                <td><%= formatDate(reminder.due_date) %></td>
+                <td><%= reminder.title %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Reproduction</span>
+        <h2>Portées liées</h2>
+      </div>
+      <% if (!litters.length) { %>
+        <p class="muted">Aucune portée enregistrée pour cette chienne.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Nombre</th></tr></thead>
+          <tbody>
+            <% litters.forEach((litter) => { %>
+              <tr>
+                <td><%= formatDate(litter.birth_date) %></td>
+                <td><%= litter.puppies_count_total || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+
+    <article class="table-block">
+      <div class="section-title compact">
+        <span class="section-kicker">Descendance</span>
+        <h2>Chiots issus des portées</h2>
+      </div>
+      <% if (!puppies.length) { %>
+        <p class="muted">Aucun chiot rattaché à cette chienne.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Nom</th><th>Sexe</th><th>Statut</th></tr></thead>
+          <tbody>
+            <% puppies.forEach((puppy) => { %>
+              <tr>
+                <td><a href="/puppies/<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %></a></td>
+                <td><%= puppy.sex || '-' %></td>
+                <td><span class="badge"><%= puppy.status || '-' %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </article>
+  </section>
 </main>
+
 <%- include('../partials/foot') %>

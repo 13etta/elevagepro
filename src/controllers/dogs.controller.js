@@ -31,7 +31,95 @@ exports.listDogs = async (req, res) => {
     }
 };
 
+<<<<<<< HEAD
 exports.getForm = async (req, res) => {
+=======
+exports.showDog = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const dogId = req.params.id;
+
+        const dogResult = await pool.query(
+            `
+              SELECT d.*,
+                     father.name AS father_name,
+                     mother.name AS mother_name
+              FROM dogs d
+              LEFT JOIN dogs father ON d.father_id = father.id
+              LEFT JOIN dogs mother ON d.mother_id = mother.id
+              WHERE d.id = $1 AND d.breeder_id = $2
+            `,
+            [dogId, breederId]
+        );
+
+        if (!dogResult.rows.length) {
+            return res.status(404).render('errors/404', {
+                title: 'Chien introuvable',
+                user: req.session.user,
+            });
+        }
+
+        const soins = await pool.query(
+            `
+              SELECT id, type, label, event_date, next_due
+              FROM soins
+              WHERE breeder_id = $1 AND dog_id = $2
+              ORDER BY event_date DESC
+              LIMIT 10
+            `,
+            [breederId, dogId]
+        );
+
+        const reminders = await pool.query(
+            `
+              SELECT id, type, title, due_date, is_completed
+              FROM reminders
+              WHERE breeder_id = $1 AND dog_id = $2 AND is_completed = FALSE
+              ORDER BY due_date ASC
+              LIMIT 10
+            `,
+            [breederId, dogId]
+        );
+
+        const litters = await pool.query(
+            `
+              SELECT id, birth_date, puppies_count_total, notes
+              FROM litters
+              WHERE breeder_id = $1 AND mother_id = $2
+              ORDER BY birth_date DESC
+            `,
+            [breederId, dogId]
+        );
+
+        const puppies = await pool.query(
+            `
+              SELECT p.id, p.name, p.sex, p.color, p.chip_number, p.status, p.sale_price, l.birth_date
+              FROM puppies p
+              JOIN litters l ON p.litter_id = l.id
+              WHERE p.breeder_id = $1 AND l.mother_id = $2
+              ORDER BY l.birth_date DESC, p.name ASC NULLS LAST
+              LIMIT 20
+            `,
+            [breederId, dogId]
+        );
+
+        res.render('dogs/show', {
+            title: dogResult.rows[0].name,
+            dog: dogResult.rows[0],
+            soins: soins.rows,
+            reminders: reminders.rows,
+            litters: litters.rows,
+            puppies: puppies.rows,
+        });
+    } catch (error) {
+        console.error('Erreur fiche chien:', error);
+        res.status(500).send('Erreur lors du chargement de la fiche chien.');
+    }
+};
+
+// 2. Affiche le formulaire de création
+exports.getCreateForm = async (req, res) => {
+>>>>>>> 9730011f8ccf2389b4537049da406798bac68cf1
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
@@ -98,6 +186,10 @@ exports.saveDog = async (req, res) => {
     }
 };
 
+<<<<<<< HEAD
+=======
+// 6. Supprime un chien
+>>>>>>> 9730011f8ccf2389b4537049da406798bac68cf1
 exports.deleteDog = async (req, res) => {
     try {
         await pool.query('DELETE FROM dogs WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);

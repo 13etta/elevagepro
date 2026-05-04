@@ -2,90 +2,210 @@
 <%- include('../partials/nav') %>
 
 <main class="container">
-    <div class="header-actions">
-        <h1>Registre des Chiots</h1>
-        <a href="/puppies/new" class="btn btn-primary">Ajouter un chiot</a>
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Cheptel jeune</p>
+      <h1>Chiots</h1>
+      <p>Suivez les chiots issus de vos portées : sexe, robe, identification, statut commercial et prix prévisionnel.</p>
+    </div>
+    <a class="btn btn-primary" href="/puppies/new">Ajouter un chiot</a>
+  </section>
+
+  <section class="table-block puppy-filter-panel">
+    <div class="section-title compact">
+      <span class="section-kicker">Filtres avancés</span>
+      <h2>Recherche opérationnelle</h2>
     </div>
 
-    <form method="GET" action="/puppies" class="card form-grid" style="margin-bottom: 2rem; padding: 1.5rem; background-color: #f8f9fa; border: 1px solid #e9ecef;">
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
-            <input type="text" name="q" placeholder="Recherche (Nom ou Puce)" value="<%= filters && filters.q ? filters.q : '' %>" style="flex: 2; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-            
-            <select name="sex" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="">-- Sexe --</option>
-                <option value="M" <%= filters && filters.sex === 'M' ? 'selected' : '' %>>Mâle</option>
-                <option value="F" <%= filters && filters.sex === 'F' ? 'selected' : '' %>>Femelle</option>
-            </select>
+    <form id="puppyFilters" class="puppy-filters">
+      <div class="form-group">
+        <label for="q">Recherche</label>
+        <input id="q" type="search" name="q" value="<%= filters.q || '' %>" placeholder="Nom, puce, robe, statut...">
+      </div>
 
-            <select name="status" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="">-- Statut --</option>
-                <option value="Actif" <%= filters && filters.status === 'Actif' ? 'selected' : '' %>>Disponible</option>
-                <option value="Réservé" <%= filters && filters.status === 'Réservé' ? 'selected' : '' %>>Réservé</option>
-                <option value="Vendu" <%= filters && filters.status === 'Vendu' ? 'selected' : '' %>>Vendu</option>
-                <option value="Décédé" <%= filters && filters.status === 'Décédé' ? 'selected' : '' %>>Décédé</option>
-            </select>
+      <div class="form-group">
+        <label for="sex">Sexe</label>
+        <select id="sex" name="sex">
+          <option value="">Tous</option>
+          <option value="M" <%= filters.sex === 'M' ? 'selected' : '' %>>Mâle</option>
+          <option value="F" <%= filters.sex === 'F' ? 'selected' : '' %>>Femelle</option>
+        </select>
+      </div>
 
-            <select name="litter" style="flex: 2; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="">-- Portée --</option>
-                <% litters.forEach(l => { %>
-                    <option value="<%= l.id %>" <%= filters && filters.litter == l.id ? 'selected' : '' %>><%= l.mother_name %> (<%= new Date(l.birth_date).toLocaleDateString('fr-FR') %>)</option>
-                <% }) %>
-            </select>
+      <div class="form-group">
+        <label for="color">Robe</label>
+        <select id="color" name="color">
+          <option value="">Toutes</option>
+          <% colors.forEach((color) => { %>
+            <option value="<%= color %>" <%= filters.color === color ? 'selected' : '' %>><%= color %></option>
+          <% }) %>
+        </select>
+      </div>
 
-            <button type="submit" class="btn btn-secondary">Filtrer</button>
-            <a href="/puppies" class="btn btn-outline-secondary" style="display: flex; align-items: center; text-decoration: none; color: #6c757d; border: 1px solid #ccc; padding: 0.5rem 1rem; border-radius: 4px;">Reset</a>
-        </div>
+      <div class="form-group">
+        <label for="status">Statut</label>
+        <select id="status" name="status">
+          <option value="">Tous</option>
+          <% statuses.forEach((status) => { %>
+            <option value="<%= status %>" <%= filters.status === status ? 'selected' : '' %>><%= status %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="sale_state">Vente</label>
+        <select id="sale_state" name="sale_state">
+          <option value="">Tous</option>
+          <option value="available" <%= filters.sale_state === 'available' ? 'selected' : '' %>>Disponible</option>
+          <option value="reserved" <%= filters.sale_state === 'reserved' ? 'selected' : '' %>>Réservé / option</option>
+          <option value="sold" <%= filters.sale_state === 'sold' ? 'selected' : '' %>>Vendu</option>
+        </select>
+      </div>
+
+      <button class="btn btn-secondary" type="button" id="resetPuppyFilters">Réinitialiser</button>
     </form>
+  </section>
 
-    <section class="card">
-        <% if (puppies.length === 0) { %>
-            <p style="text-align: center; color: #7f8c8d; padding: 3rem;">Aucun chiot trouvé avec ces critères.</p>
-        <% } else { %>
-            <div class="table-responsive">
-                <table class="table" style="width: 100%; text-align: left; border-collapse: collapse;">
-                    <thead style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <tr>
-                            <th style="padding: 1rem;">Nom / Collier</th>
-                            <th style="padding: 1rem;">Sexe</th>
-                            <th style="padding: 1rem;">Mère</th>
-                            <th style="padding: 1rem;">Né(e) le</th>
-                            <th style="padding: 1rem;">Puce</th>
-                            <th style="padding: 1rem;">Statut</th>
-                            <th style="padding: 1rem; text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% puppies.forEach(p => { %>
-                            <tr style="border-bottom: 1px solid #eee;">
-                                <td style="padding: 1rem;"><strong><%= p.name %></strong></td>
-                                <td style="padding: 1rem;"><%= p.sex === 'M' ? '♂️' : '♀️' %></td>
-                                <td style="padding: 1rem;"><%= p.female_name || '-' %></td>
-                                <td style="padding: 1rem;"><%= p.birth_date ? new Date(p.birth_date).toLocaleDateString('fr-FR') : '-' %></td>
-                                <td style="padding: 1rem;"><%= p.chip_number || '-' %></td>
-                                <td style="padding: 1rem;">
-                                    <% if (p.status === 'Actif' || p.status === 'disponible') { %>
-                                        <span style="background-color: #e8fdf5; color: #198754; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">Disponible</span>
-                                    <% } else if (p.status === 'Réservé') { %>
-                                        <span style="background-color: #fff3cd; color: #856404; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">Réservé</span>
-                                    <% } else if (p.status === 'Vendu') { %>
-                                        <span style="background-color: #ffeaea; color: #dc3545; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">Vendu</span>
-                                    <% } else { %>
-                                        <span style="background-color: #e9ecef; color: #495057; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;"><%= p.status %></span>
-                                    <% } %>
-                                </td>
-                                <td style="padding: 1rem; text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                                    <a href="/puppies/<%= p.id %>/edit" class="btn btn-secondary btn-sm">Modifier</a>
-                                    <form action="/puppies/<%= p.id %>/delete" method="POST" onsubmit="return confirm('Supprimer ce chiot ?');" style="margin:0;">
-                                        <button type="submit" class="btn btn-sm" style="background-color: #ffeaea; color: #dc3545; border: 1px solid #ffc2c2;">Supprimer</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
-        <% } %>
-    </section>
+  <section class="table-block">
+    <div class="section-title compact table-toolbar">
+      <div>
+        <span class="section-kicker">Suivi</span>
+        <h2>Liste des chiots</h2>
+      </div>
+      <p id="puppyFilterStatus" class="muted"><span id="puppyCount"><%= puppies.length %></span> chiot(s) affiché(s)</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nom / Collier</th>
+          <th>Sexe</th>
+          <th>Robe</th>
+          <th>Puce</th>
+          <th>Portée</th>
+          <th>Statut</th>
+          <th>Prix</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="puppyRows">
+        <%- include('./_rows', { puppies }) %>
+      </tbody>
+    </table>
+  </section>
 </main>
+
+<div id="deletePuppyModal" class="confirm-modal" aria-hidden="true">
+  <div class="confirm-modal-backdrop" data-modal-close></div>
+  <div class="confirm-modal-card" role="dialog" aria-modal="true" aria-labelledby="deletePuppyTitle">
+    <span class="confirm-modal-icon">!</span>
+    <h2 id="deletePuppyTitle">Confirmer la suppression</h2>
+    <p id="deletePuppyText">Cette action est définitive. Elle supprimera la fiche du chiot sélectionné.</p>
+    <div class="confirm-modal-actions">
+      <button type="button" class="btn btn-secondary" data-modal-close>Annuler</button>
+      <a id="confirmDeletePuppy" class="btn btn-primary btn-danger" href="#">Supprimer définitivement</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const form = document.getElementById('puppyFilters');
+  const rows = document.getElementById('puppyRows');
+  const count = document.getElementById('puppyCount');
+  const status = document.getElementById('puppyFilterStatus');
+  const resetButton = document.getElementById('resetPuppyFilters');
+  const modal = document.getElementById('deletePuppyModal');
+  const modalText = document.getElementById('deletePuppyText');
+  const confirmDelete = document.getElementById('confirmDeletePuppy');
+
+  let timer = null;
+  let controller = null;
+
+  function cleanParams() {
+    const params = new URLSearchParams(new FormData(form));
+    const clean = new URLSearchParams();
+
+    for (const [key, value] of params.entries()) {
+      if (value && value.trim() !== '') {
+        clean.append(key, value.trim());
+      }
+    }
+
+    return clean;
+  }
+
+  function bindDeleteButtons() {
+    document.querySelectorAll('.js-delete-puppy').forEach((button) => {
+      button.addEventListener('click', () => {
+        const puppyName = button.dataset.puppyName || 'ce chiot';
+        confirmDelete.href = button.dataset.deleteUrl;
+        modalText.textContent = `Vous allez supprimer ${puppyName}. Cette action est définitive.`;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        confirmDelete.focus();
+      });
+    });
+  }
+
+  function closeModal() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    confirmDelete.href = '#';
+  }
+
+  async function refreshPuppies() {
+    if (controller) controller.abort();
+    controller = new AbortController();
+
+    const params = cleanParams();
+    status.classList.add('is-loading');
+    rows.classList.add('is-refreshing');
+
+    try {
+      const response = await fetch(`/puppies/fragment?${params.toString()}`, {
+        headers: { 'X-Requested-With': 'fetch' },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) throw new Error('Filtrage indisponible');
+
+      rows.innerHTML = await response.text();
+      count.textContent = rows.querySelectorAll('[data-puppy-row]').length;
+      bindDeleteButtons();
+
+      window.history.replaceState({}, '', params.toString() ? `/puppies?${params.toString()}` : '/puppies');
+    } catch (error) {
+      if (error.name !== 'AbortError') console.error(error);
+    } finally {
+      status.classList.remove('is-loading');
+      rows.classList.remove('is-refreshing');
+    }
+  }
+
+  function scheduleRefresh() {
+    clearTimeout(timer);
+    timer = setTimeout(refreshPuppies, 250);
+  }
+
+  form.addEventListener('input', scheduleRefresh);
+  form.addEventListener('change', scheduleRefresh);
+
+  resetButton.addEventListener('click', () => {
+    form.reset();
+    refreshPuppies();
+  });
+
+  modal.querySelectorAll('[data-modal-close]').forEach((element) => {
+    element.addEventListener('click', closeModal);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+  });
+
+  bindDeleteButtons();
+})();
+</script>
 
 <%- include('../partials/foot') %>

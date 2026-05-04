@@ -1,0 +1,45 @@
+<% if (!puppies.length) { %>
+  <tr>
+    <td colspan="8">
+      <div class="empty-logo-preview">
+        <strong>0</strong>
+        <p>Aucun chiot ne correspond aux filtres sélectionnés.</p>
+      </div>
+    </td>
+  </tr>
+<% } else { %>
+  <% puppies.forEach((puppy) => { %>
+    <tr data-puppy-row>
+      <td><strong><%= puppy.name || '-' %></strong></td>
+      <td><%= puppy.sex || '-' %></td>
+      <td><%= puppy.color || '-' %></td>
+      <td><%= puppy.chip_number || '-' %></td>
+      <td>
+        <% if (puppy.mother_name || puppy.litter_birth_date) { %>
+          <%= puppy.mother_name || 'Portée' %>
+          <% if (puppy.litter_birth_date) { %>
+            <br><small><%= formatDate(puppy.litter_birth_date) %></small>
+          <% } %>
+        <% } else { %>
+          -
+        <% } %>
+      </td>
+      <td>
+        <span class="badge <%= puppy.is_sold ? 'badge-success' : '' %>">
+          <%= puppy.is_sold ? 'Vendu' : (puppy.status || '-') %>
+        </span>
+      </td>
+      <td><%= puppy.sale_price ? puppy.sale_price + ' €' : '-' %></td>
+      <td class="table-actions">
+        <a class="btn btn-primary" href="/puppies/<%= puppy.id %>">Fiche / IA</a>
+        <a class="btn btn-secondary" href="/puppies/edit/<%= puppy.id %>">Modifier</a>
+        <button
+          type="button"
+          class="btn btn-secondary btn-danger-soft js-delete-puppy"
+          data-delete-url="/puppies/delete/<%= puppy.id %>"
+          data-puppy-name="<%= puppy.name || 'ce chiot' %>"
+        >Supprimer</button>
+      </td>
+    </tr>
+  <% }) %>
+<% } %>
