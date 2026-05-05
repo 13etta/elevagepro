@@ -1,0 +1,68 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions">
+        <div>
+            <p class="eyebrow">Conformité DDPP</p>
+            <h1>Registre des Entrées et Sorties</h1>
+        </div>
+        <div>
+            <a href="/breeder" class="btn btn-secondary">Retour</a>
+            <button onclick="window.print()" class="btn btn-primary">Imprimer le registre</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem; overflow-x: auto;">
+        <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--primary-color);">
+                    <th style="padding: 1rem;">Date</th>
+                    <th style="padding: 1rem;">Sens</th>
+                    <th style="padding: 1rem;">Motif</th>
+                    <th style="padding: 1rem;">Nom de l'animal</th>
+                    <th style="padding: 1rem;">Identification (I-CAD)</th>
+                    <th style="padding: 1rem;">Provenance / Destination</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (movements.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="padding: 2rem; text-align: center; color: #6c757d;">
+                            Aucun mouvement enregistré. Le registre est vierge.
+                        </td>
+                    </tr>
+                <% } else { %>
+                    <% movements.forEach(mov => { %>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 1rem;">
+                                <strong><%= new Date(mov.movement_date).toLocaleDateString('fr-FR') %></strong>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <span class="badge" style="background-color: <%= mov.movement_type === 'ENTREE' ? '#d4edda' : '#f8d7da' %>; color: <%= mov.movement_type === 'ENTREE' ? '#155724' : '#721c24' %>;">
+                                    <%= mov.movement_type %>
+                                </span>
+                            </td>
+                            <td style="padding: 1rem;"><%= mov.movement_reason %></td>
+                            <td style="padding: 1rem;"><strong><%= mov.animal_name %></strong><br><small class="muted"><%= mov.breed || '' %></small></td>
+                            <td style="padding: 1rem;"><%= mov.identification || 'Non identifié' %></td>
+                            <td style="padding: 1rem; max-width: 250px;"><%= mov.third_party_info || 'Élevage interne' %></td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<style>
+    /* Styles spécifiques pour l'impression du registre légal */
+    @media print {
+        body * { visibility: hidden; }
+        .data-table, .data-table * { visibility: visible; }
+        .data-table { position: absolute; left: 0; top: 0; width: 100%; }
+        .btn, .header-actions a { display: none; }
+    }
+</style>
+
+<%- include('../partials/foot') %>

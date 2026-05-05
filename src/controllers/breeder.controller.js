@@ -108,3 +108,25 @@ exports.deleteInfra = async (req, res) => {
         res.status(500).send('Erreur lors de la suppression.');
     }
 };
+exports.getEntriesRegister = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+
+        // Récupération de tous les mouvements, du plus récent au plus ancien
+        const movementsRes = await pool.query(
+            `SELECT * FROM animal_movements 
+             WHERE breeder_id = $1 
+             ORDER BY movement_date DESC, created_at DESC`,
+            [breederId]
+        );
+
+        res.render('breeder/register-entries', {
+            title: 'Registre des Entrées et Sorties',
+            movements: movementsRes.rows
+        });
+
+    } catch (error) {
+        console.error('Erreur getEntriesRegister:', error);
+        res.status(500).send('Erreur lors du chargement du registre.');
+    }
+};
