@@ -1,14 +1,12 @@
 const express = require('express');
+const router = express.Router();
+const breederController = require('../controllers/breeder.controller');
 const { requireAuth } = require('../middleware/auth');
 
-const router = express.Router();
+// Toutes les routes de ce module nécessitent d'être connecté
+router.use(requireAuth);
 
-router.get('/', requireAuth, (req, res) => {
-  res.status(501).render('coming-soon', {
-    title: 'Module en préparation',
-    user: req.session.user,
-    moduleName: req.baseUrl.replace('/', ''),
-  });
-});
+// Tableau de bord principal du module Élevage
+router.get('/', breederController.getDashboard);
 
 module.exports = router;
