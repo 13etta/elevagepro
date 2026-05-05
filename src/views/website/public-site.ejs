@@ -43,7 +43,7 @@
         <p class="institutional-slogan"><%= websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial, sélection et accompagnement.' %></p>
         <% if (breeder.address) { %><p class="institutional-address"><%= breeder.address %></p><% } %>
         <% if (websiteSettings.openingHours) { %><p class="institutional-hours"><%= websiteSettings.openingHours %></p><% } %>
-        <% if (websiteSettings.phone) { %><p class="institutional-phone"><a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
+        <% if (breeder.phone) { %><p class="institutional-phone"><a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
       </div>
     </header>
 
@@ -64,11 +64,8 @@
         <a href="#temoignages">Témoignages</a>
         <% if (websiteSettings.showGallery) { %><a href="#galerie">Galerie</a><% } %>
         <% if (websiteSettings.showContact) { %><a href="#contact">Contact</a><% } %>
-        <a class="showcase-nav-cta" href="<%= trialUrl %>">Créer mon élevage</a>
       </div>
     </nav>
-
-  
 
     <section id="accueil" class="public-hero premium-hero">
       <div class="premium-hero-copy">
@@ -77,8 +74,7 @@
         <% if (breeder.affix_name) { %><p class="public-affix"><%= breeder.affix_name %></p><% } %>
         <p class="hero-lead"><%= websiteSettings.heroSubtitle || 'Une vitrine claire pour présenter la sélection, les reproducteurs, les portées et la philosophie de l’élevage.' %></p>
         <div class="hero-actions">
-          <a class="showcase-btn primary" href="<%= trialUrl %>">Créer mon élevage</a>
-          <% if (websiteSettings.showPuppies) { %><a class="showcase-btn secondary" href="#chiots">Voir les disponibilités</a><% } %>
+          <% if (websiteSettings.showPuppies) { %><a class="showcase-btn primary" href="#chiots">Voir les disponibilités</a><% } %>
           <% if (websiteSettings.showContact) { %><a class="showcase-btn secondary" href="#contact">Contacter l’élevage</a><% } %>
         </div>
       </div>
@@ -89,6 +85,16 @@
           <% if (breeder.producer_number) { %><em>N° producteur : <%= breeder.producer_number %></em><% } %>
         </div>
       </aside>
+    </section>
+
+    <section class="contact-strip">
+      <div>
+        <strong><%= websiteSettings.contactStripTitle || 'Besoin d’un renseignement ?' %></strong>
+        <span><%= websiteSettings.contactStripText || 'Informations, réservation, projet de portée ou disponibilité.' %></span>
+      </div>
+      <div class="contact-strip-actions">
+        <% if (websiteSettings.showContact) { %><a class="showcase-btn primary" href="#contact"><%= websiteSettings.primaryCtaLabel || 'Contactez-nous' %></a><% } %>
+      </div>
     </section>
 
     <% if (websiteSettings.showIntro) { %>
@@ -270,26 +276,34 @@
       </section>
     <% } %>
 
-    <section class="final-cta-section">
-      <div>
-        <span class="section-kicker">ElevagePro</span>
-        <h2>Pilotez votre élevage avec une vraie méthode.</h2>
-        <p>Chiens, portées, chiots, soins, rappels, ventes et vitrine : centralisez votre activité dans un outil pensé pour le terrain.</p>
+    <footer class="showcase-footer">
+      <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+        <div>
+          <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>" style="max-height: 60px; margin-bottom: 1rem;"><% } %>
+          <strong style="display: block; font-size: 1.2rem; margin-bottom: 0.5rem;"><%= siteTitle %></strong>
+          <p style="max-width: 400px; opacity: 0.8;"><%= websiteSettings.footerText || websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial.' %></p>
+        </div>
+        <div style="opacity: 0.8; line-height: 1.8;">
+          <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
+          <% if (websiteSettings.openingHours) { %><p><%= websiteSettings.openingHours %></p><% } %>
+          <% if (breeder.phone) { %><p><a href="tel:<%= breeder.phone %>" style="color: inherit; text-decoration: none;"><%= breeder.phone %></a></p><% } %>
+          <% if (breeder.email) { %><p><a href="mailto:<%= breeder.email %>" style="color: inherit; text-decoration: none;"><%= breeder.email %></a></p><% } %>
+        </div>
       </div>
-      <a class="showcase-btn primary" href="<%= trialUrl %>">Créer mon élevage</a>
-    </section>
-
- <footer class="showcase-footer">
-      <div>
-        <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>"><% } %>
-        <strong><%= siteTitle %></strong>
-        <p><%= websiteSettings.footerText || websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial.' %></p>
-      </div>
-      <div>
-        <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
-        <% if (websiteSettings.openingHours) { %><p><%= websiteSettings.openingHours %></p><% } %>
-        <% if (breeder.phone) { %><p><a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
-        <% if (breeder.email) { %><p><a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
+      
+      <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; font-size: 0.85rem; opacity: 0.7;">
+        <div>
+          &copy; <%= new Date().getFullYear() %> <%= siteTitle %>. Tous droits réservés.
+          <span style="margin: 0 10px;">|</span>
+          <a href="#" style="color: inherit; text-decoration: none;">Mentions légales</a>
+          <span style="margin: 0 10px;">|</span>
+          <a href="#" style="color: inherit; text-decoration: none;">Politique de confidentialité</a>
+        </div>
+        <div style="margin-top: 1rem; margin-bottom: 1rem;">
+          <a href="<%= trialUrl %>" style="color: inherit; text-decoration: none;" target="_blank">
+            Propulsé par <strong>ElevagePro</strong> - <em>Créer un site d'élevage</em>
+          </a>
+        </div>
       </div>
     </footer>
   </main>
