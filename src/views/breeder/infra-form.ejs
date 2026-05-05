@@ -1,0 +1,68 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <div class="header-actions">
+        <h1><%= infra.id ? "Modifier l'infrastructure" : "Ajouter une infrastructure" %></h1>
+        <a href="/breeder" class="btn btn-secondary">Retour au registre</a>
+    </div>
+
+    <form action="<%= infra.id ? '/breeder/infrastructure/' + infra.id + '/edit' : '/breeder/infrastructure/new' %>" method="POST" class="card form-block">
+        
+        <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Détails de l'installation</h3>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nom de l'infrastructure *</label>
+                <input type="text" name="name" value="<%= infra.name || '' %>" placeholder="Ex: Box principal, Nurserie A..." required>
+            </div>
+            
+            <div class="form-group">
+                <label>Type d'installation *</label>
+                <select name="type" required>
+                    <option value="box" <%= infra.type === 'box' ? 'selected' : '' %>>Box d'hébergement</option>
+                    <option value="nurserie" <%= infra.type === 'nurserie' ? 'selected' : '' %>>Nurserie / Maternité</option>
+                    <option value="quarantaine" <%= infra.type === 'quarantaine' ? 'selected' : '' %>>Zone de quarantaine</option>
+                    <option value="infirmerie" <%= infra.type === 'infirmerie' ? 'selected' : '' %>>Infirmerie</option>
+                    <option value="parc" <%= infra.type === 'parc' ? 'selected' : '' %>>Parc de détente extérieur</option>
+                    <option value="autre" <%= infra.type === 'autre' ? 'selected' : '' %>>Autre</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1.5rem;">
+            <div class="form-group">
+                <label>Capacité (Nombre de chiens maximum)</label>
+                <input type="number" name="capacity" min="1" value="<%= infra.capacity || 1 %>" required>
+                <small class="muted">Information requise pour votre déclaration DDPP.</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Statut</label>
+                <select name="status">
+                    <option value="actif" <%= infra.status === 'actif' ? 'selected' : '' %>>Opérationnel</option>
+                    <option value="travaux" <%= infra.status === 'travaux' ? 'selected' : '' %>>En travaux / Maintenance</option>
+                    <option value="inactif" <%= infra.status === 'inactif' ? 'selected' : '' %>>Inactif</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; align-items: center;">
+            <button type="submit" class="btn btn-primary" style="flex: 1; padding: 1rem;">Enregistrer l'infrastructure</button>
+            
+            <% if (infra.id) { %>
+                <button type="button" class="btn btn-secondary" style="color: #dc3545; border-color: #dc3545;" onclick="if(confirm('Cette action supprimera cette infrastructure du registre. Confirmer ?')) { document.getElementById('delete-form').submit(); }">
+                    Supprimer
+                </button>
+            <% } %>
+        </div>
+    </form>
+
+    <!-- Formulaire invisible pour la suppression sécurisée via POST -->
+    <% if (infra.id) { %>
+        <form id="delete-form" action="/breeder/infrastructure/<%= infra.id %>/delete" method="POST" style="display: none;"></form>
+    <% } %>
+
+</main>
+
+<%- include('../partials/foot') %>
