@@ -1,0 +1,76 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<%
+    // Fonction utilitaire pour formater la date pour l'input type="date"
+    const formatDateForInput = (dateObj) => {
+        if (!dateObj) return '';
+        const d = new Date(dateObj);
+        return d.toISOString().split('T')[0];
+    };
+%>
+
+<main class="container">
+    <div class="header-actions">
+        <h1>Correction du registre</h1>
+        <a href="/breeder/register/entries" class="btn btn-secondary">Annuler</a>
+    </div>
+
+    <form action="/breeder/register/movements/<%= movement.id %>/edit" method="POST" class="card form-block" style="margin-top: 2rem;">
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nom de l'animal (Lecture seule)</label>
+                <input type="text" value="<%= movement.animal_name %>" disabled style="background-color: #f8f9fa;">
+                <small class="muted">L'animal concerné par ce mouvement ne peut être modifié.</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Type de mouvement (Lecture seule)</label>
+                <input type="text" value="<%= movement.movement_type %>" disabled style="background-color: #f8f9fa;">
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1.5rem;">
+            <div class="form-group">
+                <label>Date du mouvement *</label>
+                <input type="date" name="movement_date" value="<%= formatDateForInput(movement.movement_date) %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Motif de <%= movement.movement_type === 'ENTREE' ? 'l\'entrée' : 'la sortie' %> *</label>
+                <select name="movement_reason" required>
+                    <% if (movement.movement_type === 'ENTREE') { %>
+                        <option value="Naissance" <%= movement.movement_reason === 'Naissance' ? 'selected' : '' %>>Naissance</option>
+                        <option value="Acquisition" <%= movement.movement_reason === 'Acquisition' ? 'selected' : '' %>>Acquisition / Achat</option>
+                        <option value="Restitution" <%= movement.movement_reason === 'Restitution' ? 'selected' : '' %>>Restitution (Retour à l'élevage)</option>
+                        <option value="Reprise d'historique" <%= movement.movement_reason === "Reprise d'historique" ? 'selected' : '' %>>Reprise d'historique</option>
+                        <option value="Autre" <%= movement.movement_reason === 'Autre' ? 'selected' : '' %>>Autre entrée</option>
+                    <% } else { %>
+                        <option value="Vente" <%= movement.movement_reason === 'Vente' ? 'selected' : '' %>>Vente</option>
+                        <option value="Décès" <%= movement.movement_reason === 'Décès' ? 'selected' : '' %>>Décès</option>
+                        <option value="Don" <%= movement.movement_reason === 'Don' ? 'selected' : '' %>>Don / Replacement</option>
+                        <option value="Autre" <%= movement.movement_reason === 'Autre' ? 'selected' : '' %>>Autre sortie</option>
+                    <% } %>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label>Provenance ou Destination (Optionnel)</label>
+            <input type="text" name="third_party_info" value="<%= movement.third_party_info || '' %>" placeholder="Nom et adresse de l'acheteur ou du vendeur">
+            <small class="muted">Information obligatoire en cas de vente ou d'achat pour la DDPP.</small>
+        </div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label>Observations diverses</label>
+            <textarea name="notes" rows="3" placeholder="Notes complémentaires (numéro de contrat, circonstances particulières...)"><%= movement.notes || '' %></textarea>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="padding: 1rem 2rem;">Mettre à jour le registre</button>
+        </div>
+    </form>
+</main>
+
+<%- include('../partials/foot') %>

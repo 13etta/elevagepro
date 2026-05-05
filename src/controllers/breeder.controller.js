@@ -130,3 +130,51 @@ exports.getEntriesRegister = async (req, res) => {
         res.status(500).send('Erreur lors du chargement du registre.');
     }
 };
+exports.getEditMovementForm = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const movementId = req.params.id;
+
+        const result = await pool.query(
+            'SELECT * FROM animal_movements WHERE id = $1 AND breeder_id = $2',
+            [movementId, breederId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).send('Ligne du registre introuvable.');
+        }
+
+        res.render('breeder/register-edit', {
+            title: 'Modifier le registre',
+            movement: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Erreur getEditMovementForm:', error);
+        res.status(500).send('Erreur lors de l\'ouverture du formulaire.');
+    }
+};
+
+exports.updateMovement = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const movementId = req.params.id;
+        
+        // Seuls ces champs sont modifiables pour garantir l'intégrité
+        const { movement_date, movement_reason, third_party_info, notes } = req.body;
+
+        await pool.query(
+            `UPDATE animal_movements 
+             SET movement_date = $1, 
+                 movement_reason = $2, 
+                 third_party_info = $3, 
+                 notes = $4 
+             WHERE id = $5 AND breeder_id = $6`,
+            [movement_date, movement_reason, third_party_info, notes, movementId, breederId]
+        );
+
+        res.redirect('/breeder/register/entries');
+    } catch (error) {
+        console.error('Erreur updateMovement:', error);
+        res.status(500).send('Erreur lors de la mise à jour du registre.');
+    }
+};

@@ -23,5 +23,10 @@ router.post('/infrastructure/:id/edit', breederController.saveInfra);
 router.post('/infrastructure/:id/delete', breederController.deleteInfra);
 // --- Registres Légaux ---
 // Registre des Entrées et Sorties
+// Registre des Entrées et Sorties
 router.get('/register/entries', breederController.getEntriesRegister);
+
+// Modification d'une ligne du registre
+router.get('/register/movements/:id/edit', breederController.getEditMovementForm);
+router.post('/register/movements/:id/edit', breederController.updateMovement);
 module.exports = router;

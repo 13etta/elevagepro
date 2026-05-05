@@ -16,6 +16,7 @@
     <div class="card" style="margin-top: 2rem; overflow-x: auto;">
         <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
             <thead>
+                
                 <tr style="border-bottom: 2px solid var(--primary-color);">
                     <th style="padding: 1rem;">Date</th>
                     <th style="padding: 1rem;">Sens</th>
@@ -23,12 +24,14 @@
                     <th style="padding: 1rem;">Nom de l'animal</th>
                     <th style="padding: 1rem;">Identification (I-CAD)</th>
                     <th style="padding: 1rem;">Provenance / Destination</th>
+                <th class="no-print" style="padding: 1rem;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (movements.length === 0) { %>
                     <tr>
-                        <td colspan="6" style="padding: 2rem; text-align: center; color: #6c757d;">
+                        <!-- Le colspan passe à 7 pour couvrir la nouvelle colonne Action -->
+                        <td colspan="7" style="padding: 2rem; text-align: center; color: #6c757d;">
                             Aucun mouvement enregistré. Le registre est vierge.
                         </td>
                     </tr>
@@ -47,6 +50,11 @@
                             <td style="padding: 1rem;"><strong><%= mov.animal_name %></strong><br><small class="muted"><%= mov.breed || '' %></small></td>
                             <td style="padding: 1rem;"><%= mov.identification || 'Non identifié' %></td>
                             <td style="padding: 1rem; max-width: 250px;"><%= mov.third_party_info || 'Élevage interne' %></td>
+                            
+                            <!-- Ajout de la cellule Action avec la classe no-print -->
+                            <td class="no-print" style="padding: 1rem; text-align: right;">
+                                <a href="/breeder/register/movements/<%= mov.id %>/edit" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">Modifier</a>
+                            </td>
                         </tr>
                     <% }) %>
                 <% } %>
@@ -57,12 +65,12 @@
 
 <style>
     /* Styles spécifiques pour l'impression du registre légal */
-    @media print {
-        body * { visibility: hidden; }
-        .data-table, .data-table * { visibility: visible; }
-        .data-table { position: absolute; left: 0; top: 0; width: 100%; }
-        .btn, .header-actions a { display: none; }
-    }
+   @media print {
+    body * { visibility: hidden; }
+    .data-table, .data-table * { visibility: visible; }
+    .data-table { position: absolute; left: 0; top: 0; width: 100%; }
+    .btn, .header-actions a, .no-print { display: none !important; }
+}
 </style>
 
 <%- include('../partials/foot') %>
