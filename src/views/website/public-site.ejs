@@ -68,41 +68,7 @@
       </div>
     </nav>
 
-   <!-- Bloc de contact dynamique -->
-<div class="contact-card" style="background-color: var(--surface-2, #f8f9fa); padding: 2rem; border-radius: 8px; margin-top: 2rem;">
-    <h3 style="color: var(--primary-color); margin-bottom: 1.5rem; font-size: 1.5rem;">
-        Contactez <%= breeder.company_name || breeder.name %>
-    </h3>
-
-    <ul style="list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 2;">
-        
-        <% if (breeder.phone) { %>
-            <li>
-                <strong>📞 Téléphone :</strong> 
-                <a href="tel:<%= breeder.phone %>" style="color: var(--text-color); text-decoration: none; font-weight: 500;">
-                    <%= breeder.phone %>
-                </a>
-            </li>
-        <% } %>
-
-        <% if (breeder.email) { %>
-            <li>
-                <strong>✉️ E-mail :</strong> 
-                <a href="mailto:<%= breeder.email %>" style="color: var(--text-color); text-decoration: none; font-weight: 500;">
-                    <%= breeder.email %>
-                </a>
-            </li>
-        <% } %>
-
-        <% if (breeder.address) { %>
-            <li style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                <strong>📍 Adresse :</strong><br>
-                <%= breeder.address %>
-            </li>
-        <% } %>
-
-    </ul>
-</div>
+  
 
     <section id="accueil" class="public-hero premium-hero">
       <div class="premium-hero-copy">
@@ -289,13 +255,13 @@
         <div>
           <span class="section-kicker">Contact</span>
           <h2>Contacter l’élevage</h2>
-          <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
-          <% if (websiteSettings.openingHours) { %><p>Horaires : <%= websiteSettings.openingHours %></p><% } %>
-          <% if (websiteSettings.phone) { %><p>Téléphone : <a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
-          <% if (websiteSettings.publicEmail) { %><p>Email : <a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
-          <% if (websiteSettings.instagram) { %><p>Instagram : <%= websiteSettings.instagram %></p><% } %>
-          <% if (websiteSettings.facebook) { %><p>Facebook : <%= websiteSettings.facebook %></p><% } %>
-          <% if (breeder.siret) { %><p>SIRET : <%= breeder.siret %></p><% } %>
+          <% if (breeder.address) { %><p>📍 <%= breeder.address %></p><% } %>
+          <% if (websiteSettings.openingHours) { %><p>🕒 Horaires : <%= websiteSettings.openingHours %></p><% } %>
+          <% if (breeder.phone) { %><p>📞 Téléphone : <a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
+          <% if (breeder.email) { %><p>✉️ Email : <a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
+          <% if (websiteSettings.instagram) { %><p>📷 Instagram : <%= websiteSettings.instagram %></p><% } %>
+          <% if (websiteSettings.facebook) { %><p>🟦 Facebook : <%= websiteSettings.facebook %></p><% } %>
+          <% if (breeder.siret) { %><p>🏢 SIRET : <%= breeder.siret %></p><% } %>
         </div>
         <div class="contact-panel">
           <strong><%= websiteSettings.contactPanelTitle || 'Engagement éleveur' %></strong>
@@ -313,7 +279,7 @@
       <a class="showcase-btn primary" href="<%= trialUrl %>">Créer mon élevage</a>
     </section>
 
-    <footer class="showcase-footer">
+ <footer class="showcase-footer">
       <div>
         <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>"><% } %>
         <strong><%= siteTitle %></strong>
@@ -322,8 +288,8 @@
       <div>
         <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
         <% if (websiteSettings.openingHours) { %><p><%= websiteSettings.openingHours %></p><% } %>
-        <% if (websiteSettings.phone) { %><p><a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
-        <% if (websiteSettings.publicEmail) { %><p><a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
+        <% if (breeder.phone) { %><p><a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
+        <% if (breeder.email) { %><p><a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
       </div>
     </footer>
   </main>
