@@ -68,16 +68,41 @@
       </div>
     </nav>
 
-    <section class="contact-strip">
-      <div>
-        <strong><%= websiteSettings.contactStripTitle || 'Besoin d’un renseignement ?' %></strong>
-        <span><%= websiteSettings.contactStripText || 'Informations, réservation, projet de portée ou disponibilité.' %></span>
-      </div>
-      <div class="contact-strip-actions">
-        <a class="showcase-btn primary" href="<%= trialUrl %>">Essayer gratuitement</a>
-        <% if (websiteSettings.showContact) { %><a class="showcase-btn secondary" href="#contact"><%= websiteSettings.primaryCtaLabel || 'Contactez-nous' %></a><% } %>
-      </div>
-    </section>
+   <!-- Bloc de contact dynamique -->
+<div class="contact-card" style="background-color: var(--surface-2, #f8f9fa); padding: 2rem; border-radius: 8px; margin-top: 2rem;">
+    <h3 style="color: var(--primary-color); margin-bottom: 1.5rem; font-size: 1.5rem;">
+        Contactez <%= breeder.company_name || breeder.name %>
+    </h3>
+
+    <ul style="list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 2;">
+        
+        <% if (breeder.phone) { %>
+            <li>
+                <strong>📞 Téléphone :</strong> 
+                <a href="tel:<%= breeder.phone %>" style="color: var(--text-color); text-decoration: none; font-weight: 500;">
+                    <%= breeder.phone %>
+                </a>
+            </li>
+        <% } %>
+
+        <% if (breeder.email) { %>
+            <li>
+                <strong>✉️ E-mail :</strong> 
+                <a href="mailto:<%= breeder.email %>" style="color: var(--text-color); text-decoration: none; font-weight: 500;">
+                    <%= breeder.email %>
+                </a>
+            </li>
+        <% } %>
+
+        <% if (breeder.address) { %>
+            <li style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                <strong>📍 Adresse :</strong><br>
+                <%= breeder.address %>
+            </li>
+        <% } %>
+
+    </ul>
+</div>
 
     <section id="accueil" class="public-hero premium-hero">
       <div class="premium-hero-copy">
