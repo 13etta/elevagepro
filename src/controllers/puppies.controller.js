@@ -1,5 +1,6 @@
 const { pool } = require('../db');
 const { generatePuppyAd } = require('../services/puppy-ad-agent.service');
+const registerService = require('../services/register.service');
 
 function normalizePuppyStatus(value) {
   const raw = String(value || '').trim().toLowerCase();
@@ -371,6 +372,12 @@ exports.getForm = async (req, res) => {
   }
 };
 
+const { pool } = require('../db');
+// N'oublie pas d'importer le service du registre tout en haut de ton fichier !
+const registerService = require('../services/register.service'); 
+
+// ... (tes autres fonctions comme normalizeNullableText etc.) ...
+
 exports.savePuppy = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
@@ -390,6 +397,7 @@ exports.savePuppy = async (req, res) => {
     }
 
     if (puppyId) {
+      // 1. MISE À JOUR D'UN CHIOT EXISTANT
       await pool.query(
         `
           UPDATE puppies
@@ -415,6 +423,7 @@ exports.savePuppy = async (req, res) => {
         ],
       );
     } else {
+      // 2. CRÉATION D'UN NOUVEAU CHIOT
       await pool.query(
         `
           INSERT INTO puppies (breeder_id, litter_id, name, sex, color, chip_number, status, sale_price)
@@ -431,6 +440,25 @@ exports.savePuppy = async (req, res) => {
           puppyData.sale_price,
         ],
       );
+
+      // --- DÉBUT AUTOMATISATION DU REGISTRE DDPP ---
+      
+      // On récupère la date de naissance de la portée pour le registre
+      const litterRes = await pool.query('SELECT birth_date FROM litters WHERE id = $1', [puppyData.litter_id]);
+      const birthDate = litterRes.rows[0] ? litterRes.rows[0].birth_date : new Date();
+
+      // On écrit l'entrée légale (Naissance)
+      await registerService.logMovement({
+        breederId: breederId,
+        animalName: puppyData.name,
+        identification: puppyData.chip_number,
+        breed: 'Chiot', // Indication générique, car relié à la portée
+        type: 'ENTREE',
+        reason: 'Naissance',
+        date: birthDate
+      });
+
+      // --- FIN AUTOMATISATION ---
     }
 
     res.redirect('/puppies');

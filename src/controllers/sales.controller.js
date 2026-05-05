@@ -1,5 +1,6 @@
 const { pool } = require('../db');
 const pdfService = require('../utils/pdf.service');
+const registerService = require('../services/register.service');
 
 async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
   const saleRes = await clientOrPool.query(
@@ -248,9 +249,23 @@ exports.updateSale = async (req, res) => {
       [buyer_name, sale_date, price, payment_method, notes, deposit_amount || 0, newReservationStatus, saleId, breederId],
     );
 
-    if (isFinalSale) {
-      await registerFinalMovementIfNeeded(client, breederId, previousSale, sale_date, buyer_name);
+   if (isFinalSale) {
+      // Au lieu de faire un appel à une fonction locale complexe, on délègue au service dédié.
+      // On passe 'client' en deuxième paramètre pour que cet INSERT fasse partie de ta transaction.
+      await registerService.logMovement({
+        breederId: breederId,
+        animalName: previousSale.animal_name,    // Assure-toi que getSaleWithAnimal retourne ces champs
+        identification: previousSale.chip_number, 
+        breed: previousSale.breed,
+        type: 'SORTIE',
+        reason: 'Vente',
+        date: sale_date,
+        thirdParty: buyer_name
+      }, client); 
     }
+
+    await client.query('COMMIT');
+    res.redirect('/sales');
 
     await client.query('COMMIT');
     res.redirect('/sales');
