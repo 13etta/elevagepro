@@ -23,50 +23,6 @@ async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
   return saleRes.rows[0] || null;
 }
 
-async function registerFinalMovementIfNeeded(client, breederId, sale, saleDate, buyerName) {
-  if (!sale?.animal_id) return;
-
-  const animalTable = sale.animal_type === 'puppy' ? 'puppies' : 'dogs';
-  const animalLabel = sale.animal_type === 'puppy' ? 'chiot' : 'adulte';
-
-  const animalDataRes = await client.query(
-    `SELECT name, chip_number FROM ${animalTable} WHERE id = $1 AND breeder_id = $2`,
-    [sale.animal_id, breederId],
-  );
-
-  if (!animalDataRes.rows.length) return;
-
-  const animalName = animalDataRes.rows[0].name;
-  const animalChip = animalDataRes.rows[0].chip_number;
-
-  await client.query(`UPDATE ${animalTable} SET status = 'Vendu' WHERE id = $1 AND breeder_id = $2`, [sale.animal_id, breederId]);
-
-  const existingMovement = await client.query(
-    `
-      SELECT id
-      FROM movements
-      WHERE breeder_id = $1
-        AND animal_type = $2
-        AND animal_name = $3
-        AND COALESCE(chip_number, '') = COALESCE($4, '')
-        AND movement_type = 'sortie'
-        AND reason = 'vente'
-      LIMIT 1
-    `,
-    [breederId, animalLabel, animalName, animalChip],
-  );
-
-  if (!existingMovement.rows.length) {
-    await client.query(
-      `
-        INSERT INTO movements (breeder_id, animal_type, animal_name, chip_number, movement_type, reason, movement_date, provenance_destination)
-        VALUES ($1, $2, $3, $4, 'sortie', 'vente', $5, $6)
-      `,
-      [breederId, animalLabel, animalName, animalChip, saleDate, buyerName],
-    );
-  }
-}
-
 exports.listSales = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
@@ -181,9 +137,19 @@ exports.createSale = async (req, res) => {
     const table = animalType === 'puppy' ? 'puppies' : 'dogs';
     await client.query(`UPDATE ${table} SET status = $1 WHERE id = $2 AND breeder_id = $3`, [targetStatus, animalId, breederId]);
 
+    // SI C'EST UNE VENTE DIRECTE (Pas une réservation), on inscrit la SORTIE au registre[cite: 5]
     if (!isResa) {
       const sale = await getSaleWithAnimal(client, inserted.rows[0].id, breederId);
-      await registerFinalMovementIfNeeded(client, breederId, sale, sale_date, buyer_name);
+      await registerService.logMovement({
+        breederId: breederId,
+        animalName: sale.animal_name,
+        identification: sale.animal_chip_number,
+        breed: sale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
+        type: 'SORTIE',
+        reason: 'Vente',
+        date: sale_date,
+        thirdParty: buyer_name
+      }, client); 
     }
 
     await client.query('COMMIT');
@@ -249,23 +215,19 @@ exports.updateSale = async (req, res) => {
       [buyer_name, sale_date, price, payment_method, notes, deposit_amount || 0, newReservationStatus, saleId, breederId],
     );
 
-   if (isFinalSale) {
-      // Au lieu de faire un appel à une fonction locale complexe, on délègue au service dédié.
-      // On passe 'client' en deuxième paramètre pour que cet INSERT fasse partie de ta transaction.
+    // SI ON FINALISE UNE RÉSERVATION, on inscrit la SORTIE au registre[cite: 5]
+    if (isFinalSale) {
       await registerService.logMovement({
         breederId: breederId,
-        animalName: previousSale.animal_name,    // Assure-toi que getSaleWithAnimal retourne ces champs
-        identification: previousSale.chip_number, 
-        breed: previousSale.breed,
+        animalName: previousSale.animal_name,
+        identification: previousSale.animal_chip_number, 
+        breed: previousSale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
         type: 'SORTIE',
         reason: 'Vente',
         date: sale_date,
         thirdParty: buyer_name
       }, client); 
     }
-
-    await client.query('COMMIT');
-    res.redirect('/sales');
 
     await client.query('COMMIT');
     res.redirect('/sales');

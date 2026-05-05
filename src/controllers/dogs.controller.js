@@ -1,4 +1,5 @@
 const { pool } = require('../db');
+const registerService = require('../services/register.service'); // NOUVEAU : Import du service de registre
 
 exports.listDogs = async (req, res) => {
     try {
@@ -47,6 +48,7 @@ exports.saveDog = async (req, res) => {
         if (mother_id) mother_name_external = null;
 
         if (dogId) {
+            // 1. MISE À JOUR D'UN CHIEN EXISTANT
             await pool.query(`
                 UPDATE dogs 
                 SET name = $1, sex = $2, breed = $3, birth_date = $4, chip_number = $5, 
@@ -57,6 +59,7 @@ exports.saveDog = async (req, res) => {
             `, [name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes, 
                 father_id || null, mother_id || null, father_name_external, mother_name_external, dogId, breederId]);
         } else {
+            // 2. CRÉATION D'UN NOUVEAU CHIEN (Arrivée dans l'élevage)
             await pool.query(`
                 INSERT INTO dogs (
                     breeder_id, name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
@@ -64,6 +67,18 @@ exports.saveDog = async (req, res) => {
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             `, [breederId, name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes,
                 father_id || null, mother_id || null, father_name_external, mother_name_external]);
+
+            // --- DÉBUT AUTOMATISATION DU REGISTRE DDPP ---
+            await registerService.logMovement({
+                breederId: breederId,
+                animalName: name,
+                identification: chip_number,
+                breed: breed || 'Non renseignée',
+                type: 'ENTREE',
+                reason: 'Acquisition', // Motif légal pour l'entrée d'un chien adulte
+                date: new Date() // Date du jour de l'enregistrement dans le logiciel
+            });
+            // --- FIN AUTOMATISATION ---
         }
         res.redirect('/dogs');
     } catch (error) {
