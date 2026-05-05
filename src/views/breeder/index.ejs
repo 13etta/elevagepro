@@ -1,0 +1,84 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+    <section class="page-hero" style="margin-bottom: 2rem;">
+        <div>
+            <p class="eyebrow">Administration & Légalité</p>
+            <h1>Gestion de la structure</h1>
+            <p>Pilotez vos infrastructures, votre équipe et vos obligations légales (DDPP, Inspection du travail).</p>
+        </div>
+    </section>
+
+    <div class="dashboard-columns">
+        
+        <!-- COLONNE 1 : INFRASTRUCTURES -->
+        <article class="card">
+            <div class="header-actions" style="margin-bottom: 1.5rem;">
+                <h3 style="color: var(--primary-color);">Infrastructures</h3>
+                <a href="/breeder/infrastructure/new" class="btn btn-secondary btn-sm">+ Ajouter</a>
+            </div>
+            
+            <% if (infrastructures.length === 0) { %>
+                <p class="muted">Aucune infrastructure déclarée. Cartographiez vos box et nurseries.</p>
+            <% } else { %>
+                <ul style="list-style: none; padding: 0;">
+                    <% infrastructures.forEach(infra => { %>
+                        <li style="padding: 1rem 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong><%= infra.name %></strong><br>
+                                <span class="muted" style="font-size: 0.9rem; text-transform: uppercase;"><%= infra.type %></span>
+                            </div>
+                            <span class="badge"><%= infra.capacity %> place(s)</span>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } %>
+        </article>
+
+        <!-- COLONNE 2 : RESSOURCES HUMAINES -->
+        <article class="card">
+            <div class="header-actions" style="margin-bottom: 1.5rem;">
+                <h3 style="color: var(--primary-color);">Équipe</h3>
+                <a href="/breeder/staff/new" class="btn btn-secondary btn-sm">+ Ajouter</a>
+            </div>
+            
+            <% if (staff.length === 0) { %>
+                <p class="muted">Aucun membre d'équipe enregistré. Gérez vos salariés et associés ici.</p>
+            <% } else { %>
+                <ul style="list-style: none; padding: 0;">
+                    <% staff.forEach(member => { %>
+                        <li style="padding: 1rem 0; border-bottom: 1px solid #eee;">
+                            <strong><%= member.first_name %> <%= member.last_name %></strong><br>
+                            <span class="muted" style="font-size: 0.9rem;"><%= member.role %> - <%= member.contract_type || 'Non spécifié' %></span>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } %>
+        </article>
+
+    </div>
+
+    <div class="dashboard-columns" style="margin-top: 2rem;">
+        <!-- COLONNE 3 : REGISTRES LÉGAUX -->
+        <article class="card" style="width: 100%;">
+            <div class="section-title compact">
+                <span class="section-kicker">Conformité DDPP</span>
+                <h3>Registres Légaux</h3>
+            </div>
+            <div class="form-grid">
+                <a href="/breeder/register/entries" class="card" style="text-align: center; text-decoration: none; color: inherit; border: 1px solid #ddd; padding: 2rem;">
+                    <strong>Registre des Entrées & Sorties</strong>
+                    <p class="muted" style="font-size: 0.9rem; margin-top: 0.5rem;">Obligatoire. Tracabilité des chiens présents.</p>
+                </a>
+                <a href="/breeder/register/health" class="card" style="text-align: center; text-decoration: none; color: inherit; border: 1px solid #ddd; padding: 2rem;">
+                    <strong>Registre Sanitaire</strong>
+                    <p class="muted" style="font-size: 0.9rem; margin-top: 0.5rem;">Obligatoire. Plan de nettoyage et suivi médical global.</p>
+                </a>
+            </div>
+        </article>
+    </div>
+
+</main>
+
+<%- include('../partials/foot') %>
