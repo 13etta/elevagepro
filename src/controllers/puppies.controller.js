@@ -372,12 +372,6 @@ exports.getForm = async (req, res) => {
   }
 };
 
-const { pool } = require('../db');
-// N'oublie pas d'importer le service du registre tout en haut de ton fichier !
-const registerService = require('../services/register.service'); 
-
-// ... (tes autres fonctions comme normalizeNullableText etc.) ...
-
 exports.savePuppy = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
@@ -452,12 +446,11 @@ exports.savePuppy = async (req, res) => {
         breederId: breederId,
         animalName: puppyData.name,
         identification: puppyData.chip_number,
-        breed: 'Chiot', // Indication générique, car relié à la portée
+        breed: 'Chiot',
         type: 'ENTREE',
         reason: 'Naissance',
         date: birthDate
       });
-
       // --- FIN AUTOMATISATION ---
     }
 
