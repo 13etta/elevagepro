@@ -138,4 +138,10 @@ exports.deletePregnancy = async (req, res) => {
     } catch (error) {
         res.status(500).send('Erreur suppression.');
     }
+    // --- ALIAS POUR LA COMPATIBILITÉ AVEC LE ROUTEUR ---
+if (typeof exports.getCreateForm === 'undefined') exports.getCreateForm = exports.getForm;
+if (typeof exports.getEditForm === 'undefined') exports.getEditForm = exports.getForm;
+if (typeof exports.createPregnancy === 'undefined') exports.createPregnancy = exports.savePregnancy;
+if (typeof exports.updatePregnancy === 'undefined') exports.updatePregnancy = exports.savePregnancy;
+if (typeof exports.showPregnancy === 'undefined') exports.showPregnancy = exports.getForm; // Au cas où une route de vue existerait
 };

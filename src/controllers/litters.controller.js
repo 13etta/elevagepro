@@ -172,4 +172,9 @@ exports.showLitter = async (req, res) => {
         console.error('Erreur showLitter:', error);
         res.status(500).send('Erreur chargement.');
     }
+    // --- ALIAS POUR LA COMPATIBILITÉ AVEC LE ROUTEUR ---
+if (typeof exports.getCreateForm === 'undefined') exports.getCreateForm = exports.getForm;
+if (typeof exports.getEditForm === 'undefined') exports.getEditForm = exports.getForm;
+if (typeof exports.createLitter === 'undefined') exports.createLitter = exports.saveLitter;
+if (typeof exports.updateLitter === 'undefined') exports.updateLitter = exports.saveLitter;
 };
