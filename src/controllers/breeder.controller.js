@@ -16,9 +16,6 @@ exports.getDashboard = async (req, res) => {
             [breederId]
         );
 
-        // 3. (Futur) Récupération des derniers mouvements pour le registre
-        // const movementsRes = await pool.query('...');
-
         res.render('breeder/index', {
             title: 'Gestion de l\'élevage',
             infrastructures: infraRes.rows,
@@ -30,19 +27,17 @@ exports.getDashboard = async (req, res) => {
         res.status(500).send('Erreur serveur lors du chargement du module de gestion de l\'élevage.');
     }
 };
+
 // --- FONCTIONS INFRASTRUCTURES ---
 
-// Afficher le formulaire d'ajout/modification
 exports.getInfraForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const infraId = req.params.id;
         
-        // Valeurs par défaut pour une nouvelle infrastructure
         let infra = { status: 'actif', capacity: 1 }; 
 
         if (infraId) {
-            // Mode modification : on récupère les données existantes
             const result = await pool.query(
                 'SELECT * FROM infrastructures WHERE id = $1 AND breeder_id = $2',
                 [infraId, breederId]
@@ -51,7 +46,6 @@ exports.getInfraForm = async (req, res) => {
             if (result.rows.length > 0) {
                 infra = result.rows[0];
             } else {
-                // Sécurité : l'infrastructure n'existe pas ou n'appartient pas à cet éleveur
                 return res.redirect('/breeder');
             }
         }
@@ -63,7 +57,6 @@ exports.getInfraForm = async (req, res) => {
     }
 };
 
-// Sauvegarder (Création ou Mise à jour)
 exports.saveInfra = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
@@ -71,13 +64,11 @@ exports.saveInfra = async (req, res) => {
         const { name, type, capacity, status } = req.body;
 
         if (infraId) {
-            // Mise à jour (UPDATE)
             await pool.query(
                 'UPDATE infrastructures SET name = $1, type = $2, capacity = $3, status = $4 WHERE id = $5 AND breeder_id = $6',
                 [name, type, capacity || 1, status, infraId, breederId]
             );
         } else {
-            // Création (INSERT)
             await pool.query(
                 'INSERT INTO infrastructures (breeder_id, name, type, capacity, status) VALUES ($1, $2, $3, $4, $5)',
                 [breederId, name, type, capacity || 1, status || 'actif']
@@ -91,7 +82,6 @@ exports.saveInfra = async (req, res) => {
     }
 };
 
-// Supprimer une infrastructure
 exports.deleteInfra = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
@@ -108,11 +98,13 @@ exports.deleteInfra = async (req, res) => {
         res.status(500).send('Erreur lors de la suppression.');
     }
 };
+
+// --- FONCTIONS REGISTRE DES ENTRÉES/SORTIES ---
+
 exports.getEntriesRegister = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
 
-        // Récupération de tous les mouvements, du plus récent au plus ancien
         const movementsRes = await pool.query(
             `SELECT * FROM animal_movements 
              WHERE breeder_id = $1 
@@ -130,6 +122,7 @@ exports.getEntriesRegister = async (req, res) => {
         res.status(500).send('Erreur lors du chargement du registre.');
     }
 };
+
 exports.getEditMovementForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
@@ -159,7 +152,6 @@ exports.updateMovement = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const movementId = req.params.id;
         
-        // Seuls ces champs sont modifiables pour garantir l'intégrité
         const { movement_date, movement_reason, third_party_info, notes } = req.body;
 
         await pool.query(
@@ -176,5 +168,77 @@ exports.updateMovement = async (req, res) => {
     } catch (error) {
         console.error('Erreur updateMovement:', error);
         res.status(500).send('Erreur lors de la mise à jour du registre.');
+    }
+};
+
+// --- FONCTIONS REGISTRE SANITAIRE ET HYGIÈNE ---
+
+exports.getHealthRegister = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+
+        // Récupération des événements médicaux
+        const recordsRes = await pool.query(
+            'SELECT * FROM sanitary_records WHERE breeder_id = $1 ORDER BY event_date DESC',
+            [breederId]
+        );
+
+        // Récupération des logs de nettoyage
+        const cleaningRes = await pool.query(
+            'SELECT * FROM cleaning_logs WHERE breeder_id = $1 ORDER BY cleaning_date DESC, created_at DESC LIMIT 50',
+            [breederId]
+        );
+
+        // Récupération des infrastructures pour le menu déroulant
+        const infraRes = await pool.query(
+            'SELECT * FROM infrastructures WHERE breeder_id = $1 ORDER BY type ASC, name ASC',
+            [breederId]
+        );
+
+        res.render('breeder/register-health', {
+            title: 'Registre Sanitaire & Hygiène',
+            records: recordsRes.rows,
+            cleaningLogs: cleaningRes.rows,
+            infrastructures: infraRes.rows
+        });
+    } catch (error) {
+        console.error('Erreur getHealthRegister:', error);
+        res.status(500).send('Erreur lors du chargement du registre sanitaire.');
+    }
+};
+
+exports.addSanitaryRecord = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const { event_date, event_type, description, animals_concerned, vet_name } = req.body;
+
+        await pool.query(
+            `INSERT INTO sanitary_records (breeder_id, event_date, event_type, description, animals_concerned, vet_name)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [breederId, event_date, event_type, description, animals_concerned, vet_name]
+        );
+
+        res.redirect('/breeder/register/health');
+    } catch (error) {
+        console.error('Erreur addSanitaryRecord:', error);
+        res.status(500).send('Erreur lors de l\'ajout de l\'événement sanitaire.');
+    }
+};
+
+exports.addCleaningLog = async (req, res) => {
+    try {
+        const breederId = req.session.user.breeder_id;
+        const { cleaning_date, zone_type, protocol_used, done_by, notes } = req.body;
+
+        await pool.query(
+            `INSERT INTO cleaning_logs (breeder_id, cleaning_date, zone_type, protocol_used, done_by, notes)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [breederId, cleaning_date, zone_type, protocol_used, done_by, notes]
+        );
+
+        res.redirect('/breeder/register/health');
+    } catch (error) {
+        console.error('Erreur addCleaningLog:', error);
+        res.status(500).send('Erreur lors de l\'ajout du rapport de nettoyage.');
     }
 };

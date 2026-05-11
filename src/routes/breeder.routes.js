@@ -30,3 +30,12 @@ router.get('/register/entries', breederController.getEntriesRegister);
 router.get('/register/movements/:id/edit', breederController.getEditMovementForm);
 router.post('/register/movements/:id/edit', breederController.updateMovement);
 module.exports = router;
+
+// --- Registre Sanitaire & Marche en Avant ---
+router.get('/register/health', breederController.getHealthRegister);
+
+// Ajout d'un événement au registre sanitaire
+router.post('/register/health/record', breederController.addSanitaryRecord);
+
+// Validation d'une tâche de nettoyage (Marche en avant)
+router.post('/register/health/cleaning', breederController.addCleaningLog);
