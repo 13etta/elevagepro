@@ -5,10 +5,17 @@ exports.listPregnancies = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const { q, female, status } = req.query;
 
+        // CORRECTION 1 : Jointures en cascade pour récupérer le mâle via la saillie (mating)
         let query = `
-            SELECT p.*, f.name AS female_name
+            SELECT 
+                p.*, 
+                f.name AS female_name,
+                m.mating_date,
+                father.name AS father_name
             FROM pregnancies p
             LEFT JOIN dogs f ON p.female_id = f.id
+            LEFT JOIN matings m ON p.mating_id = m.id
+            LEFT JOIN dogs father ON m.male_id = father.id
             WHERE p.breeder_id = $1
         `;
         let params = [breederId];
@@ -28,7 +35,16 @@ exports.listPregnancies = async (req, res) => {
 
         query += ' ORDER BY p.start_date DESC';
         const result = await pool.query(query, params);
-        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ORDER BY name ASC", [breederId]);
+        
+        // CORRECTION 2 : Élargissement du filtre des statuts pour inclure les chiennes en processus de reproduction
+        const females = await pool.query(`
+            SELECT id, name 
+            FROM dogs 
+            WHERE breeder_id = $1 
+              AND sex = 'F' 
+              AND LOWER(status) IN ('actif', 'active', 'en saillie', 'gestante', 'en gestation')
+            ORDER BY name ASC
+        `, [breederId]);
 
         res.render('pregnancies/index', { pregnancies: result.rows, females: females.rows, filters: req.query });
     } catch (error) {
@@ -41,29 +57,35 @@ exports.getForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const pregId = req.params.id;
-        const matingId = req.query.mating_id; 
-
-        let preg = { result: 'En cours' };
+        let pregnancy = { result: 'En cours' };
 
         if (pregId) {
             const pregRes = await pool.query('SELECT * FROM pregnancies WHERE id = $1 AND breeder_id = $2', [pregId, breederId]);
-            if (pregRes.rows.length > 0) preg = pregRes.rows[0];
-        } else if (matingId) {
-            const matingRes = await pool.query('SELECT female_id, mating_date FROM matings WHERE id = $1 AND breeder_id = $2', [matingId, breederId]);
-            if (matingRes.rows.length > 0) {
-                preg.mating_id = matingId;
-                preg.female_id = matingRes.rows[0].female_id;
-                preg.start_date = matingRes.rows[0].mating_date;
-                
-                let start = new Date(preg.start_date);
-                start.setDate(start.getDate() + 63);
-                preg.expected_date = start.toISOString().split('T')[0];
-            }
+            if (pregRes.rows.length > 0) pregnancy = pregRes.rows[0];
         }
 
-        const females = await pool.query("SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' AND status = 'Actif' ORDER BY name ASC", [breederId]);
-        res.render('pregnancies/form', { preg, females: females.rows });
+        // Le même filtre élargi pour le formulaire de création/modification
+        const females = await pool.query(`
+            SELECT id, name 
+            FROM dogs 
+            WHERE breeder_id = $1 
+              AND sex = 'F' 
+              AND LOWER(status) IN ('actif', 'active', 'en saillie', 'gestante', 'en gestation')
+            ORDER BY name ASC
+        `, [breederId]);
+        
+        const matings = await pool.query(`
+            SELECT m.id, m.mating_date, f.name as female_name, male.name as male_name
+            FROM matings m
+            JOIN dogs f ON m.female_id = f.id
+            JOIN dogs male ON m.male_id = male.id
+            WHERE m.breeder_id = $1
+            ORDER BY m.mating_date DESC
+        `, [breederId]);
+
+        res.render('pregnancies/form', { pregnancy, females: females.rows, matings: matings.rows });
     } catch (error) {
+        console.error('Erreur form gestation:', error);
         res.status(500).send('Erreur serveur.');
     }
 };
@@ -72,17 +94,16 @@ exports.savePregnancy = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const pregId = req.params.id;
-        const { mating_id, female_id, start_date, notes } = req.body;
-        let { expected_date, due_date, result } = req.body;
+        let { mating_id, female_id, start_date, expected_date, due_date, result, notes } = req.body;
 
-        // MACHINE À ÉTATS : Réajustement si l'utilisateur efface la date prévue
-        if (start_date && !expected_date) {
-            let start = new Date(start_date);
-            start.setDate(start.getDate() + 63);
-            expected_date = start.toISOString().split('T')[0];
+        if (!female_id || !start_date) {
+            return res.status(400).send('La femelle et la date de début sont obligatoires.');
         }
 
-        // MACHINE À ÉTATS : Clôture implicite si la mise bas a eu lieu
+        if (expected_date && typeof expected_date === 'string' && expected_date.includes('T')) {
+            expected_date = expected_date.split('T')[0];
+        }
+
         if (due_date && result === 'En cours') {
             result = 'Réussie';
         }
@@ -98,6 +119,9 @@ exports.savePregnancy = async (req, res) => {
                 INSERT INTO pregnancies (breeder_id, mating_id, female_id, start_date, expected_date, due_date, result, notes) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             `, [breederId, mating_id || null, female_id, start_date, expected_date || null, due_date || null, result, notes]);
+            
+            // AUTOMATISATION : On passe la chienne en statut Gestante automatiquement
+            await pool.query("UPDATE dogs SET status = 'Gestante' WHERE id = $1 AND breeder_id = $2", [female_id, breederId]);
         }
 
         res.redirect('/pregnancies');
