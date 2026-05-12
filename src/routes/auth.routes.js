@@ -10,5 +10,6 @@ router.post('/login', requireGuest, authController.login);
 router.get('/register', requireGuest, authController.renderRegister);
 router.post('/register', requireGuest, authController.register);
 router.post('/logout', requireAuth, verifyCsrf, authController.logout);
+router.get('/logout', authController.logout);
 
 module.exports = router;
