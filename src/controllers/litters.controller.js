@@ -6,7 +6,7 @@ exports.listLitters = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const { q, status, female_id } = req.query;
 
-        // CORRECTION 1 : Jointure vers la saillie (mating) pour trouver le père
+        // Jointures en cascade pour récupérer le père (via matings)
         let query = `
             SELECT 
                 l.*, 
@@ -36,7 +36,7 @@ exports.listLitters = async (req, res) => {
         query += ' ORDER BY l.birth_date DESC';
         const result = await pool.query(query, params);
         
-        // CORRECTION 2 : Intégration des statuts logiques (gestante, maternité, allaitante)
+        // Filtre élargi
         const females = await pool.query(`
             SELECT id, name 
             FROM dogs 
@@ -82,7 +82,9 @@ exports.getForm = async (req, res) => {
             ORDER BY m.mating_date DESC
         `, [breederId]);
 
-        res.render('litters/form', { litter, females: females.rows, matings: matings.rows });
+        // CORRECTION VUE : Aiguillage dynamique vers new.ejs ou edit.ejs
+        const viewTemplate = litterId ? 'litters/edit' : 'litters/new';
+        res.render(viewTemplate, { litter, females: females.rows, matings: matings.rows });
     } catch (error) {
         console.error('Erreur form portée:', error);
         res.status(500).send('Erreur serveur.');
@@ -109,16 +111,18 @@ exports.saveLitter = async (req, res) => {
                 WHERE id = $7 AND breeder_id = $8
             `, [mother_id, mating_id || null, birth_date, puppies_count_total || 0, status || 'active', notes, litterId, breederId]);
         } else {
-            await ensureAutomationColumns(client);
+            if (typeof ensureAutomationColumns === 'function') await ensureAutomationColumns(client);
             const inserted = await client.query(`
                 INSERT INTO litters (breeder_id, mother_id, mating_id, birth_date, puppies_count_total, status, notes) 
                 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
             `, [breederId, mother_id, mating_id || null, birth_date, puppies_count_total || 0, status || 'active', notes]);
             
-            // AUTOMATISATION : On passe la chienne en statut Maternité automatiquement
+            // Automatisation statut
             await client.query("UPDATE dogs SET status = 'Maternité' WHERE id = $1 AND breeder_id = $2", [mother_id, breederId]);
 
-            await createPuppyProtocolReminders(client, breederId, inserted.rows[0].id, birth_date);
+            if (typeof createPuppyProtocolReminders === 'function') {
+                await createPuppyProtocolReminders(client, breederId, inserted.rows[0].id, birth_date);
+            }
         }
 
         await client.query('COMMIT');
@@ -172,9 +176,10 @@ exports.showLitter = async (req, res) => {
         console.error('Erreur showLitter:', error);
         res.status(500).send('Erreur chargement.');
     }
-    // --- ALIAS POUR LA COMPATIBILITÉ AVEC LE ROUTEUR ---
-if (typeof exports.getCreateForm === 'undefined') exports.getCreateForm = exports.getForm;
-if (typeof exports.getEditForm === 'undefined') exports.getEditForm = exports.getForm;
-if (typeof exports.createLitter === 'undefined') exports.createLitter = exports.saveLitter;
-if (typeof exports.updateLitter === 'undefined') exports.updateLitter = exports.saveLitter;
 };
+
+// --- ALIAS SÉCURISÉS POUR ROUTEUR ---
+exports.getCreateForm = exports.getForm;
+exports.getEditForm = exports.getForm;
+exports.createLitter = exports.saveLitter;
+exports.updateLitter = exports.saveLitter;

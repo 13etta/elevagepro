@@ -5,7 +5,7 @@ exports.listPregnancies = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const { q, female, status } = req.query;
 
-        // CORRECTION 1 : Jointures en cascade pour récupérer le mâle via la saillie (mating)
+        // Jointures en cascade pour récupérer le père (via matings)
         let query = `
             SELECT 
                 p.*, 
@@ -36,7 +36,7 @@ exports.listPregnancies = async (req, res) => {
         query += ' ORDER BY p.start_date DESC';
         const result = await pool.query(query, params);
         
-        // CORRECTION 2 : Élargissement du filtre des statuts pour inclure les chiennes en processus de reproduction
+        // Filtre élargi pour inclure les chiennes gestantes ou en saillie
         const females = await pool.query(`
             SELECT id, name 
             FROM dogs 
@@ -64,7 +64,6 @@ exports.getForm = async (req, res) => {
             if (pregRes.rows.length > 0) pregnancy = pregRes.rows[0];
         }
 
-        // Le même filtre élargi pour le formulaire de création/modification
         const females = await pool.query(`
             SELECT id, name 
             FROM dogs 
@@ -83,7 +82,8 @@ exports.getForm = async (req, res) => {
             ORDER BY m.mating_date DESC
         `, [breederId]);
 
-        res.render('pregnancies/form', { pregnancy, females: females.rows, matings: matings.rows });
+        // CORRECTION VUE : On passe "preg:" pour coller à ta variable dans form.ejs
+        res.render('pregnancies/form', { preg: pregnancy, females: females.rows, matings: matings.rows });
     } catch (error) {
         console.error('Erreur form gestation:', error);
         res.status(500).send('Erreur serveur.');
@@ -104,6 +104,7 @@ exports.savePregnancy = async (req, res) => {
             expected_date = expected_date.split('T')[0];
         }
 
+        // Clôture implicite si la mise bas a eu lieu
         if (due_date && result === 'En cours') {
             result = 'Réussie';
         }
@@ -120,7 +121,7 @@ exports.savePregnancy = async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             `, [breederId, mating_id || null, female_id, start_date, expected_date || null, due_date || null, result, notes]);
             
-            // AUTOMATISATION : On passe la chienne en statut Gestante automatiquement
+            // Automatisation statut
             await pool.query("UPDATE dogs SET status = 'Gestante' WHERE id = $1 AND breeder_id = $2", [female_id, breederId]);
         }
 
@@ -138,10 +139,11 @@ exports.deletePregnancy = async (req, res) => {
     } catch (error) {
         res.status(500).send('Erreur suppression.');
     }
-    // --- ALIAS POUR LA COMPATIBILITÉ AVEC LE ROUTEUR ---
-if (typeof exports.getCreateForm === 'undefined') exports.getCreateForm = exports.getForm;
-if (typeof exports.getEditForm === 'undefined') exports.getEditForm = exports.getForm;
-if (typeof exports.createPregnancy === 'undefined') exports.createPregnancy = exports.savePregnancy;
-if (typeof exports.updatePregnancy === 'undefined') exports.updatePregnancy = exports.savePregnancy;
-if (typeof exports.showPregnancy === 'undefined') exports.showPregnancy = exports.getForm; // Au cas où une route de vue existerait
 };
+
+// --- ALIAS SÉCURISÉS POUR ROUTEUR ---
+exports.getCreateForm = exports.getForm;
+exports.getEditForm = exports.getForm;
+exports.createPregnancy = exports.savePregnancy;
+exports.updatePregnancy = exports.savePregnancy;
+exports.showPregnancy = exports.getForm;
