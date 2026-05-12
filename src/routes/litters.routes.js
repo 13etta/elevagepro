@@ -8,16 +8,16 @@ router.use(requireAuth);
 // Liste
 router.get('/', littersController.listLitters);
 
-// Création
-router.get('/new', littersController.getCreateForm);
-router.post('/new', littersController.createLitter);
+// Création (Utilise la fonction unifiée)
+router.get('/new', littersController.getForm);
+router.post('/new', littersController.saveLitter);
 
 // Vue de détail
 router.get('/:id', littersController.showLitter);
 
-// ÉDITION (C'est ici que l'aiguillage se joue)
-router.get('/:id/edit', littersController.getEditForm);
-router.post('/:id/edit', littersController.updateLitter);
+// Modification (Utilise la même fonction unifiée)
+router.get('/:id/edit', littersController.getForm);
+router.post('/:id/edit', littersController.saveLitter);
 
 // Suppression
 router.post('/:id/delete', littersController.deleteLitter);
