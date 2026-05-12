@@ -7,10 +7,25 @@ const DEFAULT_PUPPY_PROTOCOL = [
   { offsetDays: 63, type: 'document', title: 'Préparer documents de départ chiots' },
 ];
 
-function addDays(dateValue, days) {
-  const date = new Date(dateValue);
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+function addDays(date, days) {
+    let d = new Date(date);
+    
+    // SÉCURITÉ 1 : Si la date fournie n'est pas reconnue, on prend la date d'aujourd'hui
+    if (isNaN(d.getTime())) {
+        console.warn(`[Protocols] Date invalide reçue: "${date}". Remplacement par aujourd'hui.`);
+        d = new Date();
+    }
+
+    // SÉCURITÉ 2 : Si le nombre de jours n'est pas un chiffre, on ajoute 0
+    const daysToAdd = parseInt(days, 10);
+    if (!isNaN(daysToAdd)) {
+        d.setDate(d.getDate() + daysToAdd);
+    } else {
+        console.warn(`[Protocols] Nombre de jours invalide: "${days}". Remplacement par 0.`);
+    }
+
+    // On retourne uniquement la partie 'YYYY-MM-DD' pour la base de données
+    return d.toISOString().split('T')[0];
 }
 
 async function ensureAutomationColumns(client) {
