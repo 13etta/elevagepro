@@ -35,6 +35,12 @@ function normalizeNullableText(value, maxLength = null) {
   return maxLength ? text.slice(0, maxLength) : text;
 }
 
+async function ensurePuppiesSchema() {
+  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS birth_date DATE').catch(() => {});
+  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS notes TEXT').catch(() => {});
+  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE').catch(() => {});
+}
+
 function buildPuppyFilters(query, breederId) {
   const values = [breederId];
   const where = ['p.breeder_id = $1'];
@@ -85,6 +91,7 @@ function buildPuppyFilters(query, breederId) {
 
 async function fetchPuppies(req) {
   const breederId = req.session.user.breeder_id;
+  await ensurePuppiesSchema();
   const filters = buildPuppyFilters(req.query, breederId);
 
   const result = await pool.query(
@@ -98,6 +105,8 @@ async function fetchPuppies(req) {
         p.chip_number,
         p.status,
         p.sale_price,
+        p.birth_date,
+        p.notes,
         p.created_at,
         COALESCE(p.is_sold, false) AS is_sold,
         l.birth_date AS litter_birth_date,
@@ -115,6 +124,7 @@ async function fetchPuppies(req) {
 }
 
 async function fetchFilterOptions(breederId) {
+  await ensurePuppiesSchema();
   const [colors, statuses] = await Promise.all([
     pool.query(
       `
@@ -147,6 +157,7 @@ async function fetchFilterOptions(breederId) {
 }
 
 async function fetchPuppyAdContext(breederId, puppyId) {
+  await ensurePuppiesSchema();
   const puppyResult = await pool.query(
     `
       SELECT
@@ -239,6 +250,7 @@ exports.showPuppy = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const puppyId = req.params.id;
+    await ensurePuppiesSchema();
 
     const puppyResult = await pool.query(
       `
@@ -338,6 +350,7 @@ exports.getForm = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const puppyId = req.params.id;
     const litterId = req.query.litter_id;
+    await ensurePuppiesSchema();
 
     let puppy = { status: 'Actif', litter_id: litterId };
 
@@ -384,7 +397,10 @@ exports.savePuppy = async (req, res) => {
       chip_number: normalizeNullableText(req.body.chip_number, 30),
       status: normalizePuppyStatus(req.body.status),
       sale_price: normalizeSalePrice(req.body.sale_price),
+      birth_date: req.body.birth_date || null,
+      notes: normalizeNullableText(req.body.notes, 2000),
     };
+    await ensurePuppiesSchema();
 
     if (!puppyData.litter_id || !puppyData.name || !puppyData.sex) {
       return res.status(400).send('Portée, nom et sexe du chiot sont obligatoires.');
@@ -401,8 +417,11 @@ exports.savePuppy = async (req, res) => {
               color = $4,
               chip_number = $5,
               status = $6,
-              sale_price = $7
-          WHERE id = $8 AND breeder_id = $9
+              sale_price = $7,
+              birth_date = $8,
+              notes = $9,
+              is_sold = $10
+          WHERE id = $11 AND breeder_id = $12
         `,
         [
           puppyData.litter_id,
@@ -412,6 +431,9 @@ exports.savePuppy = async (req, res) => {
           puppyData.chip_number,
           puppyData.status,
           puppyData.sale_price,
+          puppyData.birth_date,
+          puppyData.notes,
+          puppyData.status === 'Vendu',
           puppyId,
           breederId,
         ],
@@ -420,8 +442,8 @@ exports.savePuppy = async (req, res) => {
       // 2. CRÉATION D'UN NOUVEAU CHIOT
       await pool.query(
         `
-          INSERT INTO puppies (breeder_id, litter_id, name, sex, color, chip_number, status, sale_price)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          INSERT INTO puppies (breeder_id, litter_id, name, sex, color, chip_number, status, sale_price, birth_date, notes, is_sold)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         `,
         [
           breederId,
@@ -432,6 +454,9 @@ exports.savePuppy = async (req, res) => {
           puppyData.chip_number,
           puppyData.status,
           puppyData.sale_price,
+          puppyData.birth_date,
+          puppyData.notes,
+          puppyData.status === 'Vendu',
         ],
       );
 

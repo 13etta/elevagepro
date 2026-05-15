@@ -124,6 +124,9 @@ CREATE TABLE IF NOT EXISTS puppies (
     chip_number VARCHAR(15),
     status VARCHAR(50) DEFAULT 'disponible',
     sale_price DECIMAL(10, 2),
+    birth_date DATE,
+    notes TEXT,
+    is_sold BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
