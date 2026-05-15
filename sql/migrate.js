@@ -20,6 +20,7 @@ async function runMigrations() {
     '006_sales_reservations.sql',
     '007_litter_status_fields.sql',
     '008_pregnancy_compatibility_fields.sql',
+    '009_dashboard_compatibility_fields.sql',
   ];
   
   console.log('Démarrage des migrations...');
