@@ -5,9 +5,9 @@ require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { 
-    rejectUnauthorized: false 
-  }
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 async function runMigrations() {
@@ -21,15 +21,16 @@ async function runMigrations() {
     '007_litter_status_fields.sql',
     '008_pregnancy_compatibility_fields.sql',
     '009_dashboard_compatibility_fields.sql',
+    '010_stabilization_dogs_registry.sql',
   ];
-  
+
   console.log('Démarrage des migrations...');
-  
+
   const client = await pool.connect();
-  
+
   try {
-    await client.query('BEGIN'); // Début de transaction
-    
+    await client.query('BEGIN');
+
     for (const file of files) {
       const filePath = path.join(__dirname, file);
       if (fs.existsSync(filePath)) {
@@ -38,15 +39,16 @@ async function runMigrations() {
         await client.query(sql);
       }
     }
-    
-    await client.query('COMMIT'); // Validation
+
+    await client.query('COMMIT');
     console.log('Migrations terminées avec succès.');
   } catch (err) {
-    await client.query('ROLLBACK'); // Annulation en cas d'erreur
+    await client.query('ROLLBACK');
     console.error('Erreur lors des migrations, rollback effectué.', err);
+    process.exitCode = 1;
   } finally {
     client.release();
-    pool.end();
+    await pool.end();
   }
 }
 
