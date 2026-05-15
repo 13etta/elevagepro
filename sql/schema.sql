@@ -1,4 +1,4 @@
-CREATE TABLE movements (
+CREATE TABLE IF NOT EXISTS movements (
     id SERIAL PRIMARY KEY,
     breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
     animal_type VARCHAR(50) NOT NULL,
@@ -12,4 +12,4 @@ CREATE TABLE movements (
 );
 
 -- Index pour accélérer les recherches lors de l'affichage du registre
-CREATE INDEX idx_movements_breeder_date ON movements(breeder_id, movement_date DESC);
+CREATE INDEX IF NOT EXISTS idx_movements_breeder_date ON movements(breeder_id, movement_date DESC);
