@@ -28,6 +28,10 @@ function isMissingSchemaError(error) {
   return ['42P01', '42703'].includes(error?.code);
 }
 
+function isTimeoutOrLockError(error) {
+  return ['57014', '55P03'].includes(error?.code);
+}
+
 async function safeQuery(sql, params, fallbackRows = []) {
   try {
     return await pool.query(sql, params);
@@ -37,33 +41,20 @@ async function safeQuery(sql, params, fallbackRows = []) {
       return { rows: fallbackRows };
     }
 
+    if (isTimeoutOrLockError(error)) {
+      console.warn('Dashboard degradé: requête interrompue ou verrouillée:', error.message);
+      return { rows: fallbackRows };
+    }
+
     throw error;
   }
 }
 
 async function ensureDashboardSchema() {
-  const statements = [
-    "ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb",
-    'ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE',
-    'ALTER TABLE puppies ADD COLUMN IF NOT EXISTS chip_number VARCHAR(15)',
-    "ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'",
-    'ALTER TABLE litters ADD COLUMN IF NOT EXISTS mother_id UUID REFERENCES dogs(id) ON DELETE CASCADE',
-    "ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS result VARCHAR(50) DEFAULT 'En cours'",
-    'ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE',
-    'ALTER TABLE reminders ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE',
-    'ALTER TABLE reminders ADD COLUMN IF NOT EXISTS title VARCHAR(255)',
-    'ALTER TABLE soins ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE',
-    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE',
-    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE',
-    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2) DEFAULT 0',
-    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP',
-  ];
-
-  for (const statement of statements) {
-    await pool.query(statement).catch((error) => {
-      if (!isMissingSchemaError(error)) throw error;
-    });
-  }
+  // Ne jamais exécuter de DDL depuis le chargement du dashboard.
+  // Les ALTER TABLE doivent être joués via `npm run db:migrate`.
+  // Ancienne cause de panne Render : statement timeout sur ALTER TABLE à l'ouverture du dashboard.
+  return true;
 }
 
 exports.getDashboard = async (req, res) => {
@@ -186,7 +177,7 @@ exports.getDashboard = async (req, res) => {
       countFallback,
     );
 
-    const activeDogsCount = toNumber(activeDogs.rows[0].count);
+    const activeDogsCount = toNumber(activeDogs.rows[0]?.count);
     const boxCapacity = Math.max(resolveBoxCapacity(breederSettings), 1);
     const boxOccupancyRate = Math.min(100, Math.round((activeDogsCount / boxCapacity) * 100));
 
@@ -201,16 +192,16 @@ exports.getDashboard = async (req, res) => {
 
     const kpis = {
       activeDogs: activeDogsCount,
-      availablePuppies: toNumber(availablePuppies.rows[0].count),
-      reservedPuppies: toNumber(reservedPuppies.rows[0].count),
-      activeLitters: toNumber(activeLitters.rows[0].count),
-      ongoingPregnancies: toNumber(ongoingPregnancies.rows[0].count),
-      incompleteSales: toNumber(incompleteSales.rows[0].count),
-      puppiesWithoutChip: toNumber(puppiesWithoutChip.rows[0].count),
+      availablePuppies: toNumber(availablePuppies.rows[0]?.count),
+      reservedPuppies: toNumber(reservedPuppies.rows[0]?.count),
+      activeLitters: toNumber(activeLitters.rows[0]?.count),
+      ongoingPregnancies: toNumber(ongoingPregnancies.rows[0]?.count),
+      incompleteSales: toNumber(incompleteSales.rows[0]?.count),
+      puppiesWithoutChip: toNumber(puppiesWithoutChip.rows[0]?.count),
       boxCapacity,
       boxOccupancyRate,
       currentMonthSales,
-      upcomingReminders: toNumber(upcomingRemindersCount.rows[0].count),
+      upcomingReminders: toNumber(upcomingRemindersCount.rows[0]?.count),
     };
 
     const remindersRes = await safeQuery(
