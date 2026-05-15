@@ -8,22 +8,6 @@ CREATE TABLE IF NOT EXISTS "session" (
   "expire" timestamp(6) NOT NULL
 );
 
--- ==========================================
--- NETTOYAGE DE DEVELOPPEMENT (A retirer en production)
--- ==========================================
-DROP TABLE IF EXISTS sales CASCADE;
-DROP TABLE IF EXISTS reminders CASCADE;
-DROP TABLE IF EXISTS soins CASCADE;
-DROP TABLE IF EXISTS puppies CASCADE;
-DROP TABLE IF EXISTS litters CASCADE;
-DROP TABLE IF EXISTS pregnancies CASCADE;
-DROP TABLE IF EXISTS matings CASCADE;
-DROP TABLE IF EXISTS heats CASCADE;
-DROP TABLE IF EXISTS dogs CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS breeder CASCADE;
--- ==========================================
-
 -- 1. ELEVEURS (Compte principal)
 CREATE TABLE IF NOT EXISTS breeder (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -96,10 +80,16 @@ CREATE TABLE IF NOT EXISTS pregnancies (
     breeder_id UUID REFERENCES breeder(id) ON DELETE CASCADE,
     mating_id UUID REFERENCES matings(id) ON DELETE CASCADE,
     dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
+    female_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
     confirmation_date DATE,
+    start_date DATE,
     expected_delivery_date DATE,
+    expected_date DATE,
+    due_date DATE,
     status VARCHAR(50) DEFAULT 'en_cours',
-    notes TEXT
+    result VARCHAR(50) DEFAULT 'En cours',
+    notes TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 7. PORTÉES
@@ -110,7 +100,9 @@ CREATE TABLE IF NOT EXISTS litters (
     pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE SET NULL,
     birth_date DATE NOT NULL,
     puppies_count_total INTEGER DEFAULT 0,
-    notes TEXT
+    status VARCHAR(50) DEFAULT 'active',
+    notes TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 8. CHIOTS
@@ -159,11 +151,14 @@ CREATE TABLE IF NOT EXISTS sales (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     breeder_id UUID REFERENCES breeder(id) ON DELETE CASCADE,
     puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE,
+    dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
     buyer_name VARCHAR(255),
     sale_date DATE NOT NULL,
     price DECIMAL(10, 2),
     payment_method VARCHAR(50),
     invoice_number VARCHAR(100),
+    is_reservation BOOLEAN DEFAULT FALSE,
+    deposit_amount DECIMAL(10, 2) DEFAULT 0,
     notes TEXT
 );
 CREATE TABLE IF NOT EXISTS movements (
