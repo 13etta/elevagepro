@@ -42,7 +42,7 @@
             <th>Acquéreur</th>
             <th>Prix</th>
             <th>Statut</th>
-            <th>Actions</th>
+            <th>Documents</th>
           </tr>
         </thead>
         <tbody>
@@ -72,11 +72,14 @@
                 <div class="table-actions">
                   <a href="/sales/<%= sale.id %>/edit" class="btn btn-secondary">Modifier</a>
                   <a href="/sales/<%= sale.id %>/document/information" class="btn btn-secondary" target="_blank">Info besoins</a>
+                  <a href="/sales/<%= sale.id %>/document/fiche-depart" class="btn btn-secondary" target="_blank">Fiche départ</a>
                   <% if (sale.is_reservation) { %>
                     <a href="/sales/<%= sale.id %>/document/reservation" class="btn btn-secondary" target="_blank">Réservation</a>
+                    <a href="/sales/<%= sale.id %>/document/recu-acompte" class="btn btn-secondary" target="_blank">Reçu acompte</a>
                   <% } %>
                   <a href="/sales/<%= sale.id %>/document/facture" class="btn btn-secondary" target="_blank"><%= sale.is_reservation ? 'Facture provisoire' : 'Facture acquittée' %></a>
                   <% if (!sale.is_reservation) { %>
+                    <a href="/sales/<%= sale.id %>/document/contrat-vente" class="btn btn-secondary" target="_blank">Contrat</a>
                     <a href="/sales/<%= sale.id %>/document/cession" class="btn btn-primary" target="_blank">Cession</a>
                   <% } %>
                 </div>
