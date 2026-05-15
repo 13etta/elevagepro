@@ -1,30 +1,36 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
 <main class="container">
-    <h1>Déclarer une transaction</h1>
-    <p style="color: #7f8c8d; margin-top:-1rem; margin-bottom: 2rem;">
-        Vente définitive d'un animal (sortie de registre) ou réservation d'un chiot.
-    </p>
+    <section class="page-hero">
+        <div>
+            <p class="eyebrow">Registre commercial</p>
+            <h1>Déclarer une transaction</h1>
+            <p>Vente définitive ou réservation d’un chiot, d’un jeune ou d’un chien adulte de l’élevage.</p>
+        </div>
+    </section>
 
     <form action="/sales" method="POST" class="card form-block">
-        
         <div class="form-group" style="margin-bottom: 2rem; padding: 1rem; background: #fdfbf7; border: 1px solid #f39c12; border-radius: 4px;">
             <label style="display: flex; align-items: center; font-weight: bold; color: #d35400;">
                 <input type="checkbox" id="is_reservation" name="is_reservation" value="true" style="margin-right: 10px; width: auto;">
-                Il s'agit d'une réservation (le chiot ne part pas aujourd'hui)
+                Il s'agit d'une réservation / acompte, sans sortie définitive immédiate du registre
             </label>
             <div style="margin-top: 1rem;">
                 <label for="deposit_amount" style="color: #333;">Montant de l'acompte / arrhes versé ce jour (€)</label>
                 <input type="number" step="0.01" id="deposit_amount" name="deposit_amount" value="0.00">
             </div>
+            <small style="color: #7f8c8d;">La réservation est possible pour un chiot ou un chien adulte. La sortie registre se fait uniquement lors de la vente définitive.</small>
         </div>
 
         <div class="form-group">
             <label for="animal_selection">Sélectionner l'animal *</label>
             <select id="animal_selection" name="animal_selection" required>
                 <option value="" data-price="">-- Choisir un animal --</option>
-                
-                <optgroup id="optgroup-puppies" label="Chiots (Portées actuelles)">
+
+                <optgroup id="optgroup-puppies" label="Chiots / jeunes disponibles">
+                    <% if (!puppies.length) { %>
+                        <option disabled>Aucun chiot disponible</option>
+                    <% } %>
                     <% puppies.forEach(p => { %>
                         <option
                             value="puppy|<%= p.id %>"
@@ -33,19 +39,28 @@
                             <%= p.name || 'Chiot sans nom' %>
                             <% if (p.mother_name) { %> — portée de <%= p.mother_name %><% } %>
                             (Puce: <%= p.chip_number || 'En attente' %>)
+                            <% if (p.status) { %> — <%= p.status %><% } %>
                             <% if (p.sale_price) { %> — <%= p.sale_price %> €<% } %>
                         </option>
                     <% }) %>
                 </optgroup>
 
-                <optgroup id="optgroup-dogs" label="Chiens Adultes (Réforme / Replacement)">
+                <optgroup id="optgroup-dogs" label="Chiens adultes / reproducteurs / réforme">
+                    <% if (!dogs.length) { %>
+                        <option disabled>Aucun chien adulte disponible</option>
+                    <% } %>
                     <% dogs.forEach(d => { %>
-                        <option value="dog|<%= d.id %>" data-price=""><%= d.name %> (Puce: <%= d.chip_number || 'N/A' %>)</option>
+                        <option value="dog|<%= d.id %>" data-price="">
+                            <%= d.name %>
+                            <% if (d.breed) { %> — <%= d.breed %><% } %>
+                            <% if (d.sex) { %> — <%= d.sex === 'M' ? 'Mâle' : 'Femelle' %><% } %>
+                            (Puce: <%= d.chip_number || 'N/A' %>)
+                            <% if (d.status) { %> — <%= d.status %><% } %>
+                        </option>
                     <% }) %>
                 </optgroup>
-
             </select>
-            <small style="color: #7f8c8d;">Pour un chiot, le prix renseigné dans sa fiche est repris automatiquement.</small>
+            <small style="color: #7f8c8d;">Les chiots peuvent reprendre automatiquement leur prix de fiche. Pour un adulte, saisissez manuellement le montant convenu.</small>
         </div>
 
         <div class="form-group">
@@ -73,15 +88,23 @@
             </div>
         </div>
 
+        <div class="form-group">
+            <label for="notes">Notes / conditions particulières</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Réforme, mise à l’essai, conditions de départ, documents remis..."></textarea>
+        </div>
+
         <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Valider la transaction</button>
     </form>
 </main>
 
 <script>
-    const reservationCheckbox = document.getElementById('is_reservation');
-    const optAdults = document.getElementById('optgroup-dogs');
     const animalSelect = document.getElementById('animal_selection');
     const priceInput = document.getElementById('price');
+    const saleDateInput = document.getElementById('sale_date');
+
+    if (saleDateInput && !saleDateInput.value) {
+        saleDateInput.value = new Date().toISOString().split('T')[0];
+    }
 
     function applySelectedAnimalPrice() {
         const selectedOption = animalSelect.options[animalSelect.selectedIndex];
@@ -93,18 +116,6 @@
     }
 
     animalSelect.addEventListener('change', applySelectedAnimalPrice);
-
-    reservationCheckbox.addEventListener('change', function() {
-        if (this.checked) {
-            optAdults.style.display = 'none';
-            if (animalSelect.value.startsWith('dog|')) {
-                animalSelect.value = '';
-                priceInput.value = '';
-            }
-        } else {
-            optAdults.style.display = 'block';
-        }
-    });
 </script>
 
 <%- include('../partials/foot') %>
