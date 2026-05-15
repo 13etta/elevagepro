@@ -96,10 +96,16 @@ CREATE TABLE IF NOT EXISTS pregnancies (
     breeder_id UUID REFERENCES breeder(id) ON DELETE CASCADE,
     mating_id UUID REFERENCES matings(id) ON DELETE CASCADE,
     dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
+    female_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
     confirmation_date DATE,
+    start_date DATE,
     expected_delivery_date DATE,
+    expected_date DATE,
+    due_date DATE,
     status VARCHAR(50) DEFAULT 'en_cours',
-    notes TEXT
+    result VARCHAR(50) DEFAULT 'En cours',
+    notes TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 7. PORTÉES
