@@ -1,5 +1,5 @@
 const { pool } = require('../db');
-const registerService = require('../services/register.service'); // NOUVEAU : Import du service de registre
+const registerService = require('../services/register.service');
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -12,6 +12,21 @@ const SUPPORTED_DOG_PHOTO_TYPES = {
 
 async function ensureDogsSchema() {
     await pool.query('ALTER TABLE dogs ADD COLUMN IF NOT EXISTS photo_url TEXT').catch(() => {});
+}
+
+function normalizeOptional(value) {
+    if (value === undefined || value === null) return null;
+    const normalized = String(value).trim();
+    return normalized.length ? normalized : null;
+}
+
+function normalizeSex(value) {
+    const normalized = normalizeOptional(value);
+    return ['M', 'F'].includes(normalized) ? normalized : null;
+}
+
+function normalizeDate(value) {
+    return normalizeOptional(value) || null;
 }
 
 function buildDogPhotoName(breederId, file) {
@@ -94,6 +109,16 @@ async function columnExists(tableName, columnName) {
     );
 
     return Boolean(result.rows[0]?.exists);
+}
+
+async function getDogOptionalColumns() {
+    const [hasLof, hasFatherNameExternal, hasMotherNameExternal] = await Promise.all([
+        columnExists('dogs', 'lof'),
+        columnExists('dogs', 'father_name_external'),
+        columnExists('dogs', 'mother_name_external'),
+    ]);
+
+    return { hasLof, hasFatherNameExternal, hasMotherNameExternal };
 }
 
 async function getLitterMotherColumn() {
@@ -237,8 +262,8 @@ exports.getForm = async (req, res) => {
             if (dogRes.rows.length > 0) dog = dogRes.rows[0];
         }
 
-        let excludeCondition = dogId ? `AND id != $2` : '';
-        let queryParams = dogId ? [breederId, dogId] : [breederId];
+        const excludeCondition = dogId ? `AND id != $2` : '';
+        const queryParams = dogId ? [breederId, dogId] : [breederId];
 
         const males = await pool.query(`SELECT id, name, breed FROM dogs WHERE breeder_id = $1 AND sex = 'M' ${excludeCondition} ORDER BY name ASC`, queryParams);
         const females = await pool.query(`SELECT id, name, breed FROM dogs WHERE breeder_id = $1 AND sex = 'F' ${excludeCondition} ORDER BY name ASC`, queryParams);
@@ -255,15 +280,48 @@ exports.saveDog = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
         await ensureDogsSchema();
-        
-        let { 
-            name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
-            father_id, mother_id, father_name_external, mother_name_external
+
+        let {
+            name,
+            sex,
+            breed,
+            birth_date,
+            chip_number,
+            id_scc,
+            pedigree_number,
+            lof,
+            status,
+            notes,
+            father_id,
+            mother_id,
+            father_name_external,
+            mother_name_external,
         } = req.body;
 
-        if (father_id) father_name_external = null;
-        if (mother_id) mother_name_external = null;
+        name = normalizeOptional(name);
+        sex = normalizeSex(sex);
+        breed = normalizeOptional(breed);
+        birth_date = normalizeDate(birth_date);
+        chip_number = normalizeOptional(chip_number);
+        id_scc = normalizeOptional(id_scc);
+        pedigree_number = normalizeOptional(pedigree_number) || normalizeOptional(lof);
+        lof = normalizeOptional(lof);
+        status = normalizeOptional(status) || 'actif';
+        notes = normalizeOptional(notes);
+        father_id = normalizeOptional(father_id);
+        mother_id = normalizeOptional(mother_id);
+        father_name_external = father_id ? null : normalizeOptional(father_name_external);
+        mother_name_external = mother_id ? null : normalizeOptional(mother_name_external);
 
+        if (!name) {
+            return res.status(400).send('Le nom du chien est obligatoire.');
+        }
+
+        if (!sex) {
+            return res.status(400).send('Le sexe du chien doit être M ou F.');
+        }
+
+        const optionalColumns = await getDogOptionalColumns();
         const uploadedPhotoUrl = await uploadDogPhoto(breederId, req.file);
         let photoUrl = uploadedPhotoUrl;
 
@@ -272,43 +330,70 @@ exports.saveDog = async (req, res) => {
             photoUrl = req.body.remove_photo === 'on' ? null : (currentDog.rows[0]?.photo_url || null);
         }
 
-        if (dogId) {
-            // 1. MISE À JOUR D'UN CHIEN EXISTANT
-            await pool.query(`
-                UPDATE dogs 
-                SET name = $1, sex = $2, breed = $3, birth_date = $4, chip_number = $5, 
-                    id_scc = $6, pedigree_number = $7, lof = $8, status = $9, notes = $10,
-                    father_id = $11, mother_id = $12, father_name_external = $13, mother_name_external = $14, photo_url = $15,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = $16 AND breeder_id = $17
-            `, [name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes, 
-                father_id || null, mother_id || null, father_name_external, mother_name_external, photoUrl, dogId, breederId]);
-        } else {
-            // 2. CRÉATION D'UN NOUVEAU CHIEN (Arrivée dans l'élevage)
-            await pool.query(`
-                INSERT INTO dogs (
-                    breeder_id, name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
-                    father_id, mother_id, father_name_external, mother_name_external, photo_url
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            `, [breederId, name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes,
-                father_id || null, mother_id || null, father_name_external, mother_name_external, photoUrl]);
+        const dogData = {
+            name,
+            sex,
+            breed,
+            birth_date,
+            chip_number,
+            id_scc,
+            pedigree_number,
+            status,
+            notes,
+            father_id,
+            mother_id,
+            photo_url: photoUrl,
+        };
 
-            // --- DÉBUT AUTOMATISATION DU REGISTRE DDPP ---
-            await registerService.logMovement({
-                breederId: breederId,
-                animalName: name,
-                identification: chip_number,
-                breed: breed || 'Non renseignée',
-                type: 'ENTREE',
-                reason: 'Acquisition', // Motif légal pour l'entrée d'un chien adulte
-                date: new Date() // Date du jour de l'enregistrement dans le logiciel
-            });
-            // --- FIN AUTOMATISATION ---
+        if (optionalColumns.hasLof) dogData.lof = lof;
+        if (optionalColumns.hasFatherNameExternal) dogData.father_name_external = father_name_external;
+        if (optionalColumns.hasMotherNameExternal) dogData.mother_name_external = mother_name_external;
+
+        if (dogId) {
+            const entries = Object.entries(dogData);
+            const setClause = entries.map(([column], index) => `${column} = $${index + 1}`).join(', ');
+            const values = entries.map(([, value]) => value);
+            values.push(dogId, breederId);
+
+            await pool.query(
+                `
+                    UPDATE dogs
+                    SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = $${values.length - 1}
+                      AND breeder_id = $${values.length}
+                `,
+                values,
+            );
+        } else {
+            const entries = Object.entries({ breeder_id: breederId, ...dogData });
+            const columns = entries.map(([column]) => column).join(', ');
+            const placeholders = entries.map((_, index) => `$${index + 1}`).join(', ');
+            const values = entries.map(([, value]) => value);
+
+            await pool.query(
+                `INSERT INTO dogs (${columns}) VALUES (${placeholders})`,
+                values,
+            );
+
+            try {
+                await registerService.logMovement({
+                    breederId,
+                    animalName: name,
+                    identification: chip_number,
+                    breed: breed || 'Non renseignée',
+                    type: 'ENTREE',
+                    reason: 'Acquisition',
+                    date: new Date(),
+                });
+            } catch (registerError) {
+                console.warn('Registre légal non mis à jour après création du chien:', registerError.message);
+            }
         }
-        res.redirect('/dogs');
+
+        return res.redirect('/dogs');
     } catch (error) {
         console.error('Erreur sauvegarde chien:', error);
-        res.status(500).send('Erreur sauvegarde.');
+        return res.status(500).send(`Erreur sauvegarde chien : ${error.message}`);
     }
 };
 
