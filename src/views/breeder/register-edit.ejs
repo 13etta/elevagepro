@@ -2,12 +2,27 @@
 <%- include('../partials/nav') %>
 
 <%
-    // Fonction utilitaire pour formater la date pour l'input type="date"
-    const formatDateForInput = (dateObj) => {
-        if (!dateObj) return '';
-        const d = new Date(dateObj);
-        return d.toISOString().split('T')[0];
+    const formatDateForInput = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+            return value.slice(0, 10);
+        }
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return '';
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
+
+    const sourceTable = movement.source_table || 'animal_movements';
+    const sourceRowId = movement.row_id || `${sourceTable}:${movement.id}`;
+    const movementType = String(movement.movement_type || '').toUpperCase();
+    const currentReason = movement.movement_reason || '';
+    const entryReasons = ['Naissance', 'Naissance portée', 'Acquisition', 'Restitution', "Reprise d'historique", 'Autre'];
+    const exitReasons = ['Vente', 'Décès', 'Don', 'Retraite / réforme', 'Autre'];
+    const reasonList = movementType === 'ENTREE' ? entryReasons : exitReasons;
+    const hasCurrentReason = currentReason && reasonList.includes(currentReason);
 %>
 
 <main class="container">
@@ -16,18 +31,17 @@
         <a href="/breeder/register/entries" class="btn btn-secondary">Annuler</a>
     </div>
 
-    <form action="/breeder/register/movements/<%= movement.id %>/edit" method="POST" class="card form-block" style="margin-top: 2rem;">
-        
+    <form action="/breeder/register/movements/<%= encodeURIComponent(sourceRowId) %>/edit" method="POST" class="card form-block" style="margin-top: 2rem;">
         <div class="form-grid">
             <div class="form-group">
-                <label>Nom de l'animal (Lecture seule)</label>
-                <input type="text" value="<%= movement.animal_name %>" disabled style="background-color: #f8f9fa;">
+                <label>Nom de l'animal (lecture seule)</label>
+                <input type="text" value="<%= movement.animal_name || '-' %>" disabled style="background-color: #f8f9fa;">
                 <small class="muted">L'animal concerné par ce mouvement ne peut être modifié.</small>
             </div>
-            
+
             <div class="form-group">
-                <label>Type de mouvement (Lecture seule)</label>
-                <input type="text" value="<%= movement.movement_type %>" disabled style="background-color: #f8f9fa;">
+                <label>Type de mouvement (lecture seule)</label>
+                <input type="text" value="<%= movementType || '-' %>" disabled style="background-color: #f8f9fa;">
             </div>
         </div>
 
@@ -36,28 +50,22 @@
                 <label>Date du mouvement *</label>
                 <input type="date" name="movement_date" value="<%= formatDateForInput(movement.movement_date) %>" required>
             </div>
-            
+
             <div class="form-group">
-                <label>Motif de <%= movement.movement_type === 'ENTREE' ? 'l\'entrée' : 'la sortie' %> *</label>
+                <label>Motif *</label>
                 <select name="movement_reason" required>
-                    <% if (movement.movement_type === 'ENTREE') { %>
-                        <option value="Naissance" <%= movement.movement_reason === 'Naissance' ? 'selected' : '' %>>Naissance</option>
-                        <option value="Acquisition" <%= movement.movement_reason === 'Acquisition' ? 'selected' : '' %>>Acquisition / Achat</option>
-                        <option value="Restitution" <%= movement.movement_reason === 'Restitution' ? 'selected' : '' %>>Restitution (Retour à l'élevage)</option>
-                        <option value="Reprise d'historique" <%= movement.movement_reason === "Reprise d'historique" ? 'selected' : '' %>>Reprise d'historique</option>
-                        <option value="Autre" <%= movement.movement_reason === 'Autre' ? 'selected' : '' %>>Autre entrée</option>
-                    <% } else { %>
-                        <option value="Vente" <%= movement.movement_reason === 'Vente' ? 'selected' : '' %>>Vente</option>
-                        <option value="Décès" <%= movement.movement_reason === 'Décès' ? 'selected' : '' %>>Décès</option>
-                        <option value="Don" <%= movement.movement_reason === 'Don' ? 'selected' : '' %>>Don / Replacement</option>
-                        <option value="Autre" <%= movement.movement_reason === 'Autre' ? 'selected' : '' %>>Autre sortie</option>
+                    <% if (currentReason && !hasCurrentReason) { %>
+                        <option value="<%= currentReason %>" selected><%= currentReason %></option>
                     <% } %>
+                    <% reasonList.forEach((reason) => { %>
+                        <option value="<%= reason %>" <%= currentReason === reason ? 'selected' : '' %>><%= reason %></option>
+                    <% }) %>
                 </select>
             </div>
         </div>
 
         <div class="form-group" style="margin-top: 1.5rem;">
-            <label>Provenance ou Destination (Optionnel)</label>
+            <label>Provenance ou destination</label>
             <input type="text" name="third_party_info" value="<%= movement.third_party_info || '' %>" placeholder="Nom et adresse de l'acheteur ou du vendeur">
             <small class="muted">Information obligatoire en cas de vente ou d'achat pour la DDPP.</small>
         </div>
