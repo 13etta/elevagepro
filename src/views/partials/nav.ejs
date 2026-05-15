@@ -1,4 +1,22 @@
-<aside class="sidebar">
+<div class="mobile-appbar">
+  <a class="brand mobile-brand" href="/dashboard" aria-label="ElevagePro">
+    <span class="brand-mark">EP</span>
+    <span>
+      <strong>ElevagePro</strong>
+      <small><%= __('app.commandCenter') %></small>
+    </span>
+  </a>
+  <button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-sidebar" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span class="sr-only">Ouvrir le menu</span>
+  </button>
+</div>
+
+<div class="sidebar-backdrop" data-nav-close></div>
+
+<aside class="sidebar" id="main-sidebar">
   <a class="brand" href="/dashboard" aria-label="ElevagePro">
     <span class="brand-mark">EP</span>
     <span>
@@ -7,6 +25,10 @@
     </span>
   </a>
 
+  <button class="sidebar-collapse" type="button" data-sidebar-collapse aria-label="Reduire le menu">
+    <span></span>
+  </button>
+
   <nav class="nav-sections" aria-label="Navigation principale">
     <% moduleGroups.forEach((group) => { %>
       <% const groupModules = modules.filter((module) => module.group === group.key); %>
@@ -14,9 +36,9 @@
         <section class="nav-group">
           <p class="nav-group-title"><%= __(group.labelKey) %></p>
           <% groupModules.forEach((module) => { %>
-            <a class="nav-link <%= currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'active' : '' %>" href="<%= module.href %>">
+            <a class="nav-link <%= currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'active' : '' %>" href="<%= module.href %>" title="<%= __(module.labelKey) %>">
               <span class="nav-icon"><%= module.icon %></span>
-              <span><%= __(module.labelKey) %></span>
+              <span class="nav-label"><%= __(module.labelKey) %></span>
             </a>
           <% }) %>
         </section>
