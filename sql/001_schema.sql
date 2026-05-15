@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS dogs (
     chip_number VARCHAR(15),
     id_scc VARCHAR(50),
     pedigree_number VARCHAR(100),
+    photo_url TEXT,
     status VARCHAR(50) DEFAULT 'actif',
     father_id UUID REFERENCES dogs(id) ON DELETE SET NULL,
     mother_id UUID REFERENCES dogs(id) ON DELETE SET NULL,

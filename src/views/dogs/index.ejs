@@ -10,7 +10,7 @@
     <table>
       <thead>
         <tr>
-            <th>Nom</th>
+            <th>Chien</th>
             <th>Race</th>
             <th>Sexe</th>
             <th>Puce</th>
@@ -24,7 +24,21 @@
         <% } %>
         <% dogs.forEach((dog) => { %>
           <tr>
-            <td><strong><%= dog.name %></strong></td>
+            <td>
+              <a class="dog-row-link" href="/dogs/<%= dog.id %>">
+                <span class="dog-avatar small">
+                  <% if (dog.photo_url) { %>
+                    <img src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
+                  <% } else { %>
+                    <%= dogInitials(dog.name) %>
+                  <% } %>
+                </span>
+                <span>
+                  <strong><%= dog.name %></strong>
+                  <small><%= dog.birth_date ? 'Ne le ' + formatDate(dog.birth_date) : 'Naissance non renseignee' %></small>
+                </span>
+              </a>
+            </td>
             <td><%= dog.breed || '-' %></td>
             <td><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></td>
             <td><%= dog.chip_number || '-' %></td>

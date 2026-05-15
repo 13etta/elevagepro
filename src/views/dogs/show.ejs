@@ -2,8 +2,15 @@
 <%- include('../partials/nav') %>
 
 <main class="container">
-  <section class="page-hero">
-    <div>
+  <section class="page-hero dog-hero">
+    <div class="dog-hero-media">
+      <% if (dog.photo_url) { %>
+        <img src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
+      <% } else { %>
+        <span><%= dogInitials(dog.name) %></span>
+      <% } %>
+    </div>
+    <div class="dog-hero-content">
       <p class="eyebrow">Fiche cynotechnique</p>
       <h1><%= dog.name %></h1>
       <p>
@@ -11,6 +18,10 @@
         —
         <%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %>
       </p>
+      <div class="dog-hero-meta">
+        <span><%= dog.status || 'Statut non renseigne' %></span>
+        <span>Dossier complete a <%= completeness.percent %>%</span>
+      </div>
     </div>
     <div class="topbar-actions">
       <a class="btn btn-secondary" href="/dogs">Retour</a>
@@ -26,6 +37,22 @@
   </section>
 
   <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Qualite dossier</span>
+        <h2>Immersion & suivi</h2>
+      </div>
+      <div class="dog-completeness">
+        <div class="dog-completeness-bar"><span style="width: <%= completeness.percent %>%;"></span></div>
+        <strong><%= completeness.percent %>%</strong>
+      </div>
+      <% if (completeness.missing.length) { %>
+        <p class="muted">A completer pour une fiche plus riche : <%= completeness.missing.join(', ') %>.</p>
+      <% } else { %>
+        <p class="muted">Fiche bien documentee pour le suivi interne et les usages commerciaux.</p>
+      <% } %>
+    </article>
+
     <article class="card">
       <div class="section-title compact">
         <span class="section-kicker">Identité</span>

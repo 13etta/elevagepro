@@ -7,8 +7,33 @@
         <a href="/dogs" class="btn btn-secondary">Annuler et retour</a>
     </div>
 
-    <form action="<%= dog.id ? '/dogs/' + dog.id + '/edit' : '/dogs/new' %>" method="POST" class="card form-block">
-        
+    <form action="<%= dog.id ? '/dogs/' + dog.id + '/edit' : '/dogs/new' %>" method="POST" class="card form-block dog-form" enctype="multipart/form-data">
+        <section class="dog-profile-editor">
+            <div class="dog-photo-preview">
+                <% if (dog.photo_url) { %>
+                    <img src="<%= dog.photo_url %>" alt="Photo de <%= dog.name || 'chien' %>">
+                <% } else { %>
+                    <span><%= dogInitials(dog.name) %></span>
+                <% } %>
+            </div>
+            <div>
+                <p class="section-kicker">Profil premium</p>
+                <h2>Photo du chien</h2>
+                <p class="muted">Une photo nette transforme la fiche en dossier vivant pour le suivi, la reproduction et la presentation aux familles.</p>
+                <div class="form-group">
+                    <label for="photo">Ajouter ou remplacer la photo</label>
+                    <input id="photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp">
+                    <small>JPG, PNG ou WebP. Maximum 5 Mo.</small>
+                </div>
+                <% if (dog.photo_url) { %>
+                    <label class="inline-check">
+                        <input type="checkbox" name="remove_photo">
+                        Supprimer la photo actuelle
+                    </label>
+                <% } %>
+            </div>
+        </section>
+
         <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">Identité</h3>
         <div class="form-grid">
             <div class="form-group">
@@ -24,7 +49,7 @@
             </div>
             <div class="form-group">
                 <label>Race</label>
-                <input type="text" name="breed" value="<%= dog.breed || '' %>">
+                <input id="breed" type="text" name="breed" value="<%= dog.breed || '' %>">
             </div>
             <div class="form-group">
                 <label>Date de naissance</label>
@@ -62,7 +87,7 @@
                     <select id="father_id" name="father_id">
                         <option value="">-- Sélectionner un mâle --</option>
                         <% males.forEach(m => { %>
-                            <option value="<%= m.id %>" <%= dog.father_id === m.id ? 'selected' : '' %>><%= m.name %></option>
+                            <option value="<%= m.id %>" data-breed="<%= m.breed || '' %>" <%= dog.father_id === m.id ? 'selected' : '' %>><%= m.name %><%= m.breed ? ' · ' + m.breed : '' %></option>
                         <% }) %>
                     </select>
                 </div>
@@ -80,7 +105,7 @@
                     <select id="mother_id" name="mother_id">
                         <option value="">-- Sélectionner une femelle --</option>
                         <% females.forEach(f => { %>
-                            <option value="<%= f.id %>" <%= dog.mother_id === f.id ? 'selected' : '' %>><%= f.name %></option>
+                            <option value="<%= f.id %>" data-breed="<%= f.breed || '' %>" <%= dog.mother_id === f.id ? 'selected' : '' %>><%= f.name %><%= f.breed ? ' · ' + f.breed : '' %></option>
                         <% }) %>
                     </select>
                 </div>
@@ -122,6 +147,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const fatherInput = document.getElementById('father_name_external');
     const motherSelect = document.getElementById('mother_id');
     const motherInput = document.getElementById('mother_name_external');
+    const breedInput = document.getElementById('breed');
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.querySelector('.dog-photo-preview');
 
     function toggleFields() {
         if (fatherSelect.value !== "") {
@@ -145,6 +173,26 @@ document.addEventListener("DOMContentLoaded", function() {
 
     fatherSelect.addEventListener('change', toggleFields);
     motherSelect.addEventListener('change', toggleFields);
+
+    [fatherSelect, motherSelect].forEach((select) => {
+        select.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            const parentBreed = selected ? selected.getAttribute('data-breed') : '';
+            if (parentBreed && !breedInput.value.trim()) breedInput.value = parentBreed;
+        });
+    });
+
+    if (photoInput && photoPreview) {
+        photoInput.addEventListener('change', function() {
+            const file = this.files && this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                photoPreview.innerHTML = '<img src="' + reader.result + '" alt="Apercu de la photo">';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
     // Initialisation
     toggleFields();
