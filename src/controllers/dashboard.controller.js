@@ -24,14 +24,58 @@ function resolveBoxCapacity(settings) {
   return Number.isFinite(envValue) && envValue > 0 ? envValue : 12;
 }
 
+function isMissingSchemaError(error) {
+  return ['42P01', '42703'].includes(error?.code);
+}
+
+async function safeQuery(sql, params, fallbackRows = []) {
+  try {
+    return await pool.query(sql, params);
+  } catch (error) {
+    if (isMissingSchemaError(error)) {
+      console.warn('Dashboard degradé: colonne ou table absente:', error.message);
+      return { rows: fallbackRows };
+    }
+
+    throw error;
+  }
+}
+
+async function ensureDashboardSchema() {
+  const statements = [
+    "ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb",
+    'ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE',
+    'ALTER TABLE puppies ADD COLUMN IF NOT EXISTS chip_number VARCHAR(15)',
+    "ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'",
+    'ALTER TABLE litters ADD COLUMN IF NOT EXISTS mother_id UUID REFERENCES dogs(id) ON DELETE CASCADE',
+    "ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS result VARCHAR(50) DEFAULT 'En cours'",
+    'ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE',
+    'ALTER TABLE reminders ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE',
+    'ALTER TABLE reminders ADD COLUMN IF NOT EXISTS title VARCHAR(255)',
+    'ALTER TABLE soins ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE',
+    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE',
+    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE',
+    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2) DEFAULT 0',
+    'ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP',
+  ];
+
+  for (const statement of statements) {
+    await pool.query(statement).catch((error) => {
+      if (!isMissingSchemaError(error)) throw error;
+    });
+  }
+}
+
 exports.getDashboard = async (req, res) => {
   try {
+    await ensureDashboardSchema();
     const breederId = req.session.user.breeder_id;
 
-    const breederSettingsRes = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
+    const countFallback = [{ count: 0 }];
+    const breederSettingsRes = await safeQuery('SELECT website_settings FROM breeder WHERE id = $1', [breederId], []);
     const breederSettings = breederSettingsRes.rows[0]?.website_settings || {};
 
-    const activeDogs = await pool.query(
+    const activeDogs = await safeQuery(
       `
         SELECT count(*)
         FROM dogs
@@ -39,9 +83,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(lower(status), 'actif') NOT IN ('archivé', 'archive', 'archived', 'inactif')
       `,
       [breederId],
+      countFallback,
     );
 
-    const availablePuppies = await pool.query(
+    const availablePuppies = await safeQuery(
       `
         SELECT count(*)
         FROM puppies
@@ -50,9 +95,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(lower(status), 'disponible') NOT IN ('vendu', 'vendue', 'sold')
       `,
       [breederId],
+      countFallback,
     );
 
-    const reservedPuppies = await pool.query(
+    const reservedPuppies = await safeQuery(
       `
         SELECT count(*)
         FROM puppies
@@ -60,9 +106,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(lower(status), '') IN ('réservé', 'reserve', 'reserved', 'option', 'réservation')
       `,
       [breederId],
+      countFallback,
     );
 
-    const activeLitters = await pool.query(
+    const activeLitters = await safeQuery(
       `
         SELECT count(*)
         FROM litters
@@ -70,9 +117,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(lower(status), 'active') IN ('active', 'sevrage', 'en cours', 'en_cours')
       `,
       [breederId],
+      countFallback,
     );
 
-    const ongoingPregnancies = await pool.query(
+    const ongoingPregnancies = await safeQuery(
       `
         SELECT count(*)
         FROM pregnancies
@@ -80,9 +128,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(lower(result), 'en cours') IN ('en cours', 'en_cours', 'active', 'confirmée', 'confirmee')
       `,
       [breederId],
+      countFallback,
     );
 
-    const incompleteSales = await pool.query(
+    const incompleteSales = await safeQuery(
       `
         SELECT count(*)
         FROM sales
@@ -90,9 +139,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(is_reservation, FALSE) = TRUE
       `,
       [breederId],
+      countFallback,
     );
 
-    const puppiesWithoutChip = await pool.query(
+    const puppiesWithoutChip = await safeQuery(
       `
         SELECT count(*)
         FROM puppies
@@ -101,9 +151,10 @@ exports.getDashboard = async (req, res) => {
           AND COALESCE(lower(status), '') NOT IN ('vendu', 'vendue', 'sold')
       `,
       [breederId],
+      countFallback,
     );
 
-    const monthlySales = await pool.query(
+    const monthlySales = await safeQuery(
       `
         SELECT
           to_char(months.month_start, 'YYYY-MM') AS month_key,
@@ -120,9 +171,10 @@ exports.getDashboard = async (req, res) => {
         ORDER BY months.month_start ASC
       `,
       [breederId],
+      [],
     );
 
-    const upcomingRemindersCount = await pool.query(
+    const upcomingRemindersCount = await safeQuery(
       `
         SELECT count(*)
         FROM reminders
@@ -131,6 +183,7 @@ exports.getDashboard = async (req, res) => {
           AND due_date <= CURRENT_DATE + INTERVAL '7 days'
       `,
       [breederId],
+      countFallback,
     );
 
     const activeDogsCount = toNumber(activeDogs.rows[0].count);
@@ -160,11 +213,11 @@ exports.getDashboard = async (req, res) => {
       upcomingReminders: toNumber(upcomingRemindersCount.rows[0].count),
     };
 
-    const remindersRes = await pool.query(
+    const remindersRes = await safeQuery(
       `
         SELECT
           r.due_date,
-          r.title AS label,
+          COALESCE(r.title, 'Rappel') AS label,
           COALESCE(d.name, p.name, lm.name) AS dog_name,
           CASE
             WHEN r.puppy_id IS NOT NULL THEN 'Chiot'
@@ -183,9 +236,10 @@ exports.getDashboard = async (req, res) => {
         LIMIT 8
       `,
       [breederId],
+      [],
     );
 
-    const soinsRes = await pool.query(
+    const soinsRes = await safeQuery(
       `
         SELECT s.event_date, s.type, s.label, COALESCE(d.name, p.name) AS dog_name
         FROM soins s
@@ -196,9 +250,10 @@ exports.getDashboard = async (req, res) => {
         LIMIT 5
       `,
       [breederId],
-    ).catch(() => ({ rows: [] }));
+      [],
+    );
 
-    const salesRes = await pool.query(
+    const salesRes = await safeQuery(
       `
         SELECT
           sale_date,
@@ -212,11 +267,12 @@ exports.getDashboard = async (req, res) => {
         LIMIT 5
       `,
       [breederId],
+      [],
     );
 
     const lateReminders = remindersRes.rows.filter((r) => r.due_date && new Date(r.due_date) < new Date());
 
-    const salesToFinalize = await pool.query(
+    const salesToFinalize = await safeQuery(
       `
         SELECT
           s.id,
@@ -233,9 +289,10 @@ exports.getDashboard = async (req, res) => {
         LIMIT 5
       `,
       [breederId],
+      [],
     );
 
-    const littersWithoutPuppies = await pool.query(
+    const littersWithoutPuppies = await safeQuery(
       `
         SELECT l.id, l.birth_date, d.name AS mother_name
         FROM litters l
@@ -249,6 +306,7 @@ exports.getDashboard = async (req, res) => {
         LIMIT 5
       `,
       [breederId],
+      [],
     );
 
     const alerts = [];
