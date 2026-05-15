@@ -1,8 +1,8 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
 
-<main class="container">
-    <div class="header-actions">
+<main class="container register-page">
+    <div class="header-actions no-print">
         <div>
             <p class="eyebrow">Conformité DDPP</p>
             <h1>Registre des Entrées et Sorties</h1>
@@ -13,8 +13,13 @@
         </div>
     </div>
 
-    <div class="card" style="margin-top: 2rem; overflow-x: auto;">
-        <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+    <section class="print-register-title print-only">
+        <h1>Registre des entrées et sorties</h1>
+        <p>Édité le <%= new Date().toLocaleDateString('fr-FR') %></p>
+    </section>
+
+    <div class="card register-print-area" style="margin-top: 2rem; overflow-x: auto;">
+        <table class="data-table register-table" style="width: 100%; text-align: left; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--primary-color);">
                     <th style="padding: 1rem;">Date</th>
@@ -41,7 +46,7 @@
                                 <strong><%= mov.movement_date ? new Date(mov.movement_date).toLocaleDateString('fr-FR') : '-' %></strong>
                             </td>
                             <td style="padding: 1rem;">
-                                <span class="badge" style="background-color: <%= movementType === 'ENTREE' ? '#d4edda' : '#f8d7da' %>; color: <%= movementType === 'ENTREE' ? '#155724' : '#721c24' %>;">
+                                <span class="badge register-badge <%= movementType === 'ENTREE' ? 'register-badge-entry' : 'register-badge-exit' %>" style="background-color: <%= movementType === 'ENTREE' ? '#d4edda' : '#f8d7da' %>; color: <%= movementType === 'ENTREE' ? '#155724' : '#721c24' %>;">
                                     <%= movementType || '-' %>
                                 </span>
                             </td>
@@ -64,11 +69,135 @@
 </main>
 
 <style>
+    .print-only {
+        display: none;
+    }
+
     @media print {
-        body * { visibility: hidden; }
-        .data-table, .data-table * { visibility: visible; }
-        .data-table { position: absolute; left: 0; top: 0; width: 100%; }
-        .btn, .header-actions a, .no-print { display: none !important; }
+        @page {
+            size: A4 landscape;
+            margin: 12mm;
+        }
+
+        html,
+        body {
+            background: #ffffff !important;
+            color: #111827 !important;
+            font-size: 10px !important;
+        }
+
+        .sidebar,
+        .app-sidebar,
+        nav,
+        aside,
+        header,
+        .topbar,
+        .no-print,
+        .header-actions,
+        .btn {
+            display: none !important;
+        }
+
+        .print-only {
+            display: block !important;
+        }
+
+        .container,
+        .register-page {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .print-register-title {
+            margin: 0 0 10mm 0 !important;
+            padding: 0 !important;
+            color: #111827 !important;
+        }
+
+        .print-register-title h1 {
+            margin: 0 0 2mm 0 !important;
+            font-size: 18px !important;
+            letter-spacing: 0 !important;
+        }
+
+        .print-register-title p {
+            margin: 0 !important;
+            font-size: 10px !important;
+            color: #4b5563 !important;
+        }
+
+        .card,
+        .register-print-area {
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+        }
+
+        .register-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            font-size: 9px !important;
+            color: #111827 !important;
+        }
+
+        .register-table thead {
+            display: table-header-group !important;
+        }
+
+        .register-table tr {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+
+        .register-table th,
+        .register-table td {
+            border: 1px solid #111827 !important;
+            padding: 4px 5px !important;
+            color: #111827 !important;
+            vertical-align: top !important;
+            background: #ffffff !important;
+            max-width: none !important;
+        }
+
+        .register-table th:nth-child(1),
+        .register-table td:nth-child(1) { width: 11%; }
+        .register-table th:nth-child(2),
+        .register-table td:nth-child(2) { width: 9%; }
+        .register-table th:nth-child(3),
+        .register-table td:nth-child(3) { width: 14%; }
+        .register-table th:nth-child(4),
+        .register-table td:nth-child(4) { width: 22%; }
+        .register-table th:nth-child(5),
+        .register-table td:nth-child(5) { width: 18%; }
+        .register-table th:nth-child(6),
+        .register-table td:nth-child(6) { width: 26%; }
+
+        .register-table th.no-print,
+        .register-table td.no-print {
+            display: none !important;
+        }
+
+        .register-table .muted,
+        .register-table small {
+            color: #374151 !important;
+            font-size: 8px !important;
+        }
+
+        .register-badge,
+        .badge {
+            display: inline !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            color: #111827 !important;
+            font-weight: 700 !important;
+        }
     }
 </style>
 
