@@ -30,6 +30,7 @@ async function runMigrations() {
     '011_health_tests.sql',
     '012_registry_automation.sql',
     '013_registry_backfill_existing_dogs.sql',
+    '014_registry_litter_events.sql',
   ];
 
   console.log('Démarrage des migrations...');
