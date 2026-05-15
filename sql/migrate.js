@@ -27,6 +27,7 @@ async function runMigrations() {
     '008_pregnancy_compatibility_fields.sql',
     '009_dashboard_compatibility_fields.sql',
     '010_stabilization_dogs_registry.sql',
+    '011_health_tests.sql',
   ];
 
   console.log('Démarrage des migrations...');
