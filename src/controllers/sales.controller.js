@@ -88,7 +88,7 @@ exports.getSaleForm = async (req, res) => {
         LEFT JOIN litters l ON p.litter_id = l.id
         LEFT JOIN dogs d ON l.mother_id = d.id
         WHERE p.breeder_id = $1
-          AND COALESCE(lower(p.status), '') NOT IN ('vendu', 'vendue', 'décédé', 'decede', 'décédée', 'decedee')
+          AND COALESCE(lower(trim(p.status)), '') NOT IN ('vendu', 'vendue', 'décédé', 'decede', 'décédée', 'decedee')
         ORDER BY l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
       `,
       [breederId],
@@ -99,7 +99,7 @@ exports.getSaleForm = async (req, res) => {
         SELECT id, name, sex, breed, chip_number, status
         FROM dogs
         WHERE breeder_id = $1
-          AND COALESCE(lower(status), '') NOT IN ('vendu', 'vendue', 'décédé', 'decede', 'décédée', 'decedee', 'archivé', 'archive')
+          AND COALESCE(lower(trim(status)), '') NOT IN ('vendu', 'vendue', 'décédé', 'decede', 'décédée', 'decedee')
         ORDER BY name ASC
       `,
       [breederId],
