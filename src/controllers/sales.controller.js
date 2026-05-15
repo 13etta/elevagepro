@@ -1,5 +1,5 @@
 const { pool } = require('../db');
-const pdfService = require('../utils/pdf.service');
+const documentService = require('../services/document.service');
 const registerService = require('../services/register.service');
 
 async function ensureSalesSchema() {
@@ -17,6 +17,7 @@ async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
              COALESCE(p.name, d.name) AS animal_name,
              COALESCE(p.sex, d.sex) AS animal_sex,
              COALESCE(p.chip_number, d.chip_number) AS animal_chip_number,
+             COALESCE(d.breed, 'Chiot') AS animal_breed,
              p.color AS animal_color,
              CASE WHEN s.puppy_id IS NOT NULL THEN 'puppy' ELSE 'dog' END AS animal_type,
              COALESCE(s.puppy_id, s.dog_id) AS animal_id
@@ -152,19 +153,18 @@ exports.createSale = async (req, res) => {
       await client.query(`UPDATE ${table} SET status = $1 WHERE id = $2 AND breeder_id = $3`, [targetStatus, animalId, breederId]);
     }
 
-    // SI C'EST UNE VENTE DIRECTE (Pas une réservation), on inscrit la SORTIE au registre[cite: 5]
     if (!isResa) {
       const sale = await getSaleWithAnimal(client, inserted.rows[0].id, breederId);
       await registerService.logMovement({
-        breederId: breederId,
+        breederId,
         animalName: sale.animal_name,
         identification: sale.animal_chip_number,
         breed: sale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
         type: 'SORTIE',
         reason: 'Vente',
         date: sale_date,
-        thirdParty: buyer_name
-      }, client); 
+        thirdParty: buyer_name,
+      }, client);
     }
 
     await client.query('COMMIT');
@@ -232,18 +232,17 @@ exports.updateSale = async (req, res) => {
       [buyer_name, sale_date, price, payment_method, notes, deposit_amount || 0, newReservationStatus, saleId, breederId],
     );
 
-    // SI ON FINALISE UNE RÉSERVATION, on inscrit la SORTIE au registre[cite: 5]
     if (isFinalSale) {
       await registerService.logMovement({
-        breederId: breederId,
+        breederId,
         animalName: previousSale.animal_name,
-        identification: previousSale.animal_chip_number, 
+        identification: previousSale.animal_chip_number,
         breed: previousSale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
         type: 'SORTIE',
         reason: 'Vente',
         date: sale_date,
-        thirdParty: buyer_name
-      }, client); 
+        thirdParty: buyer_name,
+      }, client);
     }
 
     await client.query('COMMIT');
@@ -263,7 +262,7 @@ exports.downloadDocument = async (req, res) => {
     const saleId = req.params.id;
     const docType = req.params.type;
     await ensureSalesSchema();
-    const allowedDocumentTypes = ['reservation', 'facture', 'cession', 'information'];
+    const allowedDocumentTypes = documentService.getAllowedDocumentTypes();
 
     if (!allowedDocumentTypes.includes(docType)) {
       return res.status(400).send('Type de document non autorisé.');
@@ -275,7 +274,9 @@ exports.downloadDocument = async (req, res) => {
                COALESCE(p.name, d.name) AS name,
                COALESCE(p.sex, d.sex) AS sex,
                COALESCE(p.chip_number, d.chip_number) AS chip_number,
-               p.color AS color
+               COALESCE(d.breed, 'Chiot') AS breed,
+               p.color AS color,
+               CASE WHEN s.puppy_id IS NOT NULL THEN 'puppy' ELSE 'dog' END AS animal_type
         FROM sales s
         LEFT JOIN puppies p ON s.puppy_id = p.id
         LEFT JOIN dogs d ON s.dog_id = d.id
@@ -294,10 +295,11 @@ exports.downloadDocument = async (req, res) => {
     const animalData = saleRes.rows[0];
     const breederData = breederRes.rows[0];
 
-    const pdfBuffer = await pdfService.generateDocument(docType, breederData, saleData, animalData);
+    const pdfBuffer = await documentService.generateDocument(docType, breederData, saleData, animalData);
+    const filename = documentService.getDocumentFilename(docType, animalData);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${docType}_${animalData.name}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Erreur génération PDF:', error);
