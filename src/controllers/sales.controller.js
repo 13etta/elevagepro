@@ -2,7 +2,15 @@ const { pool } = require('../db');
 const pdfService = require('../utils/pdf.service');
 const registerService = require('../services/register.service');
 
+async function ensureSalesSchema() {
+  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE').catch(() => {});
+  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE').catch(() => {});
+  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2) DEFAULT 0').catch(() => {});
+  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE').catch(() => {});
+}
+
 async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
+  await ensureSalesSchema();
   const saleRes = await clientOrPool.query(
     `
       SELECT s.*,
@@ -26,6 +34,7 @@ async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
 exports.listSales = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
+    await ensureSalesSchema();
 
     const sales = await pool.query(
       `
@@ -60,6 +69,7 @@ exports.listSales = async (req, res) => {
 exports.getSaleForm = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
+    await ensureSalesSchema();
 
     const puppies = await pool.query(
       `
@@ -109,6 +119,7 @@ exports.createSale = async (req, res) => {
   const client = await pool.connect();
   try {
     const breederId = req.session.user.breeder_id;
+    await ensureSalesSchema();
     const { animal_selection, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount } = req.body;
 
     if (!animal_selection) {
@@ -135,7 +146,11 @@ exports.createSale = async (req, res) => {
     );
 
     const table = animalType === 'puppy' ? 'puppies' : 'dogs';
-    await client.query(`UPDATE ${table} SET status = $1 WHERE id = $2 AND breeder_id = $3`, [targetStatus, animalId, breederId]);
+    if (animalType === 'puppy') {
+      await client.query('UPDATE puppies SET status = $1, is_sold = $2 WHERE id = $3 AND breeder_id = $4', [targetStatus, !isResa, animalId, breederId]);
+    } else {
+      await client.query(`UPDATE ${table} SET status = $1 WHERE id = $2 AND breeder_id = $3`, [targetStatus, animalId, breederId]);
+    }
 
     // SI C'EST UNE VENTE DIRECTE (Pas une réservation), on inscrit la SORTIE au registre[cite: 5]
     if (!isResa) {
@@ -166,6 +181,7 @@ exports.createSale = async (req, res) => {
 exports.getEditSaleForm = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
+    await ensureSalesSchema();
     const sale = await getSaleWithAnimal(pool, req.params.id, breederId);
 
     if (!sale) {
@@ -187,6 +203,7 @@ exports.updateSale = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const saleId = req.params.id;
+    await ensureSalesSchema();
     const { buyer_name, sale_date, price, payment_method, notes, deposit_amount, finalize_sale } = req.body;
 
     await client.query('BEGIN');
@@ -245,6 +262,7 @@ exports.downloadDocument = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const saleId = req.params.id;
     const docType = req.params.type;
+    await ensureSalesSchema();
     const allowedDocumentTypes = ['reservation', 'facture', 'cession', 'information'];
 
     if (!allowedDocumentTypes.includes(docType)) {

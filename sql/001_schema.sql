@@ -159,11 +159,14 @@ CREATE TABLE IF NOT EXISTS sales (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     breeder_id UUID REFERENCES breeder(id) ON DELETE CASCADE,
     puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE,
+    dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
     buyer_name VARCHAR(255),
     sale_date DATE NOT NULL,
     price DECIMAL(10, 2),
     payment_method VARCHAR(50),
     invoice_number VARCHAR(100),
+    is_reservation BOOLEAN DEFAULT FALSE,
+    deposit_amount DECIMAL(10, 2) DEFAULT 0,
     notes TEXT
 );
 CREATE TABLE IF NOT EXISTS movements (
