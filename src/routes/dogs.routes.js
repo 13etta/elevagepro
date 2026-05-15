@@ -20,4 +20,7 @@ router.post('/:id/edit', dogsController.saveDog);
 // Processus de suppression
 router.post('/:id/delete', dogsController.deleteDog);
 
+// Fiche détaillée d'un chien
+router.get('/:id', dogsController.showDog);
+
 module.exports = router;
