@@ -1,5 +1,83 @@
 const { pool } = require('../db');
 const registerService = require('../services/register.service'); // NOUVEAU : Import du service de registre
+const fs = require('fs/promises');
+const path = require('path');
+
+const DOG_PHOTO_BUCKET = process.env.SUPABASE_DOG_PHOTO_BUCKET || process.env.SUPABASE_PUBLIC_BUCKET || 'logos';
+const SUPPORTED_DOG_PHOTO_TYPES = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+};
+
+async function ensureDogsSchema() {
+    await pool.query('ALTER TABLE dogs ADD COLUMN IF NOT EXISTS photo_url TEXT').catch(() => {});
+}
+
+function buildDogPhotoName(breederId, file) {
+    const ext = SUPPORTED_DOG_PHOTO_TYPES[file.mimetype] || 'jpg';
+    const safeBreederId = String(breederId).replace(/[^a-zA-Z0-9-]/g, '');
+    return `dogs/${safeBreederId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+}
+
+async function uploadDogPhoto(breederId, file) {
+    if (!file) return null;
+    if (!SUPPORTED_DOG_PHOTO_TYPES[file.mimetype]) {
+        throw new Error('Format de photo non supporte.');
+    }
+
+    const fileName = buildDogPhotoName(breederId, file);
+
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+        const supabase = require('../utils/supabase');
+        const { error } = await supabase.storage
+            .from(DOG_PHOTO_BUCKET)
+            .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: true });
+
+        if (!error) {
+            const { data } = supabase.storage.from(DOG_PHOTO_BUCKET).getPublicUrl(fileName);
+            return data.publicUrl;
+        }
+
+        console.warn('Upload Supabase indisponible, fallback local:', error.message);
+    }
+
+    const uploadRoot = path.join(__dirname, '..', 'public', 'uploads', 'dogs');
+    await fs.mkdir(uploadRoot, { recursive: true });
+    const localName = path.basename(fileName);
+    await fs.writeFile(path.join(uploadRoot, localName), file.buffer);
+    return `/uploads/dogs/${localName}`;
+}
+
+function dogInitials(name) {
+    return String(name || 'Chien')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase();
+}
+
+function buildDogCompleteness(dog) {
+    const items = [
+        ['Identite', dog.name && dog.sex && dog.breed],
+        ['Photo', dog.photo_url],
+        ['Naissance', dog.birth_date],
+        ['Identification', dog.chip_number || dog.id_scc],
+        ['LOF / pedigree', dog.lof || dog.pedigree_number],
+        ['Genealogie', dog.father_name || dog.father_name_external || dog.mother_name || dog.mother_name_external],
+        ['Observations', dog.notes],
+    ];
+    const completed = items.filter(([, done]) => Boolean(done)).length;
+
+    return {
+        completed,
+        total: items.length,
+        percent: Math.round((completed / items.length) * 100),
+        missing: items.filter(([, done]) => !done).map(([label]) => label),
+    };
+}
 
 async function columnExists(tableName, columnName) {
     const result = await pool.query(
@@ -33,9 +111,10 @@ async function getLitterCountExpression() {
 
 exports.listDogs = async (req, res) => {
     try {
+        await ensureDogsSchema();
         const breederId = req.session.user.breeder_id;
         const result = await pool.query('SELECT * FROM dogs WHERE breeder_id = $1 ORDER BY name ASC', [breederId]);
-        res.render('dogs/index', { dogs: result.rows });
+        res.render('dogs/index', { dogs: result.rows, dogInitials });
     } catch (error) {
         console.error('Erreur chargement chiens:', error);
         res.status(500).send('Erreur chargement.');
@@ -46,6 +125,7 @@ exports.showDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
+        await ensureDogsSchema();
 
         const dogRes = await pool.query(
             `
@@ -131,6 +211,8 @@ exports.showDog = async (req, res) => {
 
         return res.render('dogs/show', {
             dog: dogRes.rows[0],
+            completeness: buildDogCompleteness(dogRes.rows[0]),
+            dogInitials,
             soins: soins.rows,
             reminders: reminders.rows,
             litters: litters.rows,
@@ -148,6 +230,7 @@ exports.getForm = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
         let dog = { status: 'actif' };
+        await ensureDogsSchema();
 
         if (dogId) {
             const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
@@ -157,10 +240,10 @@ exports.getForm = async (req, res) => {
         let excludeCondition = dogId ? `AND id != $2` : '';
         let queryParams = dogId ? [breederId, dogId] : [breederId];
 
-        const males = await pool.query(`SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'M' ${excludeCondition} ORDER BY name ASC`, queryParams);
-        const females = await pool.query(`SELECT id, name FROM dogs WHERE breeder_id = $1 AND sex = 'F' ${excludeCondition} ORDER BY name ASC`, queryParams);
+        const males = await pool.query(`SELECT id, name, breed FROM dogs WHERE breeder_id = $1 AND sex = 'M' ${excludeCondition} ORDER BY name ASC`, queryParams);
+        const females = await pool.query(`SELECT id, name, breed FROM dogs WHERE breeder_id = $1 AND sex = 'F' ${excludeCondition} ORDER BY name ASC`, queryParams);
 
-        res.render('dogs/form', { dog, males: males.rows, females: females.rows });
+        res.render('dogs/form', { dog, males: males.rows, females: females.rows, dogInitials });
     } catch (error) {
         console.error('Erreur formulaire chien:', error);
         res.status(500).send('Erreur serveur.');
@@ -171,6 +254,7 @@ exports.saveDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
+        await ensureDogsSchema();
         
         let { 
             name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
@@ -180,26 +264,34 @@ exports.saveDog = async (req, res) => {
         if (father_id) father_name_external = null;
         if (mother_id) mother_name_external = null;
 
+        const uploadedPhotoUrl = await uploadDogPhoto(breederId, req.file);
+        let photoUrl = uploadedPhotoUrl;
+
+        if (dogId && !uploadedPhotoUrl) {
+            const currentDog = await pool.query('SELECT photo_url FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
+            photoUrl = req.body.remove_photo === 'on' ? null : (currentDog.rows[0]?.photo_url || null);
+        }
+
         if (dogId) {
             // 1. MISE À JOUR D'UN CHIEN EXISTANT
             await pool.query(`
                 UPDATE dogs 
                 SET name = $1, sex = $2, breed = $3, birth_date = $4, chip_number = $5, 
                     id_scc = $6, pedigree_number = $7, lof = $8, status = $9, notes = $10,
-                    father_id = $11, mother_id = $12, father_name_external = $13, mother_name_external = $14,
+                    father_id = $11, mother_id = $12, father_name_external = $13, mother_name_external = $14, photo_url = $15,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE id = $15 AND breeder_id = $16
+                WHERE id = $16 AND breeder_id = $17
             `, [name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes, 
-                father_id || null, mother_id || null, father_name_external, mother_name_external, dogId, breederId]);
+                father_id || null, mother_id || null, father_name_external, mother_name_external, photoUrl, dogId, breederId]);
         } else {
             // 2. CRÉATION D'UN NOUVEAU CHIEN (Arrivée dans l'élevage)
             await pool.query(`
                 INSERT INTO dogs (
                     breeder_id, name, sex, breed, birth_date, chip_number, id_scc, pedigree_number, lof, status, notes,
-                    father_id, mother_id, father_name_external, mother_name_external
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    father_id, mother_id, father_name_external, mother_name_external, photo_url
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             `, [breederId, name, sex, breed, birth_date || null, chip_number, id_scc, pedigree_number, lof, status, notes,
-                father_id || null, mother_id || null, father_name_external, mother_name_external]);
+                father_id || null, mother_id || null, father_name_external, mother_name_external, photoUrl]);
 
             // --- DÉBUT AUTOMATISATION DU REGISTRE DDPP ---
             await registerService.logMovement({
