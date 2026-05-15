@@ -183,16 +183,7 @@ exports.createSale = async (req, res) => {
       try {
         const sale = await getSaleWithAnimal(pool, inserted.rows[0].id, breederId);
         if (sale) {
-          await registerService.logMovement({
-            breederId,
-            animalName: sale.animal_name,
-            identification: sale.animal_chip_number,
-            breed: sale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
-            type: 'SORTIE',
-            reason: 'Vente',
-            date: sale_date,
-            thirdParty: buyer_name,
-          });
+          await registerService.logSaleExit({ breederId, sale });
         }
       } catch (registerError) {
         console.warn('Registre non mis à jour après transaction:', registerError.message);
@@ -269,16 +260,10 @@ exports.updateSale = async (req, res) => {
 
     if (isFinalSale) {
       try {
-        await registerService.logMovement({
-          breederId,
-          animalName: previousSale.animal_name,
-          identification: previousSale.animal_chip_number,
-          breed: previousSale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
-          type: 'SORTIE',
-          reason: 'Vente',
-          date: sale_date,
-          thirdParty: buyer_name,
-        });
+        const finalizedSale = await getSaleWithAnimal(pool, saleId, breederId);
+        if (finalizedSale) {
+          await registerService.logSaleExit({ breederId, sale: finalizedSale });
+        }
       } catch (registerError) {
         console.warn('Registre non mis à jour après finalisation:', registerError.message);
       }
