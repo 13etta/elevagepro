@@ -38,6 +38,15 @@ const modules = [
     accent: 'green',
   },
   {
+    key: 'healthTests',
+    labelKey: 'nav.healthTests',
+    descriptionKey: 'modules.healthTests.description',
+    href: '/health-tests',
+    icon: 'ADN',
+    group: 'sante',
+    accent: 'green',
+  },
+  {
     key: 'reminders',
     labelKey: 'nav.reminders',
     descriptionKey: 'modules.reminders.description',
