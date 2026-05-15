@@ -1,7 +1,12 @@
+const dns = require('dns');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 require('dotenv').config();
+
+// Codespaces et certains conteneurs peuvent résoudre PostgreSQL en IPv6
+// alors que le réseau sortant IPv6 est indisponible.
+dns.setDefaultResultOrder?.('ipv4first');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
