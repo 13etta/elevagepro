@@ -1,16 +1,19 @@
 const { pool } = require('../db');
 
+async function tableExists(tableName) {
+    const result = await pool.query('SELECT to_regclass($1) IS NOT NULL AS exists', [`public.${tableName}`]);
+    return Boolean(result.rows[0]?.exists);
+}
+
 exports.getDashboard = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
 
-        // 1. Récupération des infrastructures
         const infraRes = await pool.query(
             'SELECT * FROM infrastructures WHERE breeder_id = $1 ORDER BY type ASC, name ASC',
             [breederId]
         );
 
-        // 2. Récupération de l'équipe
         const staffRes = await pool.query(
             'SELECT * FROM staff WHERE breeder_id = $1 ORDER BY status ASC, last_name ASC',
             [breederId]
@@ -28,21 +31,18 @@ exports.getDashboard = async (req, res) => {
     }
 };
 
-// --- FONCTIONS INFRASTRUCTURES ---
-
 exports.getInfraForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const infraId = req.params.id;
-        
-        let infra = { status: 'actif', capacity: 1 }; 
+        let infra = { status: 'actif', capacity: 1 };
 
         if (infraId) {
             const result = await pool.query(
                 'SELECT * FROM infrastructures WHERE id = $1 AND breeder_id = $2',
                 [infraId, breederId]
             );
-            
+
             if (result.rows.length > 0) {
                 infra = result.rows[0];
             } else {
@@ -99,18 +99,100 @@ exports.deleteInfra = async (req, res) => {
     }
 };
 
-// --- FONCTIONS REGISTRE DES ENTRÉES/SORTIES ---
-
 exports.getEntriesRegister = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
+        const hasMovements = await tableExists('movements');
+        const hasLegacy = await tableExists('animal_movements');
+        let query;
 
-        const movementsRes = await pool.query(
-            `SELECT * FROM animal_movements 
-             WHERE breeder_id = $1 
-             ORDER BY movement_date DESC, created_at DESC`,
-            [breederId]
-        );
+        if (hasMovements && hasLegacy) {
+            query = `
+                SELECT
+                    ('movements:' || m.id::text) AS row_id,
+                    m.id::text AS id,
+                    'movements' AS source_table,
+                    m.movement_date,
+                    upper(m.movement_type) AS movement_type,
+                    m.reason AS movement_reason,
+                    m.animal_name,
+                    m.animal_type AS breed,
+                    m.chip_number AS identification,
+                    m.provenance_destination AS third_party_info,
+                    m.notes,
+                    m.created_at
+                FROM movements m
+                WHERE m.breeder_id = $1
+
+                UNION ALL
+
+                SELECT
+                    ('animal_movements:' || am.id::text) AS row_id,
+                    am.id::text AS id,
+                    'animal_movements' AS source_table,
+                    am.movement_date,
+                    upper(am.movement_type) AS movement_type,
+                    am.movement_reason,
+                    am.animal_name,
+                    am.breed,
+                    am.identification,
+                    am.third_party_info,
+                    am.notes,
+                    am.created_at
+                FROM animal_movements am
+                WHERE am.breeder_id = $1
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM movements m2
+                      WHERE m2.breeder_id = am.breeder_id
+                        AND lower(trim(m2.animal_name)) = lower(trim(am.animal_name))
+                        AND COALESCE(trim(m2.chip_number), '') = COALESCE(trim(am.identification), '')
+                        AND m2.movement_date = am.movement_date
+                        AND upper(m2.movement_type) = upper(am.movement_type)
+                  )
+                ORDER BY movement_date DESC, created_at DESC
+            `;
+        } else if (hasMovements) {
+            query = `
+                SELECT
+                    ('movements:' || m.id::text) AS row_id,
+                    m.id::text AS id,
+                    'movements' AS source_table,
+                    m.movement_date,
+                    upper(m.movement_type) AS movement_type,
+                    m.reason AS movement_reason,
+                    m.animal_name,
+                    m.animal_type AS breed,
+                    m.chip_number AS identification,
+                    m.provenance_destination AS third_party_info,
+                    m.notes,
+                    m.created_at
+                FROM movements m
+                WHERE m.breeder_id = $1
+                ORDER BY m.movement_date DESC, m.created_at DESC
+            `;
+        } else if (hasLegacy) {
+            query = `
+                SELECT
+                    ('animal_movements:' || am.id::text) AS row_id,
+                    am.id::text AS id,
+                    'animal_movements' AS source_table,
+                    am.movement_date,
+                    upper(am.movement_type) AS movement_type,
+                    am.movement_reason,
+                    am.animal_name,
+                    am.breed,
+                    am.identification,
+                    am.third_party_info,
+                    am.notes,
+                    am.created_at
+                FROM animal_movements am
+                WHERE am.breeder_id = $1
+                ORDER BY am.movement_date DESC, am.created_at DESC
+            `;
+        }
+
+        const movementsRes = query ? await pool.query(query, [breederId]) : { rows: [] };
 
         res.render('breeder/register-entries', {
             title: 'Registre des Entrées et Sorties',
@@ -126,12 +208,39 @@ exports.getEntriesRegister = async (req, res) => {
 exports.getEditMovementForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        const movementId = req.params.id;
+        const rawMovementId = String(req.params.id || '');
+        const [sourceTable, movementId] = rawMovementId.includes(':')
+            ? rawMovementId.split(':')
+            : ['animal_movements', rawMovementId];
 
-        const result = await pool.query(
-            'SELECT * FROM animal_movements WHERE id = $1 AND breeder_id = $2',
-            [movementId, breederId]
-        );
+        let result;
+        if (sourceTable === 'movements') {
+            result = await pool.query(
+                `SELECT
+                    id::text AS id,
+                    'movements' AS source_table,
+                    movement_date,
+                    reason AS movement_reason,
+                    provenance_destination AS third_party_info,
+                    notes
+                 FROM movements
+                 WHERE id = $1 AND breeder_id = $2`,
+                [movementId, breederId]
+            );
+        } else {
+            result = await pool.query(
+                `SELECT
+                    id::text AS id,
+                    'animal_movements' AS source_table,
+                    movement_date,
+                    movement_reason,
+                    third_party_info,
+                    notes
+                 FROM animal_movements
+                 WHERE id = $1 AND breeder_id = $2`,
+                [movementId, breederId]
+            );
+        }
 
         if (result.rows.length === 0) {
             return res.status(404).send('Ligne du registre introuvable.');
@@ -150,19 +259,33 @@ exports.getEditMovementForm = async (req, res) => {
 exports.updateMovement = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        const movementId = req.params.id;
-        
+        const rawMovementId = String(req.params.id || '');
+        const [sourceTable, movementId] = rawMovementId.includes(':')
+            ? rawMovementId.split(':')
+            : ['animal_movements', rawMovementId];
         const { movement_date, movement_reason, third_party_info, notes } = req.body;
 
-        await pool.query(
-            `UPDATE animal_movements 
-             SET movement_date = $1, 
-                 movement_reason = $2, 
-                 third_party_info = $3, 
-                 notes = $4 
-             WHERE id = $5 AND breeder_id = $6`,
-            [movement_date, movement_reason, third_party_info, notes, movementId, breederId]
-        );
+        if (sourceTable === 'movements') {
+            await pool.query(
+                `UPDATE movements
+                 SET movement_date = $1,
+                     reason = $2,
+                     provenance_destination = $3,
+                     notes = $4
+                 WHERE id = $5 AND breeder_id = $6`,
+                [movement_date, movement_reason, third_party_info, notes, movementId, breederId]
+            );
+        } else {
+            await pool.query(
+                `UPDATE animal_movements
+                 SET movement_date = $1,
+                     movement_reason = $2,
+                     third_party_info = $3,
+                     notes = $4
+                 WHERE id = $5 AND breeder_id = $6`,
+                [movement_date, movement_reason, third_party_info, notes, movementId, breederId]
+            );
+        }
 
         res.redirect('/breeder/register/entries');
     } catch (error) {
@@ -171,25 +294,20 @@ exports.updateMovement = async (req, res) => {
     }
 };
 
-// --- FONCTIONS REGISTRE SANITAIRE ET HYGIÈNE ---
-
 exports.getHealthRegister = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
 
-        // Récupération des événements médicaux
         const recordsRes = await pool.query(
             'SELECT * FROM sanitary_records WHERE breeder_id = $1 ORDER BY event_date DESC',
             [breederId]
         );
 
-        // Récupération des logs de nettoyage
         const cleaningRes = await pool.query(
             'SELECT * FROM cleaning_logs WHERE breeder_id = $1 ORDER BY cleaning_date DESC, created_at DESC LIMIT 50',
             [breederId]
         );
 
-        // Récupération des infrastructures pour le menu déroulant
         const infraRes = await pool.query(
             'SELECT * FROM infrastructures WHERE breeder_id = $1 ORDER BY type ASC, name ASC',
             [breederId]
