@@ -1,0 +1,155 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Santé officielle</p>
+      <h1>Tests de santé reproducteurs</h1>
+      <p>Centralisez ADN, radios, examens officiels et justificatifs pour sécuriser la sélection et préparer les dossiers de reproduction.</p>
+    </div>
+    <div class="topbar-actions">
+      <a class="btn btn-secondary" href="/dogs">Voir les chiens</a>
+    </div>
+  </section>
+
+  <section class="dashboard-columns">
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Saisie</span>
+        <h2>Nouveau test</h2>
+      </div>
+
+      <form action="/health-tests" method="POST" class="stacked-form" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="dog_id">Chien *</label>
+          <select id="dog_id" name="dog_id" required onchange="if(this.value) window.location='/health-tests?dog_id=' + this.value">
+            <option value="">Sélectionner un chien</option>
+            <% dogs.forEach((dog) => { %>
+              <option value="<%= dog.id %>" <%= selectedDogId === dog.id ? 'selected' : '' %>>
+                <%= dog.name %><%= dog.breed ? ' · ' + dog.breed : '' %><%= dog.chip_number ? ' · ' + dog.chip_number : '' %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="test_type">Catégorie *</label>
+            <select id="test_type" name="test_type" required>
+              <option value="">Sélectionner</option>
+              <option value="ADN">ADN</option>
+              <option value="Dysplasie hanches">Dysplasie hanches</option>
+              <option value="Dysplasie coudes">Dysplasie coudes</option>
+              <option value="Ophtalmologie">Ophtalmologie</option>
+              <option value="Cardiaque">Cardiaque</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="test_name">Nom du test *</label>
+            <input id="test_name" name="test_name" type="text" required placeholder="APR, NF, HD-A, ED-0...">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="result">Résultat</label>
+            <input id="result" name="result" type="text" placeholder="Sain, porteur, atteint, A/A, B/B...">
+          </div>
+          <div class="form-group">
+            <label for="test_date">Date du test</label>
+            <input id="test_date" name="test_date" type="date">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="laboratory">Laboratoire / organisme</label>
+            <input id="laboratory" name="laboratory" type="text" placeholder="Antagene, SCC, vétérinaire lecteur...">
+          </div>
+          <div class="form-group">
+            <label for="certificate">Justificatif</label>
+            <input id="certificate" name="certificate" type="file" accept="application/pdf,image/jpeg,image/png,image/webp">
+            <small>PDF, JPG, PNG ou WebP. Maximum 8 Mo.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" rows="3" placeholder="Lecture officielle, commentaire vétérinaire, précision de laboratoire..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer le test</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <div class="section-title compact">
+        <span class="section-kicker">Pilotage</span>
+        <h2>Synthèse</h2>
+      </div>
+      <section class="kpi-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 0;">
+        <article class="kpi-card">
+          <span>Chiens</span>
+          <strong><%= dogs.length %></strong>
+        </article>
+        <article class="kpi-card">
+          <span>Tests</span>
+          <strong><%= tests.length %></strong>
+        </article>
+      </section>
+      <p class="muted" style="margin-top: 1rem;">Sélectionnez un chien pour filtrer son dossier santé ou laissez vide pour voir tous les tests enregistrés.</p>
+    </article>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact">
+      <span class="section-kicker">Registre santé</span>
+      <h2>Tests enregistrés</h2>
+    </div>
+
+    <% if (!tests.length) { %>
+      <%- include('../partials/empty-state', { emptyTitle: 'Aucun test enregistré', emptyText: 'Ajoutez un premier test ADN, radio ou justificatif officiel pour démarrer le dossier santé.' }) %>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Chien</th>
+            <th>Catégorie</th>
+            <th>Test</th>
+            <th>Résultat</th>
+            <th>Date</th>
+            <th>Justificatif</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tests.forEach((test) => { %>
+            <tr>
+              <td><a href="/dogs/<%= test.dog_id %>"><%= test.dog_name %></a></td>
+              <td><span class="badge"><%= test.test_type %></span></td>
+              <td><strong><%= test.test_name %></strong><% if (test.laboratory) { %><br><small><%= test.laboratory %></small><% } %></td>
+              <td><%= test.result || '-' %></td>
+              <td><%= test.test_date ? formatDate(test.test_date) : '-' %></td>
+              <td>
+                <% if (test.certificate_url) { %>
+                  <a class="btn btn-secondary" href="<%= test.certificate_url %>" target="_blank" rel="noopener">Ouvrir</a>
+                <% } else { %>
+                  -
+                <% } %>
+              </td>
+              <td>
+                <form action="/health-tests/<%= test.id %>/delete" method="POST" onsubmit="return confirm('Supprimer ce test de santé ?')">
+                  <button type="submit" class="btn btn-secondary">Supprimer</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
