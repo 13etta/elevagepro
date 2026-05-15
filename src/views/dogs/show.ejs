@@ -16,7 +16,7 @@
       <p>
         <%= dog.breed || 'Race non renseignée' %>
         —
-        <%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %>
+        <%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %>
       </p>
       <div class="dog-hero-meta">
         <span><%= dog.status || 'Statut non renseigne' %></span>
@@ -60,11 +60,11 @@
       </div>
       <p><strong>Nom :</strong> <%= dog.name %></p>
       <p><strong>Race :</strong> <%= dog.breed || '-' %></p>
-      <p><strong>Sexe :</strong> <%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></p>
+      <p><strong>Sexe :</strong> <%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %></p>
       <p><strong>N° puce :</strong> <%= dog.chip_number || '-' %></p>
       <p><strong>ID SCC :</strong> <%= dog.id_scc || '-' %></p>
-      <p><strong>Père :</strong> <%= dog.father_name || '-' %></p>
-      <p><strong>Mère :</strong> <%= dog.mother_name || '-' %></p>
+      <p><strong>Père :</strong> <%= dog.father_name || dog.father_name_external || '-' %></p>
+      <p><strong>Mère :</strong> <%= dog.mother_name || dog.mother_name_external || '-' %></p>
     </article>
 
     <article class="card">
