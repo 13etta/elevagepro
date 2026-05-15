@@ -3,14 +3,12 @@ const documentService = require('../services/document.service');
 const registerService = require('../services/register.service');
 
 async function ensureSalesSchema() {
-  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE').catch(() => {});
-  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE').catch(() => {});
-  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2) DEFAULT 0').catch(() => {});
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE').catch(() => {});
+  // Les migrations doivent être jouées par `npm run db:migrate`.
+  // Ne pas exécuter d'ALTER TABLE au runtime : cela peut bloquer Render/PostgreSQL.
+  return true;
 }
 
 async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
-  await ensureSalesSchema();
   const saleRes = await clientOrPool.query(
     `
       SELECT s.*,
@@ -32,10 +30,14 @@ async function getSaleWithAnimal(clientOrPool, saleId, breederId) {
   return saleRes.rows[0] || null;
 }
 
+function parseMoney(value) {
+  const parsed = Number.parseFloat(String(value || '0').replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 exports.listSales = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
-    await ensureSalesSchema();
 
     const sales = await pool.query(
       `
@@ -54,7 +56,7 @@ exports.listSales = async (req, res) => {
 
     const totalRevenue = sales.rows.reduce((sum, sale) => {
       if (sale.is_reservation) return sum;
-      return sum + parseFloat(sale.price || 0);
+      return sum + parseMoney(sale.price);
     }, 0);
 
     res.render('sales/index', {
@@ -70,7 +72,6 @@ exports.listSales = async (req, res) => {
 exports.getSaleForm = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
-    await ensureSalesSchema();
 
     const puppies = await pool.query(
       `
@@ -120,22 +121,46 @@ exports.createSale = async (req, res) => {
   const client = await pool.connect();
   try {
     const breederId = req.session.user.breeder_id;
-    await ensureSalesSchema();
     const { animal_selection, buyer_name, sale_date, price, payment_method, notes, is_reservation, deposit_amount } = req.body;
 
-    if (!animal_selection) {
-      return res.status(400).send('Aucun animal sélectionné.');
+    if (!animal_selection || !animal_selection.includes('|')) {
+      return res.status(400).send('Aucun animal valide sélectionné.');
     }
 
+    if (!buyer_name || !String(buyer_name).trim()) {
+      return res.status(400).send('Le nom de l’acquéreur est obligatoire.');
+    }
+
+    if (!sale_date) {
+      return res.status(400).send('La date de transaction est obligatoire.');
+    }
+
+    const totalPrice = parseMoney(price);
+    const deposit = parseMoney(deposit_amount);
     const isResa = is_reservation === 'true';
-    const deposit = deposit_amount ? parseFloat(deposit_amount) : 0;
     const targetStatus = isResa ? 'Réservé' : 'Vendu';
 
     const [animalType, animalId] = animal_selection.split('|');
+    if (!['puppy', 'dog'].includes(animalType) || !animalId) {
+      return res.status(400).send('Sélection animal invalide.');
+    }
+
     const puppyId = animalType === 'puppy' ? animalId : null;
     const dogId = animalType === 'dog' ? animalId : null;
 
     await client.query('BEGIN');
+
+    const animalCheck = await client.query(
+      animalType === 'puppy'
+        ? 'SELECT id FROM puppies WHERE id = $1 AND breeder_id = $2'
+        : 'SELECT id FROM dogs WHERE id = $1 AND breeder_id = $2',
+      [animalId, breederId],
+    );
+
+    if (!animalCheck.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).send('Animal introuvable pour cet élevage.');
+    }
 
     const inserted = await client.query(
       `
@@ -143,36 +168,46 @@ exports.createSale = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
       `,
-      [breederId, puppyId, dogId, buyer_name, sale_date, price, payment_method, notes, isResa, deposit],
+      [breederId, puppyId, dogId, String(buyer_name).trim(), sale_date, totalPrice, payment_method || null, notes || null, isResa, deposit],
     );
 
-    const table = animalType === 'puppy' ? 'puppies' : 'dogs';
     if (animalType === 'puppy') {
       await client.query('UPDATE puppies SET status = $1, is_sold = $2 WHERE id = $3 AND breeder_id = $4', [targetStatus, !isResa, animalId, breederId]);
     } else {
-      await client.query(`UPDATE ${table} SET status = $1 WHERE id = $2 AND breeder_id = $3`, [targetStatus, animalId, breederId]);
-    }
-
-    if (!isResa) {
-      const sale = await getSaleWithAnimal(client, inserted.rows[0].id, breederId);
-      await registerService.logMovement({
-        breederId,
-        animalName: sale.animal_name,
-        identification: sale.animal_chip_number,
-        breed: sale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
-        type: 'SORTIE',
-        reason: 'Vente',
-        date: sale_date,
-        thirdParty: buyer_name,
-      }, client);
+      await client.query('UPDATE dogs SET status = $1 WHERE id = $2 AND breeder_id = $3', [targetStatus, animalId, breederId]);
     }
 
     await client.query('COMMIT');
+
+    if (!isResa) {
+      try {
+        const sale = await getSaleWithAnimal(pool, inserted.rows[0].id, breederId);
+        if (sale) {
+          await registerService.logMovement({
+            breederId,
+            animalName: sale.animal_name,
+            identification: sale.animal_chip_number,
+            breed: sale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
+            type: 'SORTIE',
+            reason: 'Vente',
+            date: sale_date,
+            thirdParty: buyer_name,
+          });
+        }
+      } catch (registerError) {
+        console.warn('Registre non mis à jour après transaction:', registerError.message);
+      }
+    }
+
     res.redirect('/sales');
   } catch (error) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Rollback transaction vente impossible:', rollbackError);
+    }
     console.error('Erreur enregistrement transaction:', error);
-    res.status(500).send('Erreur lors de la finalisation.');
+    res.status(500).send(`Erreur lors de la finalisation : ${error.message}`);
   } finally {
     client.release();
   }
@@ -181,7 +216,6 @@ exports.createSale = async (req, res) => {
 exports.getEditSaleForm = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
-    await ensureSalesSchema();
     const sale = await getSaleWithAnimal(pool, req.params.id, breederId);
 
     if (!sale) {
@@ -203,7 +237,6 @@ exports.updateSale = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const saleId = req.params.id;
-    await ensureSalesSchema();
     const { buyer_name, sale_date, price, payment_method, notes, deposit_amount, finalize_sale } = req.body;
 
     await client.query('BEGIN');
@@ -229,28 +262,37 @@ exports.updateSale = async (req, res) => {
             is_reservation = $7
         WHERE id = $8 AND breeder_id = $9
       `,
-      [buyer_name, sale_date, price, payment_method, notes, deposit_amount || 0, newReservationStatus, saleId, breederId],
+      [buyer_name, sale_date, parseMoney(price), payment_method || null, notes || null, parseMoney(deposit_amount), newReservationStatus, saleId, breederId],
     );
 
+    await client.query('COMMIT');
+
     if (isFinalSale) {
-      await registerService.logMovement({
-        breederId,
-        animalName: previousSale.animal_name,
-        identification: previousSale.animal_chip_number,
-        breed: previousSale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
-        type: 'SORTIE',
-        reason: 'Vente',
-        date: sale_date,
-        thirdParty: buyer_name,
-      }, client);
+      try {
+        await registerService.logMovement({
+          breederId,
+          animalName: previousSale.animal_name,
+          identification: previousSale.animal_chip_number,
+          breed: previousSale.animal_type === 'puppy' ? 'Chiot' : 'Adulte',
+          type: 'SORTIE',
+          reason: 'Vente',
+          date: sale_date,
+          thirdParty: buyer_name,
+        });
+      } catch (registerError) {
+        console.warn('Registre non mis à jour après finalisation:', registerError.message);
+      }
     }
 
-    await client.query('COMMIT');
     res.redirect('/sales');
   } catch (error) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Rollback mise à jour vente impossible:', rollbackError);
+    }
     console.error('Erreur mise à jour vente:', error);
-    res.status(500).send('Erreur lors de la mise à jour de la transaction.');
+    res.status(500).send(`Erreur lors de la mise à jour de la transaction : ${error.message}`);
   } finally {
     client.release();
   }
@@ -261,7 +303,6 @@ exports.downloadDocument = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const saleId = req.params.id;
     const docType = req.params.type;
-    await ensureSalesSchema();
     const allowedDocumentTypes = documentService.getAllowedDocumentTypes();
 
     if (!allowedDocumentTypes.includes(docType)) {
