@@ -1,26 +1,47 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
+<%
+  const editing = editingSoin || null;
+  const formAction = editing ? `/soins/${editing.id}/edit` : '/soins/new';
+  const selectedAnimal = editing
+    ? (editing.puppy_id ? `puppy|${editing.puppy_id}` : (editing.dog_id ? `dog|${editing.dog_id}` : ''))
+    : '';
+  const dateInputValue = (value) => {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
+  };
+%>
 <main class="container">
   <section class="page-hero">
     <div>
       <p class="eyebrow">Registre sanitaire</p>
       <h1>Soins & santé</h1>
-      <p>Enregistrez les vaccins, vermifuges, antiparasitaires, consultations et actes sanitaires pour les chiens adultes comme pour les chiots.</p>
+      <p>Enregistrez, corrigez et suivez les vaccins, vermifuges, antiparasitaires, consultations et actes sanitaires pour les chiens adultes comme pour les chiots.</p>
     </div>
   </section>
 
   <div class="form-grid" style="align-items: start;">
       <section class="form-block card">
-        <h3>Enregistrer un nouveau soin</h3>
-        <form action="/soins/new" method="POST">
+        <h3><%= editing ? 'Rectifier une saisie sanitaire' : 'Enregistrer un nouveau soin' %></h3>
+        <% if (editing) { %>
+          <p class="muted">Mode correction : la modification remettra aussi à jour le rappel associé lorsque la prochaine échéance est renseignée.</p>
+        <% } %>
+        <form action="<%= formAction %>" method="POST">
+            <% if (typeof csrfToken !== 'undefined') { %>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <% } %>
+
             <div class="form-group">
                 <label for="animal_selection">Animal concerné</label>
                 <select id="animal_selection" name="animal_selection">
-                    <option value="">-- Soin d'élevage / Général --</option>
+                    <option value="" <%= selectedAnimal === '' ? 'selected' : '' %>>-- Soin d'élevage / Général --</option>
 
                     <optgroup label="Chiens adultes">
                         <% dogs.forEach(d => { %>
-                            <option value="dog|<%= d.id %>">
+                            <% const value = `dog|${d.id}`; %>
+                            <option value="<%= value %>" <%= selectedAnimal === value ? 'selected' : '' %>>
                                 <%= d.name %>
                                 <% if (d.chip_number) { %> — <%= d.chip_number %><% } %>
                             </option>
@@ -29,7 +50,8 @@
 
                     <optgroup label="Chiots">
                         <% puppies.forEach(p => { %>
-                            <option value="puppy|<%= p.id %>">
+                            <% const value = `puppy|${p.id}`; %>
+                            <option value="<%= value %>" <%= selectedAnimal === value ? 'selected' : '' %>>
                                 <%= p.name || 'Chiot sans nom' %>
                                 <% if (p.mother_name) { %> — portée de <%= p.mother_name %><% } %>
                                 <% if (p.chip_number) { %> — <%= p.chip_number %><% } %>
@@ -42,41 +64,44 @@
             <div class="form-group">
                 <label for="type">Catégorie *</label>
                 <select id="type" name="type" required>
-                    <option value="vaccin">Vaccin</option>
-                    <option value="vermifuge">Vermifuge</option>
-                    <option value="antiparasitaire">Antiparasitaire</option>
-                    <option value="veterinaire">Consultation vétérinaire</option>
-                    <option value="desinfection">Désinfection locaux</option>
-                    <option value="autre">Autre</option>
+                    <% ['vaccin', 'vermifuge', 'antiparasitaire', 'veterinaire', 'desinfection', 'autre'].forEach((type) => { %>
+                      <option value="<%= type %>" <%= (editing?.type || 'vaccin') === type ? 'selected' : '' %>><%= type %></option>
+                    <% }) %>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="label">Libellé du soin * (ex: CHPPI2L, Milbemax...)</label>
-                <input type="text" id="label" name="label" required>
+                <input type="text" id="label" name="label" value="<%= editing?.label || '' %>" required>
             </div>
 
             <div class="form-group">
                 <label for="event_date">Date de l'acte *</label>
-                <input type="date" id="event_date" name="event_date" required>
+                <input type="date" id="event_date" name="event_date" value="<%= dateInputValue(editing?.event_date) %>" required>
             </div>
 
             <div class="form-group">
-                <label for="next_due">Prochaine échéance (génère un rappel automatique)</label>
-                <input type="date" id="next_due" name="next_due">
+                <label for="next_due">Prochaine échéance (génère ou corrige un rappel automatique)</label>
+                <input type="date" id="next_due" name="next_due" value="<%= dateInputValue(editing?.next_due) %>">
             </div>
 
             <div class="form-group">
                 <label for="notes">Observations éventuelles</label>
-                <textarea id="notes" name="notes" rows="2"></textarea>
+                <textarea id="notes" name="notes" rows="2"><%= editing?.notes || '' %></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ajouter au registre</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+              <%= editing ? 'Enregistrer la correction' : 'Ajouter au registre' %>
+            </button>
+
+            <% if (editing) { %>
+              <a href="/soins" class="btn btn-secondary" style="width: 100%; margin-top: .75rem;">Annuler la correction</a>
+            <% } %>
         </form>
       </section>
 
       <section class="table-block">
-        <h3>Historique récent</h3>
+        <h3>Historique sanitaire</h3>
         <table>
           <thead>
             <tr>
@@ -85,23 +110,34 @@
                 <th>Catégorie</th>
                 <th>Acte</th>
                 <th>Prochaine échéance</th>
+                <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             <% if (soins.length === 0) { %>
-                <tr><td colspan="5">Aucun soin enregistré.</td></tr>
+                <tr><td colspan="6">Aucun soin enregistré.</td></tr>
             <% } %>
             <% soins.forEach((soin) => { %>
               <tr>
-                <td><strong><%= new Date(soin.event_date).toLocaleDateString('fr-FR') %></strong></td>
+                <td><strong><%= formatDate(soin.event_date) %></strong></td>
                 <td><%= soin.animal_name || 'Général' %></td>
                 <td><%= soin.animal_category || 'Général' %></td>
                 <td>
                     <span class="badge"><%= soin.type %></span>
                     <%= soin.label %>
+                    <% if (soin.notes) { %><br><small><%= soin.notes %></small><% } %>
                 </td>
                 <td>
-                    <%= soin.next_due ? new Date(soin.next_due).toLocaleDateString('fr-FR') : '-' %>
+                    <%= soin.next_due ? formatDate(soin.next_due) : '-' %>
+                </td>
+                <td style="white-space: nowrap;">
+                  <a href="/soins/<%= soin.id %>/edit" class="btn btn-secondary btn-sm">Rectifier</a>
+                  <form action="/soins/<%= soin.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('Supprimer définitivement cette saisie de soin ?');">
+                    <% if (typeof csrfToken !== 'undefined') { %>
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <% } %>
+                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                  </form>
                 </td>
               </tr>
             <% }) %>

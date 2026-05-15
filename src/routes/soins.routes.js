@@ -7,5 +7,8 @@ router.use(requireAuth);
 
 router.get('/', soinsController.listSoins);
 router.post('/new', soinsController.createSoin);
+router.get('/:id/edit', soinsController.editSoin);
+router.post('/:id/edit', soinsController.updateSoin);
+router.post('/:id/delete', soinsController.deleteSoin);
 
 module.exports = router;
