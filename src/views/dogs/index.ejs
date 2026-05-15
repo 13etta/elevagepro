@@ -29,13 +29,10 @@
             <td><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></td>
             <td><%= dog.chip_number || '-' %></td>
             <td><span class="badge <%= dog.status %>"><%= dog.status %></span></td>
-            <td>
-                <a href="/dogs/<%= dog.id %>" class="action-link" style="color: var(--secondary-color); font-weight: bold; text-decoration: none;">Voir fiche</a>
-
+            <td style="white-space: nowrap;">
+                <a href="/dogs/<%= dog.id %>" class="btn btn-secondary btn-sm">Voir fiche</a>
+                <a href="/dogs/<%= dog.id %>/edit" class="btn btn-primary btn-sm">Modifier</a>
             </td>
-            <td>
-    <a href="/dogs/<%= dog.id %>/edit" class="btn btn-primary btn-sm">Modifier la fiche</a>
-</td>
           </tr>
         <% }) %>
       </tbody>
