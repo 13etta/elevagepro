@@ -48,6 +48,61 @@ function normalizeBoxCapacity(value, fallback = 12) {
   return Math.max(1, Math.min(parsed, 500));
 }
 
+async function columnExists(tableName, columnName) {
+  const result = await pool.query(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = $1
+          AND column_name = $2
+      ) AS exists
+    `,
+    [tableName, columnName],
+  );
+
+  return Boolean(result.rows[0]?.exists);
+}
+
+async function getLittersForSettings(breederId) {
+  const motherColumn = await columnExists('litters', 'mother_id')
+    ? 'mother_id'
+    : await columnExists('litters', 'female_id')
+      ? 'female_id'
+      : null;
+  const countExpression = await columnExists('litters', 'puppies_count_total')
+    ? 'l.puppies_count_total'
+    : await columnExists('litters', 'puppies_count')
+      ? 'l.puppies_count'
+      : await columnExists('litters', 'nb_puppies')
+        ? 'l.nb_puppies'
+        : 'NULL';
+  const statusExpression = await columnExists('litters', 'status') ? 'l.status' : 'NULL::text';
+  const motherSelect = motherColumn ? 'mother.name' : 'NULL::text';
+  const motherJoin = motherColumn ? `LEFT JOIN dogs mother ON l.${motherColumn} = mother.id` : '';
+
+  const result = await pool.query(
+    `
+      SELECT
+        l.id,
+        l.birth_date,
+        ${statusExpression} AS status,
+        ${countExpression} AS puppies_count,
+        ${countExpression} AS nb_puppies,
+        ${motherSelect} AS mother_name
+      FROM litters l
+      ${motherJoin}
+      WHERE l.breeder_id = $1
+      ORDER BY l.birth_date DESC NULLS LAST
+      LIMIT 20
+    `,
+    [breederId],
+  );
+
+  return result.rows;
+}
+
 async function ensureSettingsSchema() {
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
   await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
@@ -90,13 +145,15 @@ exports.getSettings = async (req, res) => {
     await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
     const result = await pool.query('SELECT * FROM breeder WHERE id = $1', [breederId]);
-    const breeder = result.rows[0];
-
-    const litters = await pool.query(`
-        SELECT l.id, l.birth_date, l.status, l.puppies_count, l.nb_puppies, mother.name AS mother_name
-        FROM litters l LEFT JOIN dogs mother ON l.female_id = mother.id
-        WHERE l.breeder_id = $1 ORDER BY l.birth_date DESC NULLS LAST LIMIT 20
-      `, [breederId]).catch(() => ({ rows: [] }));
+    const breeder = result.rows[0] || {
+      id: breederId,
+      company_name: req.session.user.company_name || 'ElevagePro',
+      website_settings: {},
+    };
+    const litters = await getLittersForSettings(breederId).catch((error) => {
+      console.error('Erreur chargement portees parametres:', error);
+      return [];
+    });
 
     res.render('settings/index', {
       title: res.__('settings.title'),
@@ -104,7 +161,7 @@ exports.getSettings = async (req, res) => {
       websiteSettings: mergeWebsiteSettings(breeder.website_settings),
       publicSiteUrl: `/site/${breeder.slug || breeder.id}`,
       websiteTemplates: allowedWebsiteTemplates,
-      litters: litters.rows,
+      litters,
       activeSettingsTab: req.query.tab === 'vitrine' ? 'vitrine' : 'application',
     });
   } catch (error) {
