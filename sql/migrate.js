@@ -11,7 +11,7 @@ const pool = new Pool({
 });
 
 async function runMigrations() {
-  const files = ['001_schema.sql', '002_indexes.sql', '003_seed.sql', '004_dog_photos.sql', '005_puppy_commercial_fields.sql', '006_sales_reservations.sql'];
+  const files = ['001_schema.sql', '002_indexes.sql', '003_seed.sql', '004_dog_photos.sql', '005_puppy_commercial_fields.sql', '006_sales_reservations.sql', '007_litter_status_fields.sql'];
   
   console.log('Démarrage des migrations...');
   

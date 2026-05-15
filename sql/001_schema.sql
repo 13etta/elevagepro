@@ -110,7 +110,9 @@ CREATE TABLE IF NOT EXISTS litters (
     pregnancy_id UUID REFERENCES pregnancies(id) ON DELETE SET NULL,
     birth_date DATE NOT NULL,
     puppies_count_total INTEGER DEFAULT 0,
-    notes TEXT
+    status VARCHAR(50) DEFAULT 'active',
+    notes TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 8. CHIOTS

@@ -1,9 +1,47 @@
 const { pool } = require('../db');
 const { createPuppyProtocolReminders, ensureAutomationColumns } = require('../services/protocols.service');
 
+async function columnExists(tableName, columnName) {
+    const result = await pool.query(
+        `
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = $1
+                  AND column_name = $2
+            ) AS exists
+        `,
+        [tableName, columnName],
+    );
+
+    return Boolean(result.rows[0]?.exists);
+}
+
+async function ensureLittersSchema(clientOrPool = pool) {
+    await clientOrPool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS mother_id UUID REFERENCES dogs(id) ON DELETE CASCADE').catch(() => {});
+    await clientOrPool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS mating_id UUID REFERENCES matings(id) ON DELETE SET NULL').catch(() => {});
+    await clientOrPool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS puppies_count_total INTEGER DEFAULT 0').catch(() => {});
+    await clientOrPool.query("ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'").catch(() => {});
+    await clientOrPool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP').catch(() => {});
+
+    if (await columnExists('litters', 'female_id')) {
+        await clientOrPool.query('UPDATE litters SET mother_id = female_id WHERE mother_id IS NULL AND female_id IS NOT NULL').catch(() => {});
+    }
+
+    if (await columnExists('litters', 'puppies_count')) {
+        await clientOrPool.query('UPDATE litters SET puppies_count_total = puppies_count WHERE puppies_count_total IS NULL AND puppies_count IS NOT NULL').catch(() => {});
+    }
+
+    if (await columnExists('litters', 'nb_puppies')) {
+        await clientOrPool.query('UPDATE litters SET puppies_count_total = nb_puppies WHERE puppies_count_total IS NULL AND nb_puppies IS NOT NULL').catch(() => {});
+    }
+}
+
 exports.listLitters = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
+        await ensureLittersSchema();
         const { q, status, female_id } = req.query;
 
         // Jointures en cascade pour récupérer le père (via matings)
@@ -56,6 +94,7 @@ exports.listLitters = async (req, res) => {
 exports.getForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
+        await ensureLittersSchema();
         const litterId = req.params.id;
         let litter = { status: 'active', puppies_count_total: 0 };
 
@@ -95,6 +134,7 @@ exports.saveLitter = async (req, res) => {
     const client = await pool.connect();
     try {
         const breederId = req.session.user.breeder_id;
+        await ensureLittersSchema(client);
         const litterId = req.params.id;
         const { mother_id, mating_id, birth_date, puppies_count_total, status, notes } = req.body;
 
@@ -148,6 +188,7 @@ exports.deleteLitter = async (req, res) => {
 exports.showLitter = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
+        await ensureLittersSchema();
         const litterId = req.params.id;
 
         const litterRes = await pool.query(`
