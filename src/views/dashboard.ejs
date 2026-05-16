@@ -1,73 +1,66 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
 
-<main class="container">
-  <section class="page-hero dashboard-hero">
+<main class="container dashboard-stitch">
+  <section class="page-hero dashboard-titlebar">
     <div>
-      <p class="eyebrow"><%= __('dashboard.kicker') %></p>
-      <h1><%= __('dashboard.title') %></h1>
-      <p><%= __('dashboard.subtitle') %></p>
+      <h1>Pilotage d'élevage canin</h1>
+      <p><span class="material-symbols-outlined">verified</span> Cockpit professionnel de l'élevage</p>
     </div>
-    <a class="btn btn-primary" href="/dogs"><%= __('dashboard.primaryAction') %></a>
+    <div class="hero-actions">
+      <a class="btn btn-secondary" href="/soins"><span class="material-symbols-outlined">add_circle</span> Ajouter un soin</a>
+      <a class="btn btn-primary" href="/dogs/new"><span class="material-symbols-outlined">pets</span> Nouveau chien</a>
+    </div>
   </section>
 
   <% if (typeof alerts !== 'undefined' && alerts.length) { %>
-    <section class="alert-grid">
+    <section class="alert-grid stitch-alert-strip">
       <% alerts.forEach((alert) => { %>
         <a class="business-alert alert-<%= alert.level %>" href="<%= alert.href %>">
-          <span><%= alert.level === 'danger' ? '!' : alert.level === 'warning' ? '⚠' : 'i' %></span>
+          <span class="material-symbols-outlined"><%= alert.level === 'danger' ? 'warning' : alert.level === 'warning' ? 'report' : 'info' %></span>
           <strong><%= alert.title %></strong>
         </a>
       <% }) %>
     </section>
   <% } %>
 
-  <section class="dashboard-kpi-grid">
-    <article class="kpi-card kpi-gauge-card">
-      <span>Occupation des box</span>
-      <div class="dashboard-gauge" style="--value:<%= kpis.boxOccupancyRate %>;">
-        <div class="dashboard-gauge-inner">
-          <strong><%= kpis.boxOccupancyRate %>%</strong>
-          <small><%= kpis.activeDogs %> / <%= kpis.boxCapacity %> places</small>
-        </div>
-      </div>
-      <p class="muted">Capacité configurable via KENNEL_BOX_CAPACITY.</p>
-    </article>
-
+  <section class="dashboard-kpi-grid stitch-kpis">
     <article class="kpi-card">
-      <span>Chiots disponibles</span>
-      <strong><%= kpis.availablePuppies %></strong>
-      <small class="muted"><%= kpis.reservedPuppies %> réservé(s) ou sous option</small>
+      <span>Chiens actifs</span>
+      <strong><%= kpis.activeDogs %></strong>
     </article>
-
     <article class="kpi-card">
-      <span>Ventes du mois</span>
-      <strong><%= formatCurrency(kpis.currentMonthSales) %></strong>
-      <small class="muted"><%= kpis.incompleteSales %> vente(s) à finaliser</small>
-    </article>
-
-    <article class="kpi-card">
-      <span>Rappels à 7 jours</span>
-      <strong><%= kpis.upcomingReminders %></strong>
-      <small class="muted">Priorités sanitaires et administratives</small>
-    </article>
-
-    <article class="kpi-card">
-      <span>Portées actives</span>
+      <span>Portées en cours</span>
       <strong><%= kpis.activeLitters %></strong>
-      <small class="muted"><%= kpis.ongoingPregnancies %> gestation(s) en cours</small>
+    </article>
+    <article class="kpi-card">
+      <span>Chiots dispo.</span>
+      <strong><%= kpis.availablePuppies %></strong>
+    </article>
+    <article class="kpi-card kpi-warning">
+      <span>Rappels de soins</span>
+      <strong><%= kpis.upcomingReminders %></strong>
+    </article>
+    <article class="kpi-card">
+      <span>Ventes en attente</span>
+      <strong><%= kpis.incompleteSales %></strong>
+    </article>
+    <article class="kpi-card kpi-revenue">
+      <span>Revenu mensuel</span>
+      <strong><%= formatCurrency(kpis.currentMonthSales) %></strong>
     </article>
   </section>
 
-  <section class="dashboard-columns dashboard-priority-zone">
-    <article class="table-block dashboard-sales-panel">
+  <section class="dashboard-columns stitch-main-grid">
+    <article class="table-block dashboard-sales-panel stitch-chart-card">
       <div class="section-title compact">
-        <span class="section-kicker">Pilotage commercial</span>
-        <h2>Ventes mensuelles</h2>
+        <h2>Performances Financières</h2>
+        <p class="muted">Revenus des ventes et réservations</p>
+        <a href="/sales" class="report-link">Voir le rapport <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
 
       <% if (!salesSeries || !salesSeries.length) { %>
-        <p class="muted">Aucune donnée de vente à afficher.</p>
+        <p class="muted empty-chart-text">Aucune donnée de vente à afficher.</p>
       <% } else { %>
         <div class="mini-bar-chart" aria-label="Graphique des ventes mensuelles">
           <% salesSeries.forEach((item) => { %>
@@ -76,48 +69,53 @@
                 <div class="mini-bar-fill" style="height:<%= Math.max(5, Math.round((item.total / maxMonthlySales) * 100)) %>%"></div>
               </div>
               <small><%= item.label %></small>
-              <strong><%= formatCurrency(item.total) %></strong>
             </div>
           <% }) %>
         </div>
       <% } %>
     </article>
 
-    <article class="table-block">
-      <div class="section-title compact">
-        <span class="section-kicker"><%= __('dashboard.priority') %></span>
-        <h2><%= __('dashboard.reminders') %></h2>
+    <article class="card stitch-alert-card">
+      <div class="section-title compact alert-heading">
+        <span class="material-symbols-outlined">warning</span>
+        <h2>Alertes Actives</h2>
       </div>
-      <% if (!reminders.length) { %>
-        <p class="muted">Aucun rappel prioritaire.</p>
-      <% } else { %>
-        <table>
-          <thead><tr><th><%= __('common.date') %></th><th><%= __('common.label') %></th><th><%= __('common.dog') %></th></tr></thead>
-          <tbody>
-            <% reminders.forEach((row) => { %>
-              <tr class="<%= new Date(row.due_date) < new Date() ? 'late' : '' %>">
-                <td><%= formatDate(row.due_date) %></td>
-                <td><%= row.label %><br><small><%= row.scope || '' %></small></td>
-                <td><%= row.dog_name || __('common.general') %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
+      <div class="alert-list">
+        <% if (alerts && alerts.length) { %>
+          <% alerts.slice(0, 5).forEach((alert) => { %>
+            <a href="<%= alert.href %>" class="alert-item alert-<%= alert.level %>">
+              <span class="material-symbols-outlined"><%= alert.level === 'danger' ? 'vaccines' : alert.level === 'warning' ? 'hourglass_top' : 'description' %></span>
+              <strong><%= alert.title %></strong>
+              <small>Action requise</small>
+            </a>
+          <% }) %>
+        <% } else if (reminders && reminders.length) { %>
+          <% reminders.slice(0, 3).forEach((row) => { %>
+            <a href="/reminders" class="alert-item">
+              <span class="material-symbols-outlined">notifications_active</span>
+              <strong><%= row.label %></strong>
+              <small><%= row.dog_name || __('common.general') %> · <%= formatDate(row.due_date) %></small>
+            </a>
+          <% }) %>
+        <% } else { %>
+          <p class="muted">Aucune alerte active.</p>
+        <% } %>
+      </div>
+      <a class="btn btn-secondary full-width" href="/reminders">Voir tout (<%= kpis.upcomingReminders %>)</a>
     </article>
   </section>
 
   <section class="dashboard-columns dashboard-priority-zone">
     <article class="table-block">
       <div class="section-title compact">
-        <span class="section-kicker"><%= __('dashboard.recent') %></span>
-        <h2><%= __('dashboard.care') %></h2>
+        <span class="section-kicker">Santé</span>
+        <h2>Derniers soins</h2>
       </div>
       <% if (!soins.length) { %>
-        <p class="muted">Aucun soin récent.</p>
+        <p class="muted table-empty">Aucun soin récent.</p>
       <% } else { %>
         <table>
-          <thead><tr><th><%= __('common.date') %></th><th><%= __('common.type') %></th><th><%= __('common.dog') %></th></tr></thead>
+          <thead><tr><th>Date</th><th>Type</th><th>Chien</th></tr></thead>
           <tbody>
             <% soins.forEach((row) => { %>
               <tr>
@@ -137,7 +135,7 @@
         <h2>Dernières ventes</h2>
       </div>
       <% if (!sales.length) { %>
-        <p class="muted">Aucune vente récente.</p>
+        <p class="muted table-empty">Aucune vente récente.</p>
       <% } else { %>
         <table>
           <thead><tr><th>Date</th><th>Acquéreur</th><th>Montant</th></tr></thead>
@@ -155,61 +153,10 @@
     </article>
   </section>
 
-  <% if ((typeof salesToFinalize !== 'undefined' && salesToFinalize.length) || (typeof littersWithoutPuppies !== 'undefined' && littersWithoutPuppies.length)) { %>
-    <section class="dashboard-columns dashboard-priority-zone">
-      <article class="table-block">
-        <div class="section-title compact">
-          <span class="section-kicker">Commercial</span>
-          <h2>Ventes incomplètes</h2>
-        </div>
-        <% if (!salesToFinalize.length) { %>
-          <p class="muted">Aucune réservation à finaliser.</p>
-        <% } else { %>
-          <table>
-            <thead><tr><th>Animal</th><th>Acquéreur</th><th>Solde</th><th>Action</th></tr></thead>
-            <tbody>
-              <% salesToFinalize.forEach((sale) => { %>
-                <tr>
-                  <td><%= sale.animal_name || '-' %></td>
-                  <td><%= sale.buyer_name || '-' %></td>
-                  <td><%= formatCurrency(Math.max(Number(sale.price || 0) - Number(sale.deposit_amount || 0), 0)) %></td>
-                  <td><a class="btn btn-secondary" href="/sales/<%= sale.id %>/edit">Finaliser</a></td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        <% } %>
-      </article>
-
-      <article class="table-block">
-        <div class="section-title compact">
-          <span class="section-kicker">Portées</span>
-          <h2>Actions manquantes</h2>
-        </div>
-        <% if (!littersWithoutPuppies.length) { %>
-          <p class="muted">Aucune portée sans chiots.</p>
-        <% } else { %>
-          <table>
-            <thead><tr><th>Date</th><th>Mère</th><th>Action</th></tr></thead>
-            <tbody>
-              <% littersWithoutPuppies.forEach((litter) => { %>
-                <tr>
-                  <td><%= formatDate(litter.birth_date) %></td>
-                  <td><%= litter.mother_name || '-' %></td>
-                  <td><a class="btn btn-secondary" href="/litters/<%= litter.id %>">Ouvrir</a></td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        <% } %>
-      </article>
-    </section>
-  <% } %>
-
   <section class="module-cockpit">
     <div class="section-title">
-      <span class="section-kicker"><%= __('dashboard.modulesKicker') %></span>
-      <h2><%= __('dashboard.modulesTitle') %></h2>
+      <span class="section-kicker">Modules</span>
+      <h2>Accès rapides</h2>
     </div>
 
     <div class="module-grid">

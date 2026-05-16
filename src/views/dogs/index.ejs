@@ -1,26 +1,64 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
-<main class="container">
-  <div class="header-actions">
-      <h1>Mes Chiens</h1>
-      <a href="/dogs/new" class="btn btn-primary">+ Ajouter un chien</a>
-  </div>
 
-  <section class="table-block">
+<main class="container dogs-stitch">
+  <section class="page-hero dogs-titlebar">
+    <div>
+      <h1>Gestion des Chiens</h1>
+      <p>Gérez vos reproducteurs, portées et suivi médical.</p>
+    </div>
+    <a href="/dogs/new" class="btn btn-primary"><span class="material-symbols-outlined">add</span> Add Dog</a>
+  </section>
+
+  <section class="dogs-filter-panel" aria-label="Filtres chiens">
+    <div class="form-group">
+      <label>Recherche rapide</label>
+      <input type="search" placeholder="Puce, LOF, Nom..." aria-label="Recherche rapide">
+    </div>
+    <div class="form-group">
+      <label>Sexe</label>
+      <select aria-label="Filtrer par sexe">
+        <option>Tous les sexes</option>
+        <option>Mâle</option>
+        <option>Femelle</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Race</label>
+      <select aria-label="Filtrer par race">
+        <option>Toutes les races</option>
+        <% [...new Set(dogs.map((dog) => dog.breed).filter(Boolean))].forEach((breed) => { %>
+          <option><%= breed %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Statut</label>
+      <select aria-label="Filtrer par statut">
+        <option>Tous les statuts</option>
+        <% [...new Set(dogs.map((dog) => dog.status).filter(Boolean))].forEach((status) => { %>
+          <option><%= status %></option>
+        <% }) %>
+      </select>
+    </div>
+    <button class="btn btn-secondary" type="button"><span class="material-symbols-outlined">filter_list</span> Filtrer</button>
+  </section>
+
+  <section class="table-block dogs-table-card">
     <table>
       <thead>
         <tr>
-            <th>Chien</th>
-            <th>Race</th>
-            <th>Sexe</th>
-            <th>Puce</th>
-            <th>Statut</th>
-            <th>Actions</th>
+          <th>Chien</th>
+          <th>Race</th>
+          <th>Sexe & âge</th>
+          <th>Statut</th>
+          <th>Dernier soin</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <% if (dogs.length === 0) { %>
-            <tr><td colspan="6">Aucun chien enregistré pour le moment.</td></tr>
+          <tr><td colspan="6">Aucun chien enregistré pour le moment.</td></tr>
         <% } %>
         <% dogs.forEach((dog) => { %>
           <tr>
@@ -30,22 +68,28 @@
                   <% if (dog.photo_url) { %>
                     <img src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
                   <% } else { %>
-                    <%= dogInitials(dog.name) %>
+                    <span class="material-symbols-outlined">pets</span>
                   <% } %>
                 </span>
                 <span>
                   <strong><%= dog.name %></strong>
-                  <small><%= dog.birth_date ? 'Ne le ' + formatDate(dog.birth_date) : 'Naissance non renseignee' %></small>
+                  <small><%= dog.chip_number ? 'Puce: ' + dog.chip_number : (dog.lof ? 'LOF: ' + dog.lof : 'Identification non renseignée') %></small>
                 </span>
               </a>
             </td>
             <td><%= dog.breed || '-' %></td>
-            <td><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></td>
-            <td><%= dog.chip_number || '-' %></td>
-            <td><span class="badge <%= dog.status %>"><%= dog.status %></span></td>
-            <td style="white-space: nowrap;">
-                <a href="/dogs/<%= dog.id %>" class="btn btn-secondary btn-sm">Voir fiche</a>
-                <a href="/dogs/<%= dog.id %>/edit" class="btn btn-primary btn-sm">Modifier</a>
+            <td>
+              <span><%= dog.sex === 'M' ? '♂' : '♀' %></span>
+              <%= dog.birth_date ? formatDate(dog.birth_date) : 'Âge non renseigné' %>
+            </td>
+            <td><span class="badge <%= dog.status %>"><%= dog.status || 'actif' %></span></td>
+            <td>
+              <span class="muted">Suivi médical</span><br>
+              <small>Voir fiche</small>
+            </td>
+            <td class="table-actions">
+              <a href="/dogs/<%= dog.id %>" class="btn btn-secondary btn-sm">Voir fiche</a>
+              <a href="/dogs/<%= dog.id %>/edit" class="btn btn-primary btn-sm">Modifier</a>
             </td>
           </tr>
         <% }) %>
@@ -53,4 +97,5 @@
     </table>
   </section>
 </main>
+
 <%- include('../partials/foot') %>
