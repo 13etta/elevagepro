@@ -65,6 +65,15 @@ const modules = [
     accent: 'green',
   },
   {
+    key: 'reproductionDashboard',
+    labelKey: 'nav.reproduction',
+    descriptionKey: 'modules.reproduction.description',
+    href: '/reproduction',
+    icon: 'hub',
+    group: 'reproduction',
+    accent: 'rose',
+  },
+  {
     key: 'heats',
     labelKey: 'nav.heats',
     descriptionKey: 'modules.heats.description',
