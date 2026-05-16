@@ -1,18 +1,66 @@
 <%- include('../partials/head') %>
-<main class="auth-shell">
-  <section class="auth-card">
-    <h1>Connexion éleveur</h1>
-    <p>Accédez à votre tableau de bord professionnel.</p>
-    <% if (error) { %><div class="alert"><%= error %></div><% } %>
-    <form method="post" action="/auth/login" class="form-grid">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-      <label>Email</label>
-      <input type="email" name="email" required />
-      <label>Mot de passe</label>
-      <input type="password" name="password" required minlength="8" />
-      <button type="submit">Se connecter</button>
-    </form>
-    <p class="muted">Nouveau ? <a href="/auth/register">Créer mon compte</a></p>
+
+<main class="auth-canine-shell auth-canine-login">
+  <section class="auth-canine-visual" aria-label="Élevage canin professionnel">
+    <div class="auth-canine-visual-overlay">
+      <p class="auth-canine-kicker">Gestion d'élevage canin</p>
+      <h2>Un cockpit clair pour piloter votre sélection, vos portées et votre suivi sanitaire.</h2>
+      <p>Conçu pour les éleveurs qui veulent une gestion propre, professionnelle et orientée terrain.</p>
+    </div>
+  </section>
+
+  <section class="auth-canine-panel">
+    <div class="auth-canine-card">
+      <a class="auth-canine-brand" href="/auth/login" aria-label="ElevagePro">
+        <span class="auth-canine-logo-mark">
+          <span class="material-symbols-outlined">pets</span>
+        </span>
+        <strong>Éleveur Pro</strong>
+      </a>
+
+      <header class="auth-canine-header">
+        <h1>Connexion éleveur</h1>
+        <p>Accédez à votre tableau de bord professionnel.</p>
+      </header>
+
+      <% if (error) { %>
+        <div class="auth-canine-alert"><%= error %></div>
+      <% } %>
+
+      <form method="post" action="/auth/login" class="auth-canine-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+        <div class="auth-canine-field">
+          <label for="email">Email</label>
+          <input id="email" type="email" name="email" autocomplete="email" required />
+        </div>
+
+        <div class="auth-canine-field">
+          <div class="auth-canine-label-row">
+            <label for="password">Mot de passe</label>
+            <button type="button" class="auth-canine-show-password" data-toggle-password="password">Afficher</button>
+          </div>
+          <input id="password" type="password" name="password" autocomplete="current-password" required minlength="8" />
+        </div>
+
+        <button type="submit" class="auth-canine-submit">Se connecter</button>
+      </form>
+
+      <p class="auth-canine-switch">Nouveau ? <a href="/auth/register">Créer mon compte</a></p>
+    </div>
   </section>
 </main>
+
+<script>
+  document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const input = document.getElementById(button.dataset.togglePassword);
+      if (!input) return;
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      button.textContent = hidden ? 'Masquer' : 'Afficher';
+    });
+  });
+</script>
+
 <%- include('../partials/foot') %>
