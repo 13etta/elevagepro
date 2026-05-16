@@ -21,7 +21,7 @@
     <span class="brand-mark">EP</span>
     <span>
       <strong>ElevagePro</strong>
-      <small><%= __('app.tagline') %></small>
+      <small>ERP élevage canin</small>
     </span>
   </a>
 
@@ -37,7 +37,7 @@
           <p class="nav-group-title"><%= __(group.labelKey) %></p>
           <% groupModules.forEach((module) => { %>
             <a class="nav-link <%= currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'active' : '' %>" href="<%= module.href %>" title="<%= __(module.labelKey) %>">
-              <span class="nav-icon"><%= module.icon %></span>
+              <span class="nav-icon material-symbols-outlined"><%= module.icon %></span>
               <span class="nav-label"><%= __(module.labelKey) %></span>
             </a>
           <% }) %>
@@ -47,14 +47,14 @@
   </nav>
 
   <div class="sidebar-footer">
-    <a class="settings-chip" href="/settings"><%= __('nav.settings') %></a>
-    <a class="logout-link" href="/auth/logout"><%= __('auth.logout') %></a>
+    <a class="settings-chip" href="/settings"><span class="material-symbols-outlined">settings</span><%= __('nav.settings') %></a>
+    <a class="logout-link" href="/auth/logout"><span class="material-symbols-outlined">logout</span><%= __('auth.logout') %></a>
   </div>
 </aside>
 
 <div class="app-shell">
   <header class="topbar">
-    <div>
+    <div class="topbar-title">
       <p class="eyebrow"><%= __('app.name') %></p>
       <strong><%= __('app.commandCenter') %></strong>
     </div>
