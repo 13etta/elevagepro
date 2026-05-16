@@ -45,6 +45,11 @@ async function ensureAuthSchema(client) {
   `);
 
   await client.query(`
+    ALTER TABLE breeder
+    ADD COLUMN IF NOT EXISTS primary_breed VARCHAR(255)
+  `);
+
+  await client.query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE
   `);
@@ -82,7 +87,7 @@ async function createUniqueSlug(client, kennelName) {
   return `${baseSlug}-${Date.now()}`;
 }
 
-async function createBreederWithAdmin({ kennelName, email, password, fullName }) {
+async function createBreederWithAdmin({ kennelName, email, password, fullName, primaryBreed }) {
   const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
@@ -91,6 +96,7 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName })
     const normalizedEmail = String(email || '').toLowerCase().trim();
     const cleanKennelName = String(kennelName || '').trim();
     const cleanFullName = String(fullName || '').trim();
+    const cleanPrimaryBreed = String(primaryBreed || '').trim();
 
     const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
     if (existingUser.rowCount > 0) {
@@ -101,11 +107,11 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName })
 
     const breederResult = await client.query(
       `
-        INSERT INTO breeder (company_name, name, slug)
-        VALUES ($1, $1, $2)
+        INSERT INTO breeder (company_name, name, slug, primary_breed)
+        VALUES ($1, $1, $2, $3)
         RETURNING id
       `,
-      [cleanKennelName, slug],
+      [cleanKennelName, slug, cleanPrimaryBreed],
     );
 
     const hashedPassword = await bcrypt.hash(password, 12);
