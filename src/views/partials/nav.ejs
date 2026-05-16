@@ -3,7 +3,7 @@
     <span class="brand-mark">EP</span>
     <span>
       <strong>ElevagePro</strong>
-      <small><%= __('app.commandCenter') %></small>
+      <small>Elite Canine Management</small>
     </span>
   </a>
   <button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-sidebar" aria-expanded="false">
@@ -18,10 +18,9 @@
 
 <aside class="sidebar" id="main-sidebar">
   <a class="brand" href="/dashboard" aria-label="ElevagePro">
-    <span class="brand-mark">EP</span>
-    <span>
+    <span class="brand-text">
       <strong>ElevagePro</strong>
-      <small>ERP élevage canin</small>
+      <small>Elite Canine Management</small>
     </span>
   </a>
 
@@ -54,13 +53,17 @@
 
 <div class="app-shell">
   <header class="topbar">
-    <div class="topbar-title">
-      <p class="eyebrow"><%= __('app.name') %></p>
-      <strong><%= __('app.commandCenter') %></strong>
-    </div>
+    <form class="topbar-search" action="/dogs" method="GET" role="search">
+      <span class="material-symbols-outlined">search</span>
+      <input type="search" name="q" placeholder="Rechercher un chien, document..." aria-label="Recherche">
+    </form>
+
     <div class="topbar-actions">
-      <a class="lang-link <%= currentLang === 'fr' ? 'active' : '' %>" href="?lang=fr">FR</a>
-      <a class="lang-link <%= currentLang === 'en' ? 'active' : '' %>" href="?lang=en">EN</a>
-      <span class="theme-pill"><%= __('themes.' + (theme || 'prestige')) %></span>
+      <a class="topbar-btn topbar-btn-light" href="/sales"><span class="material-symbols-outlined">description</span>Generate Document</a>
+      <a class="topbar-btn topbar-btn-primary" href="/dogs/new"><span class="material-symbols-outlined">add</span>Add Dog</a>
+      <span class="topbar-divider"></span>
+      <a class="icon-action" href="/reminders" aria-label="Rappels"><span class="material-symbols-outlined">notifications</span></a>
+      <a class="icon-action" href="/settings" aria-label="Paramètres"><span class="material-symbols-outlined">settings</span></a>
+      <a class="user-avatar" href="/settings" aria-label="Profil"><span><%= user && user.name ? user.name.charAt(0).toUpperCase() : 'E' %></span></a>
     </div>
   </header>
