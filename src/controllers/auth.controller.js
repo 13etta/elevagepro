@@ -17,18 +17,30 @@ function renderRegister(req, res) {
 }
 
 async function register(req, res) {
-  const { kennel_name: kennelName, full_name: fullName, email, password } = req.body;
+  const {
+    kennel_name: kennelName,
+    full_name: fullName,
+    email,
+    password,
+    primary_breed: primaryBreed,
+  } = req.body;
 
-  if (!kennelName || !fullName || !email || !password || password.length < 8) {
+  if (!kennelName || !fullName || !email || !password || !primaryBreed || password.length < 8) {
     return res.status(400).render('auth/register', {
       title: 'Créer un compte',
-      error: 'Tous les champs sont obligatoires, mot de passe minimum 8 caractères.',
+      error: 'Tous les champs sont obligatoires, race principale incluse, mot de passe minimum 8 caractères.',
       user: null,
     });
   }
 
   try {
-    const user = await authService.createBreederWithAdmin({ kennelName, fullName, email, password });
+    const user = await authService.createBreederWithAdmin({
+      kennelName,
+      fullName,
+      email,
+      password,
+      primaryBreed,
+    });
     req.session.user = user;
     return res.redirect('/dashboard');
   } catch (error) {
