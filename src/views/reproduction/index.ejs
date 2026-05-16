@@ -126,6 +126,16 @@
                 <span><span class="material-symbols-outlined">event</span><small><%= formatDate(mating.mating_date) %></small></span>
                 <small><%= mating.method || 'méthode non renseignée' %></small>
               </div>
+              <div class="repro-confirm-actions">
+                <form method="POST" action="/reproduction/matings/<%= mating.id %>/confirm">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="repro-confirm-btn"><span class="material-symbols-outlined">pregnant_woman</span> Confirmer gestation</button>
+                </form>
+                <form method="POST" action="/reproduction/matings/<%= mating.id %>/failed">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="repro-failed-btn"><span class="material-symbols-outlined">close</span> Non prise</button>
+                </form>
+              </div>
             </div>
           <% }) %>
         </div>

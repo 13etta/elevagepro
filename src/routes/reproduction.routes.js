@@ -7,6 +7,7 @@ router.use(requireAuth);
 
 router.get('/', reproController.getIndex);
 router.post('/matings/new', reproController.addMating);
-// Les routes addHeat et addPregnancy viendront se greffer ici plus tard
+router.post('/matings/:id/confirm', reproController.confirmMating);
+router.post('/matings/:id/failed', reproController.markMatingFailed);
 
 module.exports = router;

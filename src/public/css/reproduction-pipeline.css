@@ -453,6 +453,65 @@
   font-size: 18px;
 }
 
+.repro-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(196, 199, 199, .30);
+}
+
+.repro-confirm-actions form {
+  margin: 0;
+}
+
+.repro-confirm-btn,
+.repro-failed-btn {
+  width: 100%;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.repro-confirm-btn {
+  background: #0f5132;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(15, 81, 50, .14);
+}
+
+.repro-confirm-btn:hover {
+  background: #0b4328;
+}
+
+.repro-failed-btn {
+  background: #f5f3f3;
+  color: #444748;
+  border: 1px solid rgba(196, 199, 199, .60);
+}
+
+.repro-failed-btn:hover {
+  background: #ffdad6;
+  color: #93000a;
+  border-color: rgba(186, 26, 26, .20);
+}
+
+.repro-confirm-btn .material-symbols-outlined,
+.repro-failed-btn .material-symbols-outlined {
+  font-size: 17px;
+}
+
 .repro-progress {
   margin-top: 18px;
 }
