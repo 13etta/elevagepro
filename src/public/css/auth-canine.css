@@ -1,9 +1,11 @@
-/* Auth canine — login/register inspirés de la maquette fournie */
+/* Auth canine — login/register responsive premium */
 
 .auth-canine-shell {
   min-height: 100vh;
+  min-height: 100svh;
   display: grid;
-  grid-template-columns: minmax(520px, 48vw) minmax(520px, 1fr);
+  grid-template-columns: minmax(340px, 46vw) minmax(0, 1fr);
+  overflow-x: hidden;
   background: #ffffff;
   color: #121212;
   font-family: 'Hanken Grotesk', Inter, system-ui, sans-serif;
@@ -14,17 +16,18 @@
   --auth-canine-position: center center;
   position: relative;
   min-height: 100vh;
+  min-height: 100svh;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(22, 24, 18, .04), rgba(22, 24, 18, .28)),
-    linear-gradient(90deg, rgba(20, 28, 17, .08), rgba(20, 28, 17, .02)),
+    linear-gradient(180deg, rgba(8, 12, 7, .02), rgba(8, 12, 7, .18)),
+    linear-gradient(90deg, rgba(8, 18, 10, .06), rgba(8, 18, 10, .00)),
     var(--auth-canine-bg) var(--auth-canine-position) / cover no-repeat;
   transition: opacity .55s ease, filter .55s ease;
 }
 
 .auth-canine-visual.is-changing {
-  opacity: .84;
-  filter: saturate(.88) contrast(.96);
+  opacity: .88;
+  filter: saturate(.92) contrast(.98);
 }
 
 .auth-canine-visual::before {
@@ -32,32 +35,23 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, transparent 0%, rgba(11, 25, 14, .16) 46%, rgba(8, 20, 12, .78) 100%),
-    radial-gradient(circle at 20% 15%, rgba(255, 239, 199, .34), transparent 28rem);
+    linear-gradient(180deg, rgba(0,0,0,.04) 0%, rgba(0,0,0,.04) 42%, rgba(8, 20, 12, .72) 100%),
+    radial-gradient(circle at 18% 12%, rgba(255, 239, 199, .30), transparent 30rem);
 }
 
 .auth-canine-visual::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 33%;
-  background:
-    linear-gradient(90deg, rgba(15, 48, 24, .50), rgba(33, 64, 30, .18)),
-    repeating-linear-gradient(92deg, rgba(255,255,255,.08) 0 1px, transparent 1px 14px);
-  opacity: .76;
+  display: none;
 }
 
 .auth-canine-visual-overlay {
   position: absolute;
-  left: 56px;
-  right: 56px;
-  bottom: 48px;
+  left: clamp(28px, 4vw, 56px);
+  right: clamp(28px, 4vw, 56px);
+  bottom: clamp(28px, 5vh, 56px);
   z-index: 2;
-  max-width: 620px;
+  max-width: min(620px, 86%);
   color: #fffdf4;
-  text-shadow: 0 2px 18px rgba(0,0,0,.35);
+  text-shadow: 0 2px 18px rgba(0,0,0,.36);
 }
 
 .auth-canine-kicker {
@@ -71,7 +65,7 @@
 
 .auth-canine-visual-overlay h2 {
   margin: 0;
-  font-size: clamp(2.45rem, 3.35vw, 4.15rem);
+  font-size: clamp(2.15rem, 3.05vw, 4rem);
   line-height: 1.03;
   letter-spacing: -.055em;
   font-weight: 800;
@@ -80,22 +74,23 @@
 .auth-canine-visual-overlay p:last-child {
   max-width: 540px;
   margin: 18px 0 0;
-  font-size: 17px;
+  font-size: clamp(15px, 1.15vw, 17px);
   line-height: 1.55;
   color: rgba(255,253,244,.90);
 }
 
 .auth-canine-panel {
   min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: clamp(32px, 5vw, 72px);
+  padding: clamp(28px, 5vw, 72px);
   background: #ffffff;
 }
 
 .auth-canine-card {
   width: min(100%, 462px);
-  transform: translateY(-8px);
+  transform: translateY(-6px);
 }
 
 .auth-canine-card-wide {
@@ -108,7 +103,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: clamp(20px, 3vh, 28px);
   color: #111111;
   text-decoration: none;
 }
@@ -138,14 +133,14 @@
 
 .auth-canine-header {
   text-align: center;
-  margin-bottom: 34px;
+  margin-bottom: clamp(24px, 4vh, 34px);
 }
 
 .auth-canine-header h1 {
   margin: 0;
   color: #111111;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.7rem, 3.15vw, 3.65rem);
+  font-size: clamp(2.45rem, 3.05vw, 3.45rem);
   line-height: 1.04;
   font-weight: 400;
   letter-spacing: -.055em;
@@ -154,19 +149,19 @@
 
 .auth-canine-register .auth-canine-header h1 {
   white-space: normal;
-  font-size: clamp(2.35rem, 3vw, 3.2rem);
+  font-size: clamp(2.15rem, 2.65vw, 3rem);
 }
 
 .auth-canine-header p {
   margin: 12px 0 0;
   color: #242424;
-  font-size: 18px;
-  line-height: 28px;
+  font-size: clamp(16px, 1.2vw, 18px);
+  line-height: 1.55;
 }
 
 .auth-canine-form {
   display: grid;
-  gap: 20px;
+  gap: clamp(16px, 2.2vh, 20px);
 }
 
 .auth-canine-grid {
@@ -293,52 +288,153 @@
   }
 }
 
-@media (max-width: 1180px) {
+@media (min-width: 1600px) {
   .auth-canine-shell {
-    grid-template-columns: minmax(420px, 42vw) minmax(480px, 1fr);
+    grid-template-columns: minmax(640px, 50vw) minmax(0, 1fr);
   }
 
-  .auth-canine-header h1 {
-    font-size: clamp(2.25rem, 3.2vw, 3rem);
+  .auth-canine-card {
+    width: min(100%, 500px);
+  }
+
+  .auth-canine-card-wide {
+    width: min(100%, 640px);
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1280px) {
   .auth-canine-shell {
+    grid-template-columns: minmax(360px, 42vw) minmax(0, 1fr);
+  }
+
+  .auth-canine-panel {
+    padding: clamp(24px, 4vw, 48px);
+  }
+
+  .auth-canine-visual-overlay h2 {
+    font-size: clamp(2rem, 3vw, 3rem);
+  }
+
+  .auth-canine-header h1 {
+    font-size: clamp(2.2rem, 3vw, 3rem);
+  }
+}
+
+@media (max-width: 1080px) {
+  .auth-canine-shell {
+    grid-template-columns: minmax(300px, 38vw) minmax(0, 1fr);
+  }
+
+  .auth-canine-visual-overlay {
+    left: 28px;
+    right: 28px;
+    bottom: 32px;
+    max-width: 90%;
+  }
+
+  .auth-canine-visual-overlay h2 {
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
+  }
+
+  .auth-canine-visual-overlay p:last-child {
+    font-size: 14px;
+  }
+
+  .auth-canine-card {
+    width: min(100%, 430px);
+  }
+
+  .auth-canine-header h1 {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 900px) {
+  .auth-canine-shell {
+    min-height: 100svh;
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(220px, 34svh) auto;
   }
 
   .auth-canine-visual {
-    min-height: 300px;
+    min-height: 0;
+    height: 34svh;
+    max-height: 360px;
   }
 
   .auth-canine-visual-overlay {
     left: 24px;
     right: 24px;
-    bottom: 24px;
+    bottom: 22px;
+    max-width: 680px;
   }
 
   .auth-canine-visual-overlay h2 {
-    font-size: 2rem;
+    font-size: clamp(1.8rem, 6vw, 2.55rem);
+  }
+
+  .auth-canine-visual-overlay p:last-child {
+    display: none;
   }
 
   .auth-canine-panel {
     min-height: auto;
-    padding: 36px 20px 52px;
+    align-items: start;
+    padding: 34px 22px 52px;
   }
 
-  .auth-canine-card {
+  .auth-canine-card,
+  .auth-canine-card-wide {
+    width: min(100%, 560px);
     transform: none;
   }
 }
 
 @media (max-width: 640px) {
+  .auth-canine-shell {
+    grid-template-rows: minmax(190px, 28svh) auto;
+  }
+
+  .auth-canine-visual {
+    height: 28svh;
+    max-height: 280px;
+  }
+
+  .auth-canine-visual-overlay {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .auth-canine-kicker {
+    font-size: 10px;
+    line-height: 14px;
+    letter-spacing: .14em;
+  }
+
+  .auth-canine-visual-overlay h2 {
+    font-size: clamp(1.45rem, 7vw, 2rem);
+    line-height: 1.08;
+  }
+
+  .auth-canine-panel {
+    padding: 28px 18px 44px;
+  }
+
   .auth-canine-grid {
     grid-template-columns: 1fr;
   }
 
+  .auth-canine-brand {
+    margin-bottom: 20px;
+  }
+
+  .auth-canine-header {
+    margin-bottom: 24px;
+  }
+
   .auth-canine-header h1 {
-    font-size: 2.25rem;
+    font-size: clamp(2rem, 9vw, 2.45rem);
     white-space: normal;
   }
 
@@ -346,5 +442,30 @@
   .auth-canine-switch {
     font-size: 16px;
     line-height: 24px;
+  }
+
+  .auth-canine-field label,
+  .auth-canine-label-row label {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 430px) {
+  .auth-canine-visual {
+    height: 24svh;
+  }
+
+  .auth-canine-visual-overlay h2 {
+    font-size: 1.45rem;
+  }
+
+  .auth-canine-panel {
+    padding-inline: 14px;
+  }
+
+  .auth-canine-field input,
+  .auth-canine-field select,
+  .auth-canine-submit {
+    height: 50px;
   }
 }
