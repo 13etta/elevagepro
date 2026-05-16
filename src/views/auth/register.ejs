@@ -1,21 +1,100 @@
 <%- include('../partials/head') %>
-<main class="auth-shell">
-  <section class="auth-card wide">
-    <h1>Créer votre espace éleveur</h1>
-    <% if (error) { %><div class="alert"><%= error %></div><% } %>
-    <form method="post" action="/auth/register" class="form-grid">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-      <label>Nom de l'élevage</label>
-      <input type="text" name="kennel_name" required />
-      <label>Nom complet</label>
-      <input type="text" name="full_name" required />
-      <label>Email</label>
-      <input type="email" name="email" required />
-      <label>Mot de passe</label>
-      <input type="password" name="password" required minlength="8" />
-      <button type="submit">Créer mon compte</button>
-    </form>
-    <p class="muted">Déjà inscrit ? <a href="/auth/login">Connexion</a></p>
+
+<main class="auth-canine-shell auth-canine-register">
+  <section class="auth-canine-visual" aria-label="Élevage canin professionnel">
+    <div class="auth-canine-visual-overlay">
+      <p class="auth-canine-kicker">Votre race, votre conduite, votre méthode</p>
+      <h2>Paramétrez votre espace autour de votre élevage canin.</h2>
+      <p>Le choix de la race principale permet de personnaliser l'expérience dès les premiers écrans.</p>
+    </div>
+  </section>
+
+  <section class="auth-canine-panel">
+    <div class="auth-canine-card auth-canine-card-wide">
+      <a class="auth-canine-brand" href="/auth/login" aria-label="ElevagePro">
+        <span class="auth-canine-logo-mark">
+          <span class="material-symbols-outlined">pets</span>
+        </span>
+        <strong>Éleveur Pro</strong>
+      </a>
+
+      <header class="auth-canine-header">
+        <h1>Créer votre espace éleveur</h1>
+        <p>Renseignez votre élevage, votre accès administrateur et votre race principale.</p>
+      </header>
+
+      <% if (error) { %>
+        <div class="auth-canine-alert"><%= error %></div>
+      <% } %>
+
+      <form method="post" action="/auth/register" class="auth-canine-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+        <div class="auth-canine-grid">
+          <div class="auth-canine-field">
+            <label for="kennel_name">Nom de l'élevage</label>
+            <input id="kennel_name" type="text" name="kennel_name" autocomplete="organization" required />
+          </div>
+
+          <div class="auth-canine-field">
+            <label for="primary_breed">Race principale</label>
+            <select id="primary_breed" name="primary_breed" required>
+              <option value="">Choisir une race</option>
+              <optgroup label="Chiens d'arrêt britanniques">
+                <option value="Setter Anglais">Setter Anglais</option>
+                <option value="Pointer Anglais">Pointer Anglais</option>
+                <option value="Setter Gordon">Setter Gordon</option>
+                <option value="Setter Irlandais Rouge">Setter Irlandais Rouge</option>
+                <option value="Setter Irlandais Rouge et Blanc">Setter Irlandais Rouge et Blanc</option>
+              </optgroup>
+              <optgroup label="Chiens d'arrêt continentaux">
+                <option value="Braque Allemand">Braque Allemand</option>
+                <option value="Braque Français">Braque Français</option>
+                <option value="Braque d'Auvergne">Braque d'Auvergne</option>
+                <option value="Épagneul Breton">Épagneul Breton</option>
+                <option value="Épagneul Français">Épagneul Français</option>
+                <option value="Griffon Korthals">Griffon Korthals</option>
+                <option value="Drahthaar">Drahthaar</option>
+                <option value="Weimaraner">Braque de Weimar</option>
+              </optgroup>
+              <optgroup label="Autres races d'élevage">
+                <option value="Berger Australien">Berger Australien</option>
+                <option value="Berger Allemand">Berger Allemand</option>
+                <option value="Border Collie">Border Collie</option>
+                <option value="Golden Retriever">Golden Retriever</option>
+                <option value="Labrador Retriever">Labrador Retriever</option>
+                <option value="Bouledogue Français">Bouledogue Français</option>
+                <option value="Cavalier King Charles">Cavalier King Charles</option>
+                <option value="Cocker Anglais">Cocker Anglais</option>
+                <option value="Teckel">Teckel</option>
+                <option value="Autre">Autre</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="auth-canine-field">
+          <label for="full_name">Nom complet</label>
+          <input id="full_name" type="text" name="full_name" autocomplete="name" required />
+        </div>
+
+        <div class="auth-canine-field">
+          <label for="email">Email</label>
+          <input id="email" type="email" name="email" autocomplete="email" required />
+        </div>
+
+        <div class="auth-canine-field">
+          <label for="password">Mot de passe</label>
+          <input id="password" type="password" name="password" autocomplete="new-password" required minlength="8" />
+          <small>Minimum 8 caractères.</small>
+        </div>
+
+        <button type="submit" class="auth-canine-submit">Créer mon compte</button>
+      </form>
+
+      <p class="auth-canine-switch">Déjà inscrit ? <a href="/auth/login">Connexion</a></p>
+    </div>
   </section>
 </main>
+
 <%- include('../partials/foot') %>
