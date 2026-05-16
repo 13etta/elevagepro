@@ -6,7 +6,7 @@ const allowedLangs = ['fr', 'en'];
 const allowedWebsiteTemplates = ['heritage', 'field', 'luxury', 'minimal', 'breeder'];
 
 const websiteTemplatePalettes = {
-  heritage: { primaryColor: '#6d7c45', secondaryColor: '#c8b397', accentColor: '#2b2014', backgroundColor: '#f6f1e8', textColor: '#2b2014' },
+  heritage: { primaryColor: '#29422c', secondaryColor: '#bda66f', accentColor: '#f4efe2', backgroundColor: '#f6f1e8', textColor: '#24301f' },
   field: { primaryColor: '#41552b', secondaryColor: '#9a7444', accentColor: '#1f2a1d', backgroundColor: '#eef1e8', textColor: '#1f2a1d' },
   luxury: { primaryColor: '#c79a45', secondaryColor: '#7a4b28', accentColor: '#0f0b08', backgroundColor: '#17120d', textColor: '#fff4df' },
   minimal: { primaryColor: '#111827', secondaryColor: '#d1d5db', accentColor: '#111827', backgroundColor: '#f8fafc', textColor: '#111827' },
@@ -16,24 +16,42 @@ const websiteTemplatePalettes = {
 function defaultWebsiteSettings() {
   return {
     template: 'heritage', kennelBoxCapacity: 12,
-    primaryColor: '#6d7c45', secondaryColor: '#c8b397', accentColor: '#2b2014', backgroundColor: '#f6f1e8', textColor: '#2b2014',
-    heroTitle: '', heroSubtitle: 'Élevage canin familial, sélection, passion et accompagnement.', heroImageUrl: '',
+    primaryColor: '#29422c', secondaryColor: '#bda66f', accentColor: '#f4efe2', backgroundColor: '#f6f1e8', textColor: '#24301f',
+    heroTitle: 'Élevage et Dressage de prestige',
+    heroSubtitle: 'Excellence canine au cœur de la nature.',
+    heroImageUrl: '',
     siteSlogan: 'Élevage canin familial, sélection et accompagnement.',
-    contactStripTitle: 'Besoin d’un renseignement ?', contactStripText: 'Informations, réservation, projet de portée ou disponibilité.',
-    primaryCtaLabel: 'Contactez-nous', secondaryCtaLabel: 'Envoyer un message',
+    contactStripTitle: 'La saison est ouverte : contactez l’élevage pour les disponibilités.',
+    contactStripText: 'Portées, pension, dressage, conseils et accompagnement.',
+    primaryCtaLabel: 'Nos services', secondaryCtaLabel: 'Contactez-nous',
     serviceSectionTitle: 'Nos services', serviceSectionKicker: 'Savoir-faire',
-    strengthsTitle: 'Pourquoi nous faire confiance', strengthsKicker: 'Nos points forts',
-    contactPanelTitle: 'Engagement éleveur', contactPanelText: 'Un élevage sérieux ne vend pas seulement un chiot : il transmet une lignée, une méthode et un suivi.',
+    strengthsTitle: 'Pourquoi nous choisir', strengthsKicker: 'Engagements',
+    contactPanelTitle: 'Contact direct', contactPanelText: 'Un élevage sérieux transmet une lignée, une méthode et un suivi.',
     footerText: 'Élevage canin familial.', openingHours: '',
     introTitle: 'Une sélection lisible, suivie et assumée',
     introText: 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.',
     showIntro: true, showPuppies: true, showLitters: true, showDogs: true, showServices: true, showGallery: true, showContact: true, showStrengths: true,
     servicesEnabled: true, newsEnabled: true, strengthsEnabled: true, galleryEnabled: true, contactEnabled: true,
-    service1Title: 'Élevage canin', service1Text: 'Sélection raisonnée, suivi des portées et accompagnement des familles.',
-    service2Title: 'Conseil & accompagnement', service2Text: 'Aide au choix du chiot, socialisation et suivi après départ.',
-    service3Title: 'Sélection cynotechnique', service3Text: 'Travail sur la santé, le tempérament, le type et les aptitudes naturelles.',
+    servicePensionEnabled: true,
+    serviceTrainingEnabled: true,
+    serviceBreedingEnabled: true,
+    servicePensionTitle: 'Pension Canine',
+    servicePensionText: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
+    servicePensionButton: 'Découvrir la pension',
+    servicePensionImageUrl: '',
+    serviceTrainingTitle: 'Dressage et Éducation',
+    serviceTrainingText: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
+    serviceTrainingButton: 'Programmes de dressage',
+    serviceTrainingImageUrl: '',
+    serviceBreedingTitle: 'Élevage de Sélection',
+    serviceBreedingText: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
+    serviceBreedingButton: 'Nos portées actuelles',
+    serviceBreedingImageUrl: '',
+    service1Title: 'Pension Canine', service1Text: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
+    service2Title: 'Dressage et Éducation', service2Text: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
+    service3Title: 'Élevage de Sélection', service3Text: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
     newsTitle: 'Actualités de l’élevage', newsText: 'Retrouvez nos disponibilités, projets de portées et nouvelles de l’élevage.',
-    strengths: 'Sélection raisonnée\nSuivi sanitaire structuré\nAccompagnement après départ\nPassion cynophile',
+    strengths: 'Expérience & Expertise\nQualité & Bien-être\nNutrition & Santé',
     gallery: [], litterGallery: {},
   };
 }
@@ -173,7 +191,6 @@ exports.updateSettings = async (req, res) => {
   try {
     await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
-    // On capte désormais phone et email depuis le formulaire
     const { company_name, affix_name, siret, producer_number, address, phone, email } = req.body;
 
     const currentResult = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
@@ -252,15 +269,33 @@ exports.updateWebsiteSettings = async (req, res) => {
       showDogs: req.body.showDogs === 'on', showServices: req.body.showServices === 'on', showGallery: req.body.showGallery === 'on',
       showContact: req.body.showContact === 'on', showStrengths: req.body.showStrengths === 'on',
       servicesEnabled: req.body.showServices === 'on', galleryEnabled: req.body.showGallery === 'on', contactEnabled: req.body.showContact === 'on',
-      service1Title: req.body.service1Title || '', service1Text: req.body.service1Text || '',
-      service2Title: req.body.service2Title || '', service2Text: req.body.service2Text || '',
-      service3Title: req.body.service3Title || '', service3Text: req.body.service3Text || '',
+      servicePensionEnabled: req.body.servicePensionEnabled === 'on',
+      serviceTrainingEnabled: req.body.serviceTrainingEnabled === 'on',
+      serviceBreedingEnabled: req.body.serviceBreedingEnabled === 'on',
+      servicePensionTitle: req.body.servicePensionTitle || '', servicePensionText: req.body.servicePensionText || '', servicePensionButton: req.body.servicePensionButton || '',
+      serviceTrainingTitle: req.body.serviceTrainingTitle || '', serviceTrainingText: req.body.serviceTrainingText || '', serviceTrainingButton: req.body.serviceTrainingButton || '',
+      serviceBreedingTitle: req.body.serviceBreedingTitle || '', serviceBreedingText: req.body.serviceBreedingText || '', serviceBreedingButton: req.body.serviceBreedingButton || '',
+      service1Title: req.body.servicePensionTitle || req.body.service1Title || '', service1Text: req.body.servicePensionText || req.body.service1Text || '',
+      service2Title: req.body.serviceTrainingTitle || req.body.service2Title || '', service2Text: req.body.serviceTrainingText || req.body.service2Text || '',
+      service3Title: req.body.serviceBreedingTitle || req.body.service3Title || '', service3Text: req.body.serviceBreedingText || req.body.service3Text || '',
       newsTitle: req.body.newsTitle || '', newsText: req.body.newsText || '', strengths: req.body.strengths || ''
     });
 
     if (req.body.clearHeroImage === 'on') settings.heroImageUrl = '';
     const heroUrl = await uploadPublicImage(breederId, files.hero_image?.[0], 'hero');
     if (heroUrl) settings.heroImageUrl = heroUrl;
+
+    const serviceImageMap = [
+      ['service_pension_image', 'servicePensionImageUrl', 'services/pension'],
+      ['service_training_image', 'serviceTrainingImageUrl', 'services/training'],
+      ['service_breeding_image', 'serviceBreedingImageUrl', 'services/breeding'],
+    ];
+
+    for (const [fieldName, settingKey, folder] of serviceImageMap) {
+      if (req.body[`clear_${fieldName}`] === 'on') settings[settingKey] = '';
+      const serviceUrl = await uploadPublicImage(breederId, files[fieldName]?.[0], folder);
+      if (serviceUrl) settings[settingKey] = serviceUrl;
+    }
 
     const removeGallery = arrayFromBody(req.body.removeGallery);
     let gallery = Array.isArray(settings.gallery) ? settings.gallery : [];
@@ -292,6 +327,7 @@ exports.updateWebsiteSettings = async (req, res) => {
     await pool.query('UPDATE breeder SET website_settings = $1 WHERE id = $2', [settings, breederId]);
     res.redirect('/settings?tab=vitrine');
   } catch (error) {
+    console.error('Erreur sauvegarde vitrine:', error);
     res.status(500).send('Erreur lors de la sauvegarde de la vitrine.');
   }
 };
