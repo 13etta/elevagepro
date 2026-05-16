@@ -15,35 +15,115 @@ function buildSlug(input) {
 
 function defaultWebsiteSettings() {
   return {
-    primaryColor: '#6d7c45',
-    secondaryColor: '#c8b397',
-    heroTitle: '',
-    heroSubtitle: 'Élevage canin familial, sélection, passion et accompagnement.',
+    template: 'heritage',
+    primaryColor: '#29422c',
+    secondaryColor: '#bda66f',
+    accentColor: '#f4efe2',
+    backgroundColor: '#f6f1e8',
+    textColor: '#24301f',
+    heroTitle: 'Élevage et Dressage de prestige',
+    heroSubtitle: 'Excellence canine au cœur de la nature.',
     heroImageUrl: '',
+    siteSlogan: 'Élevage canin familial, sélection et accompagnement.',
+    contactStripTitle: 'La saison est ouverte : contactez l’élevage pour les disponibilités.',
+    contactStripText: 'Portées, pension, dressage, conseils et accompagnement.',
+    primaryCtaLabel: 'Nos services',
+    secondaryCtaLabel: 'Contactez-nous',
+    serviceSectionTitle: 'Nos services',
+    serviceSectionKicker: 'Savoir-faire',
+    servicePensionEnabled: true,
+    serviceTrainingEnabled: true,
+    serviceBreedingEnabled: true,
+    servicePensionTitle: 'Pension Canine',
+    servicePensionText: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
+    servicePensionButton: 'Découvrir la pension',
+    servicePensionImageUrl: '',
+    serviceTrainingTitle: 'Dressage et Éducation',
+    serviceTrainingText: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
+    serviceTrainingButton: 'Programmes de dressage',
+    serviceTrainingImageUrl: '',
+    serviceBreedingTitle: 'Élevage de Sélection',
+    serviceBreedingText: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
+    serviceBreedingButton: 'Nos portées actuelles',
+    serviceBreedingImageUrl: '',
+    service1Title: 'Pension Canine',
+    service1Text: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
+    service2Title: 'Dressage et Éducation',
+    service2Text: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
+    service3Title: 'Élevage de Sélection',
+    service3Text: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
+    strengthsTitle: 'Pourquoi nous choisir',
+    strengthsKicker: 'Engagements',
+    strengths: 'Expérience & Expertise\nQualité & Bien-être\nNutrition & Santé',
+    contactPanelTitle: 'Contact direct',
+    contactPanelText: 'Un élevage sérieux transmet une lignée, une méthode et un suivi.',
+    footerText: 'Élevage canin familial.',
+    openingHours: '',
+    introTitle: 'Une sélection lisible, suivie et assumée',
+    introText: 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.',
+    showIntro: true,
+    showPuppies: true,
+    showLitters: true,
+    showDogs: true,
+    showServices: true,
+    showGallery: true,
+    showContact: true,
+    showStrengths: true,
     servicesEnabled: true,
     newsEnabled: true,
     strengthsEnabled: true,
     galleryEnabled: true,
     contactEnabled: true,
-    service1Title: 'Élevage canin',
-    service1Text: 'Sélection raisonnée, suivi des portées et accompagnement des familles.',
-    service2Title: 'Conseil & accompagnement',
-    service2Text: 'Aide au choix du chiot, socialisation et suivi après départ.',
-    service3Title: 'Sélection cynotechnique',
-    service3Text: 'Travail sur la santé, le tempérament, le type et les aptitudes naturelles.',
-    newsTitle: 'Actualités de l’élevage',
-    newsText: 'Retrouvez nos disponibilités, projets de portées et nouvelles de l’élevage.',
-    strengths: 'Sélection raisonnée\nSuivi sanitaire structuré\nAccompagnement après départ\nPassion cynophile',
-    phone: '',
-    publicEmail: '',
-    instagram: '',
-    facebook: '',
-    gallery: []
+    gallery: [],
+    litterGallery: {},
   };
 }
 
 function mergeWebsiteSettings(settings) {
   return { ...defaultWebsiteSettings(), ...(settings || {}) };
+}
+
+function groupByBreed(items) {
+  return items.reduce((groups, item) => {
+    const breed = item.breed || item.mother_breed || 'Race non renseignée';
+    if (!groups[breed]) groups[breed] = [];
+    groups[breed].push(item);
+    return groups;
+  }, {});
+}
+
+function buildServices(settings) {
+  const services = [
+    {
+      key: 'pension',
+      enabled: settings.servicePensionEnabled,
+      title: settings.servicePensionTitle,
+      text: settings.servicePensionText,
+      button: settings.servicePensionButton,
+      imageUrl: settings.servicePensionImageUrl,
+      anchor: '#contact',
+    },
+    {
+      key: 'training',
+      enabled: settings.serviceTrainingEnabled,
+      title: settings.serviceTrainingTitle,
+      text: settings.serviceTrainingText,
+      button: settings.serviceTrainingButton,
+      imageUrl: settings.serviceTrainingImageUrl,
+      anchor: '#contact',
+    },
+    {
+      key: 'breeding',
+      enabled: settings.serviceBreedingEnabled,
+      title: settings.serviceBreedingTitle,
+      text: settings.serviceBreedingText,
+      button: settings.serviceBreedingButton,
+      imageUrl: settings.serviceBreedingImageUrl,
+      anchor: '#selection',
+    },
+  ];
+
+  return services.filter((service) => service.enabled !== false && (service.title || service.text));
 }
 
 async function ensureWebsiteSchema() {
@@ -96,43 +176,48 @@ async function renderPublic(req, res) {
 
     const dogs = await pool.query(
       `
-        SELECT id, name, sex, breed, chip_number, birth_date, status, notes,
-               COALESCE(lof, pedigree, id_scc) AS lof
+        SELECT id, name, sex, breed, chip_number, birth_date, status, notes, photo_url,
+               COALESCE(lof, pedigree, pedigree_number, id_scc) AS lof
         FROM dogs
         WHERE breeder_id = $1
-          AND COALESCE(lower(status), '') IN ('actif', 'active', 'reproducteur', 'reproductrice')
-        ORDER BY sex DESC, name ASC
-        LIMIT 12
+          AND COALESCE(lower(status), '') IN ('actif', 'active', 'reproducteur', 'reproductrice', 'disponible')
+        ORDER BY breed ASC NULLS LAST, sex DESC, name ASC
+        LIMIT 48
       `,
       [breeder.id],
     ).catch(() => ({ rows: [] }));
 
     const puppies = await pool.query(
       `
-        SELECT p.*, l.birth_date, mother.name AS mother_name
+        SELECT p.*, l.birth_date, mother.name AS mother_name, mother.breed AS mother_breed
         FROM puppies p
         LEFT JOIN litters l ON p.litter_id = l.id
-        LEFT JOIN dogs mother ON l.female_id = mother.id
+        LEFT JOIN dogs mother ON l.mother_id = mother.id
         WHERE p.breeder_id = $1
           AND COALESCE(lower(p.status), '') IN ('disponible', 'actif', 'active', 'réservé', 'reserve', 'reservé')
-        ORDER BY l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
-        LIMIT 24
+        ORDER BY mother.breed ASC NULLS LAST, l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
+        LIMIT 60
       `,
       [breeder.id],
     ).catch(() => ({ rows: [] }));
 
     const litters = await pool.query(
       `
-        SELECT l.*, mother.name AS mother_name
+        SELECT l.*, mother.name AS mother_name, mother.breed AS mother_breed
         FROM litters l
-        LEFT JOIN dogs mother ON l.female_id = mother.id
+        LEFT JOIN dogs mother ON l.mother_id = mother.id
         WHERE l.breeder_id = $1
           AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage', 'née', 'nee')
-        ORDER BY l.birth_date DESC NULLS LAST
-        LIMIT 8
+        ORDER BY mother.breed ASC NULLS LAST, l.birth_date DESC NULLS LAST
+        LIMIT 24
       `,
       [breeder.id],
     ).catch(() => ({ rows: [] }));
+
+    const dogsByBreed = groupByBreed(dogs.rows);
+    const puppiesByBreed = groupByBreed(puppies.rows);
+    const littersByBreed = groupByBreed(litters.rows);
+    const publicServices = buildServices(websiteSettings);
 
     return res.status(200).render('website/public-site', {
       title: breeder.company_name || breeder.name || 'Élevage',
@@ -143,6 +228,10 @@ async function renderPublic(req, res) {
       dogs: dogs.rows,
       puppies: puppies.rows,
       litters: litters.rows,
+      dogsByBreed,
+      puppiesByBreed,
+      littersByBreed,
+      publicServices,
     });
   } catch (error) {
     console.error('Erreur vitrine publique:', error);

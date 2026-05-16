@@ -7,10 +7,8 @@
   <meta name="description" content="<%= websiteSettings.heroSubtitle || 'Élevage canin familial, sélection, passion et accompagnement.' %>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Merriweather+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/phase5.css">
-  <link rel="stylesheet" href="/css/showcase-heritage.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/showcase-domain-forest.css">
 </head>
 <%
   const siteTitle = breeder.company_name || breeder.name || 'Élevage canin';
@@ -19,293 +17,201 @@
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);
-  const trialUrl = '/auth/register';
+  const heroImage = websiteSettings.heroImageUrl || (websiteSettings.gallery && websiteSettings.gallery[0] && websiteSettings.gallery[0].url) || '';
+  const serviceFallbackImages = {
+    pension: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1200&q=80',
+    training: 'https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?auto=format&fit=crop&w=1200&q=80',
+    breeding: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&q=80'
+  };
+  const serviceList = publicServices && publicServices.length ? publicServices : [];
+  const dogBreedEntries = Object.entries(dogsByBreed || {});
+  const puppyBreedEntries = Object.entries(puppiesByBreed || {});
+  const litterBreedEntries = Object.entries(littersByBreed || {});
 %>
-<body
-  data-theme="nature"
-  class="public-website-body showcase-template-<%= websiteSettings.template || 'heritage' %>"
-  style="--showcase-primary:<%= websiteSettings.primaryColor %>;--showcase-secondary:<%= websiteSettings.secondaryColor %>;--showcase-accent:<%= websiteSettings.accentColor || '#2b2014' %>;--showcase-bg:<%= websiteSettings.backgroundColor || '#f6f1e8' %>;--showcase-text:<%= websiteSettings.textColor || '#2b2014' %>;"
->
-  <main class="public-site premium-showcase">
-    <header class="institutional-header">
-      <div class="institutional-logo-block">
-        <% if (logoUrl) { %>
-          <img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>">
-        <% } else { %>
-          <span class="institutional-logo-fallback"><%= String(siteTitle).slice(0, 1) %></span>
-        <% } %>
-        <div>
-          <strong><%= siteTitle %></strong>
-          <% if (breeder.affix_name) { %><small><%= breeder.affix_name %></small><% } %>
-        </div>
-      </div>
-      <div class="institutional-info-block">
-        <p class="institutional-slogan"><%= websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial, sélection et accompagnement.' %></p>
-        <% if (breeder.address) { %><p class="institutional-address"><%= breeder.address %></p><% } %>
-        <% if (websiteSettings.openingHours) { %><p class="institutional-hours"><%= websiteSettings.openingHours %></p><% } %>
-        <% if (breeder.phone) { %><p class="institutional-phone"><a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
-      </div>
-    </header>
+<body class="domain-forest-site" style="--forest-primary:<%= websiteSettings.primaryColor || '#29422c' %>;--forest-secondary:<%= websiteSettings.secondaryColor || '#bda66f' %>;--forest-bg:<%= websiteSettings.backgroundColor || '#f6f1e8' %>;--forest-text:<%= websiteSettings.textColor || '#24301f' %>;">
+  <header class="forest-header">
+    <a href="#accueil" class="forest-logo" aria-label="<%= siteTitle %>">
+      <% if (logoUrl) { %>
+        <img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>">
+      <% } else { %>
+        <span class="forest-logo-mark">♧</span>
+      <% } %>
+      <strong><%= siteTitle %></strong>
+    </a>
+  </header>
 
-    <nav class="showcase-nav" aria-label="Navigation vitrine">
-      <a href="#accueil" class="showcase-brand">
-        <% if (logoUrl) { %>
-          <img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>">
-        <% } else { %>
-          <span><%= String(siteTitle).slice(0, 1) %></span>
-        <% } %>
-        <strong><%= siteTitle %></strong>
-      </a>
-      <div class="showcase-links">
-        <a href="#accueil">Accueil</a>
-        <% if (websiteSettings.showServices) { %><a href="#services">Services</a><% } %>
-        <% if (websiteSettings.showDogs) { %><a href="#selection">Sélection</a><% } %>
-        <% if (websiteSettings.showPuppies) { %><a href="#chiots">Chiots</a><% } %>
-        <a href="#temoignages">Témoignages</a>
-        <% if (websiteSettings.showGallery) { %><a href="#galerie">Galerie</a><% } %>
-        <% if (websiteSettings.showContact) { %><a href="#contact">Contact</a><% } %>
-      </div>
-    </nav>
-
-    <section id="accueil" class="public-hero premium-hero">
-      <div class="premium-hero-copy">
-        <p class="eyebrow">Élevage canin · Sélection raisonnée</p>
-        <h1><%= websiteSettings.heroTitle || siteTitle %></h1>
-        <% if (breeder.affix_name) { %><p class="public-affix"><%= breeder.affix_name %></p><% } %>
-        <p class="hero-lead"><%= websiteSettings.heroSubtitle || 'Une vitrine claire pour présenter la sélection, les reproducteurs, les portées et la philosophie de l’élevage.' %></p>
-        <div class="hero-actions">
-          <% if (websiteSettings.showPuppies) { %><a class="showcase-btn primary" href="#chiots">Voir les disponibilités</a><% } %>
-          <% if (websiteSettings.showContact) { %><a class="showcase-btn secondary" href="#contact">Contacter l’élevage</a><% } %>
+  <main>
+    <section id="accueil" class="forest-hero" <% if (heroImage) { %>style="background-image:linear-gradient(90deg,rgba(0,0,0,.52),rgba(0,0,0,.18)),url('<%= heroImage %>')"<% } %>>
+      <div class="forest-hero-inner">
+        <h1><%= websiteSettings.heroTitle || 'Élevage et Dressage de prestige' %></h1>
+        <p><%= websiteSettings.heroSubtitle || 'Excellence canine au cœur de la nature.' %></p>
+        <div class="forest-actions">
+          <% if (websiteSettings.showServices) { %><a href="#services">Nos services</a><% } %>
+          <% if (websiteSettings.showContact) { %><a href="#contact" class="secondary">Contactez-nous</a><% } %>
         </div>
-      </div>
-      <aside class="hero-portrait" <% if (websiteSettings.heroImageUrl) { %>style="background-image:url('<%= websiteSettings.heroImageUrl %>')"<% } %>>
-        <div class="hero-portrait-card">
-          <span>Affixe</span>
-          <strong><%= siteTitle %></strong>
-          <% if (breeder.producer_number) { %><em>N° producteur : <%= breeder.producer_number %></em><% } %>
-        </div>
-      </aside>
-    </section>
-
-    <section class="contact-strip">
-      <div>
-        <strong><%= websiteSettings.contactStripTitle || 'Besoin d’un renseignement ?' %></strong>
-        <span><%= websiteSettings.contactStripText || 'Informations, réservation, projet de portée ou disponibilité.' %></span>
-      </div>
-      <div class="contact-strip-actions">
-        <% if (websiteSettings.showContact) { %><a class="showcase-btn primary" href="#contact"><%= websiteSettings.primaryCtaLabel || 'Contactez-nous' %></a><% } %>
       </div>
     </section>
 
-    <% if (websiteSettings.showIntro) { %>
-      <section class="showcase-intro public-section editorial-intro">
-        <div>
-          <span class="section-kicker">Ligne d’élevage</span>
-          <h2><%= websiteSettings.introTitle || 'Une sélection lisible, suivie et assumée' %></h2>
-        </div>
-        <p><%= websiteSettings.introText || websiteSettings.newsText || 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.' %></p>
-      </section>
-    <% } %>
-
-    <% if (websiteSettings.showServices) { %>
-      <section id="services" class="public-section services-showcase-section">
-        <div class="section-title compact">
-          <span class="section-kicker"><%= websiteSettings.serviceSectionKicker || 'Savoir-faire' %></span>
-          <h2><%= websiteSettings.serviceSectionTitle || 'Nos services' %></h2>
-        </div>
-        <div class="service-panel-grid">
-          <% [1, 2, 3].forEach((index) => { const title = websiteSettings[`service${index}Title`]; const text = websiteSettings[`service${index}Text`]; if (title || text) { %>
-            <article class="service-panel service-panel-<%= index %>">
-              <div>
-                <span>0<%= index %></span>
-                <h3><%= title || `Service ${index}` %></h3>
-                <p><%= text || '' %></p>
-              </div>
-            </article>
-          <% } }) %>
-        </div>
-      </section>
-    <% } %>
-
-    <section id="temoignages" class="public-section social-proof-section">
-      <div class="section-title compact">
-        <span class="section-kicker">Preuve sociale</span>
-        <h2>Les problèmes que les éleveurs veulent enfin régler</h2>
-        <p class="muted">Des situations fréquentes du terrain, transformées en axes concrets de pilotage.</p>
-      </div>
-      <div class="testimonial-grid">
-        <article class="testimonial-card">
-          <p>“Entre les vermifuges, les vaccins et les départs chiots, tout finit dans des carnets différents. Il me faut une vision claire, pas un tableau bricolé.”</p>
-          <strong>Suivi sanitaire structuré</strong>
-        </article>
-        <article class="testimonial-card">
-          <p>“Le vrai risque, ce n’est pas de manquer de passion. C’est d’oublier une échéance administrative ou de vendre un chiot avec un document incomplet.”</p>
-          <strong>Alertes et documents maîtrisés</strong>
-        </article>
-        <article class="testimonial-card">
-          <p>“Je veux savoir où en sont mes portées, mes réservations et ma trésorerie sans ouvrir dix fichiers. Un élevage sérieux doit se piloter proprement.”</p>
-          <strong>Dashboard métier</strong>
-        </article>
-      </div>
+    <section class="forest-newsbar">
+      <strong><%= websiteSettings.contactStripTitle || 'La saison est ouverte : contactez l’élevage pour les disponibilités.' %></strong>
+      <a href="#contact"><%= websiteSettings.contactStripText || 'En savoir plus' %></a>
     </section>
 
-    <% if (websiteSettings.showPuppies) { %>
-      <section id="chiots" class="public-section">
-        <div class="section-title compact">
-          <span class="section-kicker">Disponibilités</span>
-          <h2>Chiots disponibles ou réservables</h2>
-        </div>
-        <% if (!puppies.length) { %>
-          <div class="empty-state"><strong>Aucun chiot disponible actuellement</strong><p>Contactez l’élevage pour connaître les prochains projets de portée.</p></div>
-        <% } else { %>
-          <div class="public-card-grid premium-card-grid">
-            <% puppies.forEach((puppy) => { %>
-              <article class="public-card premium-card">
-                <span class="badge"><%= puppy.status || 'Disponible' %></span>
-                <h3><%= puppy.name || 'Chiot disponible' %></h3>
-                <p><%= puppy.sex || '-' %> — <%= puppy.color || 'Robe non renseignée' %></p>
-                <% if (puppy.mother_name) { %><p>Mère : <strong><%= puppy.mother_name %></strong></p><% } %>
-                <% if (puppy.sale_price) { %><p class="public-price"><%= puppy.sale_price %> €</p><% } %>
-              </article>
-            <% }) %>
-          </div>
-        <% } %>
+    <% if (websiteSettings.showServices && serviceList.length) { %>
+      <section id="services" class="forest-services">
+        <% serviceList.forEach((service, index) => { const image = service.imageUrl || serviceFallbackImages[service.key] || serviceFallbackImages.breeding; %>
+          <article class="forest-service <%= index % 2 === 1 ? 'reverse' : '' %>">
+            <div class="forest-service-image"><img src="<%= image %>" alt="<%= service.title %>"></div>
+            <div class="forest-service-copy">
+              <h2><%= service.title %></h2>
+              <p><%= service.text %></p>
+              <a href="<%= service.anchor || '#contact' %>"><%= service.button || 'Découvrir' %></a>
+            </div>
+          </article>
+        <% }) %>
       </section>
     <% } %>
 
-    <% if (websiteSettings.showLitters) { %>
-      <section class="public-section">
-        <div class="section-title compact">
-          <span class="section-kicker">Portées</span>
-          <h2>Portées en cours</h2>
+    <% if (websiteSettings.showDogs && dogBreedEntries.length) { %>
+      <section id="selection" class="forest-section forest-selection">
+        <div class="forest-section-title">
+          <span>Sélection</span>
+          <h2>Chiens adultes classés par race</h2>
         </div>
-        <% if (!litters.length) { %>
-          <p class="muted">Aucune portée active affichée.</p>
-        <% } else { %>
-          <div class="public-card-grid premium-card-grid litter-public-grid">
-            <% litters.forEach((litter) => { const litterImages = (websiteSettings.litterGallery && websiteSettings.litterGallery[litter.id]) || []; %>
-              <article class="public-card premium-card litter-public-card">
-                <% if (litterImages[0]) { %><img class="litter-cover" src="<%= litterImages[0].url %>" alt="Photo portée"><% } %>
-                <h3>Portée de <%= litter.mother_name || 'mère non renseignée' %></h3>
-                <p>Née le <%= formatDate(litter.birth_date) %></p>
-                <p><%= litter.puppies_count_total || litter.puppies_count || litter.nb_puppies || 0 %> chiot(s)</p>
-                <% if (litterImages.length > 1) { %>
-                  <div class="litter-thumbs">
-                    <% litterImages.slice(1, 5).forEach((image) => { %><img src="<%= image.url %>" alt="Photo portée"><% }) %>
+        <% dogBreedEntries.forEach(([breed, breedDogs]) => { %>
+          <div class="forest-breed-block">
+            <h3><%= breed %></h3>
+            <div class="forest-animal-grid">
+              <% breedDogs.forEach((dog) => { %>
+                <article class="forest-animal-card">
+                  <% if (dog.photo_url) { %><img src="<%= dog.photo_url %>" alt="<%= dog.name %>"><% } %>
+                  <div>
+                    <span><%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : 'Chien' %></span>
+                    <h4><%= dog.name %></h4>
+                    <% if (dog.lof) { %><p>LOF : <%= dog.lof %></p><% } %>
+                    <% if (dog.notes) { %><p><%= String(dog.notes).slice(0, 140) %><%= String(dog.notes).length > 140 ? '…' : '' %></p><% } %>
                   </div>
-                <% } %>
-              </article>
-            <% }) %>
+                </article>
+              <% }) %>
+            </div>
           </div>
-        <% } %>
+        <% }) %>
       </section>
     <% } %>
 
-    <% if (websiteSettings.showDogs) { %>
-      <section id="selection" class="public-section">
-        <div class="section-title compact">
-          <span class="section-kicker">Sélection</span>
-          <h2>Nos chiens</h2>
+    <% if (websiteSettings.showLitters && litterBreedEntries.length) { %>
+      <section class="forest-section forest-litters">
+        <div class="forest-section-title">
+          <span>Portées</span>
+          <h2>Portées actuelles par race</h2>
         </div>
-        <% if (!dogs.length) { %>
-          <p class="muted">Aucun chien affiché pour le moment.</p>
-        <% } else { %>
-          <div class="public-card-grid premium-card-grid dogs-grid">
-            <% dogs.forEach((dog) => { %>
-              <article class="public-card premium-card dog-card">
-                <span class="dog-sex"><%= dog.sex === 'M' ? 'Mâle' : 'Femelle' %></span>
-                <h3><%= dog.name %></h3>
-                <p><%= dog.breed || 'Race non renseignée' %></p>
-                <% if (dog.lof) { %><p>LOF : <%= dog.lof %></p><% } %>
-                <% if (dog.notes) { %><p class="dog-note"><%= String(dog.notes).slice(0, 160) %><%= String(dog.notes).length > 160 ? '…' : '' %></p><% } %>
-              </article>
-            <% }) %>
+        <% litterBreedEntries.forEach(([breed, breedLitters]) => { %>
+          <div class="forest-breed-block">
+            <h3><%= breed %></h3>
+            <div class="forest-litter-grid">
+              <% breedLitters.forEach((litter) => { const litterImages = (websiteSettings.litterGallery && websiteSettings.litterGallery[litter.id]) || []; %>
+                <article class="forest-litter-card">
+                  <% if (litterImages[0]) { %><img src="<%= litterImages[0].url %>" alt="Portée <%= breed %>"><% } %>
+                  <div>
+                    <h4>Portée de <%= litter.mother_name || 'mère non renseignée' %></h4>
+                    <p>Née le <%= formatDate(litter.birth_date) %></p>
+                    <p><%= litter.puppies_count_total || litter.puppies_count || litter.nb_puppies || 0 %> chiot(s)</p>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
           </div>
-        <% } %>
+        <% }) %>
       </section>
     <% } %>
 
-    <% if (websiteSettings.showGallery && websiteSettings.gallery && websiteSettings.gallery.length) { %>
-      <section id="galerie" class="public-section">
-        <div class="section-title compact">
-          <span class="section-kicker">Galerie</span>
-          <h2>Photos de l’élevage</h2>
+    <% if (websiteSettings.showPuppies && puppyBreedEntries.length) { %>
+      <section id="chiots" class="forest-section forest-puppies">
+        <div class="forest-section-title">
+          <span>Disponibilités</span>
+          <h2>Chiots disponibles classés par race</h2>
         </div>
-        <div class="public-gallery-grid">
-          <% websiteSettings.gallery.forEach((image) => { %>
-            <img src="<%= image.url %>" alt="Photo élevage">
+        <% puppyBreedEntries.forEach(([breed, breedPuppies]) => { %>
+          <div class="forest-breed-block">
+            <h3><%= breed %></h3>
+            <div class="forest-puppy-grid">
+              <% breedPuppies.forEach((puppy) => { const litterImages = (websiteSettings.litterGallery && websiteSettings.litterGallery[puppy.litter_id]) || []; %>
+                <article class="forest-puppy-card">
+                  <% if (litterImages[0]) { %><img src="<%= litterImages[0].url %>" alt="Chiot <%= breed %>"><% } %>
+                  <div>
+                    <span><%= puppy.status || 'Disponible' %></span>
+                    <h4><%= puppy.name || 'Chiot disponible' %></h4>
+                    <p><%= puppy.sex || '-' %> · <%= puppy.color || 'Robe non renseignée' %></p>
+                    <% if (puppy.mother_name) { %><p>Mère : <strong><%= puppy.mother_name %></strong></p><% } %>
+                    <% if (puppy.sale_price) { %><p class="forest-price"><%= puppy.sale_price %> €</p><% } %>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      </section>
+    <% } %>
+
+    <% if (websiteSettings.showStrengths && strengthsList.length) { %>
+      <section class="forest-strengths">
+        <h2><%= websiteSettings.strengthsTitle || 'Pourquoi nous choisir' %></h2>
+        <div>
+          <% strengthsList.slice(0, 3).forEach((strength, index) => { %>
+            <article>
+              <span><%= index === 0 ? '◷' : index === 1 ? '◈' : '♧' %></span>
+              <strong><%= strength %></strong>
+              <p>Une exigence quotidienne au service du chien, de la famille et de la sélection.</p>
+            </article>
           <% }) %>
         </div>
       </section>
     <% } %>
 
-    <% if (websiteSettings.showStrengths && strengthsList.length) { %>
-      <section class="public-section strengths-band">
-        <div class="section-title compact">
-          <span class="section-kicker"><%= websiteSettings.strengthsKicker || 'Nos points forts' %></span>
-          <h2><%= websiteSettings.strengthsTitle || 'Pourquoi nous faire confiance' %></h2>
+    <% if (websiteSettings.showGallery && websiteSettings.gallery && websiteSettings.gallery.length) { %>
+      <section id="galerie" class="forest-section forest-gallery">
+        <div class="forest-section-title">
+          <span>Galerie</span>
+          <h2>Vie de l’élevage</h2>
         </div>
-        <div class="strengths-grid">
-          <% strengthsList.slice(0, 4).forEach((strength, index) => { %>
-            <article>
-              <span><%= index + 1 %></span>
-              <strong><%= strength %></strong>
-            </article>
+        <div>
+          <% websiteSettings.gallery.slice(0, 12).forEach((image) => { %>
+            <img src="<%= image.url %>" alt="Photo de l’élevage">
           <% }) %>
         </div>
       </section>
     <% } %>
 
     <% if (websiteSettings.showContact) { %>
-      <section id="contact" class="public-section public-contact premium-contact">
-        <div>
-          <span class="section-kicker">Contact</span>
-          <h2>Contacter l’élevage</h2>
-          <% if (breeder.address) { %><p>📍 <%= breeder.address %></p><% } %>
-          <% if (websiteSettings.openingHours) { %><p>🕒 Horaires : <%= websiteSettings.openingHours %></p><% } %>
-          <% if (breeder.phone) { %><p>📞 Téléphone : <a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
-          <% if (breeder.email) { %><p>✉️ Email : <a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
-          <% if (websiteSettings.instagram) { %><p>📷 Instagram : <%= websiteSettings.instagram %></p><% } %>
-          <% if (websiteSettings.facebook) { %><p>🟦 Facebook : <%= websiteSettings.facebook %></p><% } %>
-          <% if (breeder.siret) { %><p>🏢 SIRET : <%= breeder.siret %></p><% } %>
-        </div>
-        <div class="contact-panel">
-          <strong><%= websiteSettings.contactPanelTitle || 'Engagement éleveur' %></strong>
-          <p><%= websiteSettings.contactPanelText || 'Un élevage sérieux ne vend pas seulement un chiot : il transmet une lignée, une méthode et un suivi.' %></p>
+      <section id="contact" class="forest-contact">
+        <div class="forest-contact-inner">
+          <form class="forest-contact-form">
+            <h2>Contact</h2>
+            <div class="forest-form-grid">
+              <input placeholder="Nom">
+              <input placeholder="E-mail">
+              <input placeholder="Téléphone">
+              <input placeholder="Projet">
+            </div>
+            <textarea placeholder="Message"></textarea>
+            <button type="button">Envoyer le message</button>
+          </form>
+          <div class="forest-contact-details">
+            <% if (breeder.phone) { %><p>☎ <a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
+            <% if (breeder.email) { %><p>✉ <a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
+            <% if (breeder.address) { %><p>◆ <%= breeder.address %></p><% } %>
+            <% if (websiteSettings.openingHours) { %><p>◷ <%= websiteSettings.openingHours %></p><% } %>
+            <% if (websiteSettings.instagram) { %><p>Instagram : <%= websiteSettings.instagram %></p><% } %>
+            <% if (websiteSettings.facebook) { %><p>Facebook : <%= websiteSettings.facebook %></p><% } %>
+          </div>
         </div>
       </section>
     <% } %>
-
-    <footer class="showcase-footer">
-      <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
-        <div>
-          <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Logo <%= siteTitle %>" style="max-height: 60px; margin-bottom: 1rem;"><% } %>
-          <strong style="display: block; font-size: 1.2rem; margin-bottom: 0.5rem;"><%= siteTitle %></strong>
-          <p style="max-width: 400px; opacity: 0.8;"><%= websiteSettings.footerText || websiteSettings.siteSlogan || websiteSettings.heroSubtitle || 'Élevage canin familial.' %></p>
-        </div>
-        <div style="opacity: 0.8; line-height: 1.8;">
-          <% if (breeder.address) { %><p><%= breeder.address %></p><% } %>
-          <% if (websiteSettings.openingHours) { %><p><%= websiteSettings.openingHours %></p><% } %>
-          <% if (breeder.phone) { %><p><a href="tel:<%= breeder.phone %>" style="color: inherit; text-decoration: none;"><%= breeder.phone %></a></p><% } %>
-          <% if (breeder.email) { %><p><a href="mailto:<%= breeder.email %>" style="color: inherit; text-decoration: none;"><%= breeder.email %></a></p><% } %>
-        </div>
-      </div>
-      
-      <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; font-size: 0.85rem; opacity: 0.7;">
-        <div>
-          &copy; <%= new Date().getFullYear() %> <%= siteTitle %>. Tous droits réservés.
-          <span style="margin: 0 10px;">|</span>
-          <a href="#" style="color: inherit; text-decoration: none;">Mentions légales</a>
-          <span style="margin: 0 10px;">|</span>
-          <a href="#" style="color: inherit; text-decoration: none;">Politique de confidentialité</a>
-        </div>
-        <div style="margin-top: 1rem; margin-bottom: 1rem;">
-          <a href="<%= trialUrl %>" style="color: inherit; text-decoration: none;" target="_blank">
-            Propulsé par <strong>ElevagePro</strong> - <em>Créer un site d'élevage</em>
-          </a>
-        </div>
-      </div>
-    </footer>
   </main>
+
+  <footer class="forest-footer">
+    <strong><%= siteTitle %></strong>
+    <span>© <%= new Date().getFullYear() %> · Propulsé par ElevagePro</span>
+  </footer>
 </body>
 </html>
