@@ -2,20 +2,20 @@
 </div>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation mobile principale">
-  <a class="mobile-bottom-link <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard"><span>⌂</span>Accueil</a>
-  <a class="mobile-bottom-link <%= currentPath.startsWith('/dogs') ? 'active' : '' %>" href="/dogs"><span>🐕</span>Chiens</a>
-  <a class="mobile-bottom-link <%= currentPath.startsWith('/puppies') ? 'active' : '' %>" href="/puppies"><span>🐾</span>Chiots</a>
-  <a class="mobile-bottom-link <%= currentPath.startsWith('/soins') ? 'active' : '' %>" href="/soins"><span>✚</span>Soins</a>
-  <a class="mobile-bottom-link <%= currentPath.startsWith('/reminders') ? 'active' : '' %>" href="/reminders"><span>⚑</span>Rappels</a>
+  <a class="mobile-bottom-link <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard"><span class="material-symbols-outlined">dashboard</span>Accueil</a>
+  <a class="mobile-bottom-link <%= currentPath.startsWith('/dogs') ? 'active' : '' %>" href="/dogs"><span class="material-symbols-outlined">pets</span>Chiens</a>
+  <a class="mobile-bottom-link <%= currentPath.startsWith('/puppies') ? 'active' : '' %>" href="/puppies"><span class="material-symbols-outlined">cruelty_free</span>Chiots</a>
+  <a class="mobile-bottom-link <%= currentPath.startsWith('/soins') ? 'active' : '' %>" href="/soins"><span class="material-symbols-outlined">medical_services</span>Soins</a>
+  <a class="mobile-bottom-link <%= currentPath.startsWith('/reminders') ? 'active' : '' %>" href="/reminders"><span class="material-symbols-outlined">notifications_active</span>Rappels</a>
 </nav>
 
 <div class="quick-action" data-quick-action>
-  <button class="quick-action-button" type="button" data-quick-action-toggle aria-label="Ouvrir les actions rapides" aria-expanded="false">+</button>
+  <button class="quick-action-button" type="button" data-quick-action-toggle aria-label="Ouvrir les actions rapides" aria-expanded="false"><span class="material-symbols-outlined">add</span></button>
   <div class="quick-action-menu">
-    <a class="quick-action-link" href="/dogs/new"><span>🐕</span>Ajouter un chien</a>
-    <a class="quick-action-link" href="/puppies/new"><span>🐾</span>Ajouter un chiot</a>
-    <a class="quick-action-link" href="/soins"><span>✚</span>Ajouter un soin</a>
-    <a class="quick-action-link" href="/reminders/new"><span>⚑</span>Créer un rappel</a>
+    <a class="quick-action-link" href="/dogs/new"><span class="material-symbols-outlined">pets</span>Ajouter un chien</a>
+    <a class="quick-action-link" href="/puppies/new"><span class="material-symbols-outlined">cruelty_free</span>Ajouter un chiot</a>
+    <a class="quick-action-link" href="/soins"><span class="material-symbols-outlined">medical_services</span>Ajouter un soin</a>
+    <a class="quick-action-link" href="/reminders/new"><span class="material-symbols-outlined">add_alert</span>Créer un rappel</a>
   </div>
 </div>
 
