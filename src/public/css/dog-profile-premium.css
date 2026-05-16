@@ -1,0 +1,474 @@
+/* Fiche chien premium — hero photo uploadée + cartes métier */
+
+.dog-profile-page {
+  max-width: 1440px !important;
+}
+
+.dog-profile-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.dog-profile-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #111827;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.dog-profile-back .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.dog-profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dog-profile-actions .btn {
+  gap: 8px;
+}
+
+.dog-profile-hero {
+  position: relative;
+  min-height: 282px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1a2418, #6e8054);
+  box-shadow: 0 12px 42px rgba(17, 24, 39, .10);
+}
+
+.dog-profile-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 44%;
+}
+
+.dog-profile-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.42) 38%, rgba(0,0,0,.08) 72%, rgba(0,0,0,.16) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.24));
+}
+
+.dog-profile-hero.no-photo .dog-profile-hero-overlay {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(253, 203, 155, .22), transparent 28rem),
+    linear-gradient(135deg, rgba(5,5,5,.88), rgba(37, 54, 34, .84));
+}
+
+.dog-profile-placeholder {
+  position: absolute;
+  right: clamp(34px, 5vw, 80px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 156px;
+  height: 156px;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(10px);
+}
+
+.dog-profile-placeholder span {
+  color: #fff;
+  font-size: 48px;
+  font-weight: 900;
+}
+
+.dog-profile-hero-content {
+  position: relative;
+  z-index: 2;
+  min-height: 282px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 640px;
+  padding: clamp(28px, 4vw, 44px);
+  color: #fff;
+}
+
+.dog-profile-hero-content h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -.055em;
+  font-weight: 900;
+}
+
+.dog-profile-hero-content p {
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.88);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.dog-profile-identity {
+  display: grid;
+  gap: 4px;
+  margin: 18px 0 0;
+}
+
+.dog-profile-identity div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  color: rgba(255,255,255,.88);
+}
+
+.dog-profile-identity dt,
+.dog-profile-identity dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.dog-profile-identity dt::after {
+  content: ' :';
+}
+
+.dog-profile-status {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  margin-top: 22px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dog-profile-hero-edit {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.94);
+  color: #111827;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+
+.dog-profile-hero-edit .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.dog-profile-grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.dog-profile-grid-main {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dog-profile-grid-secondary {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .7fr);
+}
+
+.dog-profile-card {
+  min-height: 240px;
+  padding: 24px;
+  border: 1px solid rgba(196, 199, 199, .55);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(26,26,26,.045);
+}
+
+.dog-profile-card-head {
+  margin-bottom: 18px;
+}
+
+.dog-profile-card-head span {
+  display: block;
+  margin-bottom: 4px;
+  color: #7c5730;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.dog-profile-card h2 {
+  margin: 0;
+  color: #101010;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -.025em;
+  font-weight: 900;
+}
+
+.dog-profile-card h3 {
+  margin: 20px 0 10px;
+  color: #101010;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 900;
+}
+
+.dog-profile-card p {
+  color: #242424;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.dog-profile-progress-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.dog-profile-progress-row strong,
+.dog-profile-progress-row span {
+  color: #242424;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dog-profile-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.dog-profile-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.dog-profile-mini-table {
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.dog-profile-mini-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef0f2;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.dog-profile-mini-row:last-child {
+  border-bottom: 0;
+}
+
+.dog-profile-mini-head {
+  background: #f3f4f6;
+  color: #111827;
+  font-weight: 900;
+}
+
+.dog-profile-mini-row small {
+  display: block;
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.link-row:hover {
+  background: #f9fafb;
+}
+
+.dog-profile-card-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 18px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.dog-profile-empty {
+  color: #6b7280 !important;
+}
+
+.dog-profile-empty.centered {
+  margin: 18px 0;
+  text-align: center;
+}
+
+.muted-table {
+  border-color: #e5e7eb;
+}
+
+.dog-profile-info-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.dog-profile-info-list div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.dog-profile-info-list div:last-child {
+  border-bottom: 0;
+}
+
+.dog-profile-info-list dt,
+.dog-profile-info-list dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.dog-profile-info-list dt {
+  color: #6b7280;
+  font-weight: 800;
+}
+
+.dog-profile-info-list dd {
+  color: #111827;
+  font-weight: 700;
+}
+
+.dog-profile-reminders {
+  display: grid;
+  gap: 10px;
+}
+
+.dog-profile-reminder {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 0 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  color: #111827;
+  text-decoration: none;
+}
+
+.dog-profile-reminder .material-symbols-outlined {
+  grid-row: span 2;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 18px;
+}
+
+.dog-profile-reminder strong {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.dog-profile-reminder small {
+  color: #6b7280;
+}
+
+@media (max-width: 1280px) {
+  .dog-profile-grid-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dog-profile-toolbar {
+    display: grid;
+    align-items: start;
+  }
+
+  .dog-profile-actions {
+    width: 100%;
+  }
+
+  .dog-profile-actions .btn {
+    flex: 1;
+  }
+
+  .dog-profile-hero,
+  .dog-profile-hero-content {
+    min-height: 360px;
+  }
+
+  .dog-profile-hero-overlay {
+    background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.78));
+  }
+
+  .dog-profile-hero-edit {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .dog-profile-grid-main,
+  .dog-profile-grid-secondary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .dog-profile-hero,
+  .dog-profile-hero-content {
+    min-height: 420px;
+  }
+
+  .dog-profile-hero-content {
+    justify-content: flex-end;
+    padding: 22px;
+  }
+
+  .dog-profile-identity div,
+  .dog-profile-info-list div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .dog-profile-card {
+    padding: 18px;
+  }
+
+  .dog-profile-mini-row {
+    grid-template-columns: 1fr;
+  }
+}
