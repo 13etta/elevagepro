@@ -23,14 +23,14 @@
         <% if (selectedLitter) { %>
           <p class="muted"><%= selectedLitterLabel %><% if (selectedLitter.mother_breed) { %> · <%= selectedLitter.mother_breed %><% } %></p>
         <% } else { %>
-          <p class="muted">Aucune portée sélectionnée. Créez ou sélectionnez une portée pour activer les calculs.</p>
+          <p class="muted">Aucune portée sélectionnée. Les charges saisies seront enregistrées comme charges générales de l’élevage.</p>
         <% } %>
       </div>
 
       <% if (!litters.length) { %>
         <div class="empty-state">
           <strong>Aucune portée enregistrée</strong>
-          <p>La rentabilité se calcule portée par portée. Commencez par créer une portée.</p>
+          <p>Vous pouvez saisir des charges générales dès maintenant, ou créer une portée pour analyser une marge par portée.</p>
           <a class="btn btn-primary" href="/litters/new">Créer une portée</a>
         </div>
       <% } else { %>
@@ -38,6 +38,7 @@
           <div class="form-group">
             <label for="litter_id">Portée analysée</label>
             <select id="litter_id" name="litter_id">
+              <option value="">Charges générales de l’élevage</option>
               <% litters.forEach((litter) => { %>
                 <option value="<%= litter.id %>" <%= selectedLitter && String(selectedLitter.id) === String(litter.id) ? 'selected' : '' %>>
                   <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
@@ -46,7 +47,7 @@
             </select>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Analyser cette portée</button>
+            <button class="btn btn-primary" type="submit">Analyser</button>
             <% if (selectedLitter) { %>
               <a class="btn btn-secondary" href="/litters/<%= selectedLitter.id %>">Ouvrir la portée</a>
             <% } %>
@@ -85,60 +86,67 @@
       <div class="section-title compact">
         <span class="section-kicker">Charges</span>
         <h2>Ajouter une dépense</h2>
+        <% if (!selectedLitter) { %>
+          <p class="muted">Aucune portée sélectionnée : la charge sera enregistrée comme charge générale de l’élevage.</p>
+        <% } %>
       </div>
 
-      <% if (!hasLitter) { %>
-        <div class="empty-state">
-          <strong>Portée obligatoire</strong>
-          <p>Créez ou sélectionnez une portée avant d’ajouter une charge.</p>
-          <a class="btn btn-primary" href="/litters/new">Créer une portée</a>
-        </div>
-      <% } else { %>
-        <form action="/profitability/expenses" method="POST" class="stacked-form">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <input type="hidden" name="litter_id" value="<%= selectedLitter ? selectedLitter.id : '' %>">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Date</label>
-              <input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>">
-            </div>
-            <div class="form-group">
-              <label>Catégorie</label>
-              <select name="category" required>
-                <% expenseCategories.forEach(([value, label]) => { %>
-                  <option value="<%= value %>"><%= label %></option>
-                <% }) %>
-              </select>
-            </div>
+      <form action="/profitability/expenses" method="POST" class="stacked-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Portée concernée</label>
+            <select name="litter_id">
+              <option value="">Charge générale élevage</option>
+              <% litters.forEach((litter) => { %>
+                <option value="<%= litter.id %>" <%= selectedLitter && String(selectedLitter.id) === String(litter.id) ? 'selected' : '' %>>
+                  <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
+                </option>
+              <% }) %>
+            </select>
           </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Rattacher à un chiot</label>
-              <select name="puppy_id">
-                <option value="">Charge générale portée</option>
-                <% puppies.forEach((puppy) => { %>
-                  <option value="<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %> · <%= puppy.sex || '-' %></option>
-                <% }) %>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Montant (€)</label>
-              <input type="number" step="0.01" min="0.01" name="amount" required>
-            </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select name="category" required>
+              <% expenseCategories.forEach(([value, label]) => { %>
+                <option value="<%= value %>"><%= label %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Montant (€)</label>
+            <input type="number" step="0.01" min="0.01" name="amount" required>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Rattacher à un chiot</label>
+            <select name="puppy_id">
+              <option value="">Aucun chiot / charge générale</option>
+              <% puppies.forEach((puppy) => { %>
+                <option value="<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %> · <%= puppy.sex || '-' %></option>
+              <% }) %>
+            </select>
           </div>
           <div class="form-group">
             <label>Libellé</label>
             <input type="text" name="label" required placeholder="Ex : croquettes chiots, visite vétérinaire, vaccin...">
           </div>
-          <div class="form-group">
-            <label>Note</label>
-            <input type="text" name="notes">
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Ajouter la charge</button>
-          </div>
-        </form>
-      <% } %>
+        </div>
+        <div class="form-group">
+          <label>Note</label>
+          <input type="text" name="notes">
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Ajouter la charge</button>
+        </div>
+      </form>
     </article>
 
     <article class="table-block">
@@ -244,7 +252,7 @@
     <% if (!expenses.length) { %>
       <div class="empty-state">
         <strong>Aucune charge</strong>
-        <p>Ajoutez les charges liées à la portée pour calculer une marge réaliste.</p>
+        <p>Ajoutez les charges liées à la portée ou à l’élevage pour calculer une marge réaliste.</p>
         <a class="btn btn-primary" href="#profitability-expense-form">Ajouter une charge</a>
       </div>
     <% } else { %>
@@ -256,7 +264,7 @@
               <td><%= formatDate(expense.expense_date) %></td>
               <td><span class="badge"><%= expense.category %></span></td>
               <td><%= expense.label %><% if (expense.notes) { %><br><small class="muted"><%= expense.notes %></small><% } %></td>
-              <td><%= expense.puppy_name || expense.dog_name || 'Portée' %></td>
+              <td><%= expense.puppy_name || expense.dog_name || (expense.litter_id ? 'Portée' : 'Élevage général') %></td>
               <td><strong><%= Number(expense.amount || 0).toFixed(2) %> €</strong></td>
               <td>
                 <form method="POST" action="/profitability/expenses/<%= expense.id %>/delete" onsubmit="return confirm('Supprimer cette charge ?');">
