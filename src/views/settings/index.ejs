@@ -71,144 +71,144 @@
       <div class="section-title">
         <span class="section-kicker">Site vitrine</span>
         <h2>Générateur de site public</h2>
-        <p class="muted">Template Domaine / Forêt : élevage, pension, dressage, chiens et chiots classés par race.</p>
+        <p class="muted">Modifiez le site à gauche : l’aperçu à droite se met à jour immédiatement. Les données affichées viennent de l’ERP.</p>
       </div>
 
-      <form action="/settings/website" method="POST" enctype="multipart/form-data" class="stacked-form">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="website-live-builder">
+        <div class="website-live-form">
+          <form id="website-settings-form" action="/settings/website" method="POST" enctype="multipart/form-data" class="stacked-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-        <div class="settings-panel">
-          <div class="section-title compact"><span class="section-kicker">Template</span><h3>Choix graphique</h3></div>
-          <div class="template-picker">
-            <% const templateLabels = { heritage: 'Domaine / Forêt — recommandé', field: 'Field & chasse', luxury: 'Premium sombre', minimal: 'Minimal moderne', breeder: 'Catalogue élevage' }; %>
-            <% websiteTemplates.forEach((tpl) => { %>
-              <label class="template-option <%= websiteSettings.template === tpl ? 'selected' : '' %>">
-                <input type="radio" name="template" value="<%= tpl %>" <%= websiteSettings.template === tpl ? 'checked' : '' %>>
-                <strong><%= templateLabels[tpl] || tpl %></strong>
-                <span><%= tpl %></span>
-              </label>
-            <% }) %>
-          </div>
-        </div>
-
-        <div class="dashboard-columns">
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Accueil</span><h3>Hero de page</h3></div>
-            <div class="form-group"><label>Titre principal</label><input name="heroTitle" value="<%= websiteSettings.heroTitle || '' %>"></div>
-            <div class="form-group"><label>Texte d’introduction</label><textarea name="heroSubtitle" rows="4"><%= websiteSettings.heroSubtitle || '' %></textarea></div>
-            <div class="form-group"><label>Slogan d’en-tête</label><input name="siteSlogan" value="<%= websiteSettings.siteSlogan || '' %>"></div>
-            <% if (websiteSettings.heroImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.heroImageUrl %>" alt="Image d’accueil"></div><label><input type="checkbox" name="clearHeroImage"> Supprimer l’image d’accueil</label><% } %>
-            <div class="form-group"><label>Image d’accueil</label><input type="file" name="hero_image" accept="image/png, image/jpeg, image/webp"></div>
-          </div>
-
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Couleurs</span><h3>Palette complète</h3></div>
-            <div class="form-grid">
-              <div class="form-group"><label>Vert principal</label><input type="color" name="primaryColor" value="<%= websiteSettings.primaryColor || '#29422c' %>"></div>
-              <div class="form-group"><label>Doré / sable</label><input type="color" name="secondaryColor" value="<%= websiteSettings.secondaryColor || '#bda66f' %>"></div>
-              <div class="form-group"><label>Accent</label><input type="color" name="accentColor" value="<%= websiteSettings.accentColor || '#f4efe2' %>"></div>
-              <div class="form-group"><label>Fond</label><input type="color" name="backgroundColor" value="<%= websiteSettings.backgroundColor || '#f6f1e8' %>"></div>
-              <div class="form-group"><label>Texte</label><input type="color" name="textColor" value="<%= websiteSettings.textColor || '#24301f' %>"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="dashboard-columns">
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Sections</span><h3>Afficher / masquer</h3></div>
-            <label><input type="checkbox" name="showIntro" <%= websiteSettings.showIntro ? 'checked' : '' %>> Introduction</label><br>
-            <label><input type="checkbox" name="showServices" <%= websiteSettings.showServices ? 'checked' : '' %>> Services</label><br>
-            <label><input type="checkbox" name="showDogs" <%= websiteSettings.showDogs ? 'checked' : '' %>> Chiens adultes par race</label><br>
-            <label><input type="checkbox" name="showLitters" <%= websiteSettings.showLitters ? 'checked' : '' %>> Portées par race</label><br>
-            <label><input type="checkbox" name="showPuppies" <%= websiteSettings.showPuppies ? 'checked' : '' %>> Chiots par race</label><br>
-            <label><input type="checkbox" name="showGallery" <%= websiteSettings.showGallery ? 'checked' : '' %>> Galerie</label><br>
-            <label><input type="checkbox" name="showStrengths" <%= websiteSettings.showStrengths ? 'checked' : '' %>> Pourquoi nous choisir</label><br>
-            <label><input type="checkbox" name="showContact" <%= websiteSettings.showContact ? 'checked' : '' %>> Contact</label>
-          </div>
-
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Bande annonce</span><h3>Message sous le hero</h3></div>
-            <div class="form-group"><label>Annonce</label><input name="contactStripTitle" value="<%= websiteSettings.contactStripTitle || '' %>"></div>
-            <div class="form-group"><label>Lien / sous-texte</label><input name="contactStripText" value="<%= websiteSettings.contactStripText || '' %>"></div>
-            <div class="form-grid"><div class="form-group"><label>Bouton principal</label><input name="primaryCtaLabel" value="<%= websiteSettings.primaryCtaLabel || '' %>"></div><div class="form-group"><label>Bouton secondaire</label><input name="secondaryCtaLabel" value="<%= websiteSettings.secondaryCtaLabel || '' %>"></div></div>
-          </div>
-        </div>
-
-        <div class="settings-panel">
-          <div class="section-title compact"><span class="section-kicker">Services</span><h3>Choisir les activités proposées</h3></div>
-          <p class="muted">Coche uniquement les services réellement proposés par l’élevage. Chaque bloc peut avoir son texte, son bouton et son image.</p>
-
-          <div class="dashboard-columns">
-            <div class="card" style="box-shadow:none; background:var(--surface-2);">
-              <label><input type="checkbox" name="servicePensionEnabled" <%= websiteSettings.servicePensionEnabled ? 'checked' : '' %>> Afficher Pension canine</label>
-              <div class="form-group"><label>Titre</label><input name="servicePensionTitle" value="<%= websiteSettings.servicePensionTitle || '' %>"></div>
-              <div class="form-group"><label>Texte</label><textarea name="servicePensionText" rows="3"><%= websiteSettings.servicePensionText || '' %></textarea></div>
-              <div class="form-group"><label>Bouton</label><input name="servicePensionButton" value="<%= websiteSettings.servicePensionButton || '' %>"></div>
-              <% if (websiteSettings.servicePensionImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.servicePensionImageUrl %>" alt="Pension"></div><label><input type="checkbox" name="clear_service_pension_image"> Supprimer l’image</label><% } %>
-              <div class="form-group"><label>Image pension</label><input type="file" name="service_pension_image" accept="image/png, image/jpeg, image/webp"></div>
+            <div class="settings-panel">
+              <div class="section-title compact"><span class="section-kicker">Template</span><h3>Choix graphique</h3></div>
+              <div class="template-picker">
+                <% const templateLabels = { heritage: 'Domaine / Forêt — recommandé', field: 'Field & chasse', luxury: 'Premium sombre', minimal: 'Minimal moderne', breeder: 'Catalogue élevage' }; %>
+                <% websiteTemplates.forEach((tpl) => { %>
+                  <label class="template-option <%= websiteSettings.template === tpl ? 'selected' : '' %>">
+                    <input type="radio" name="template" value="<%= tpl %>" <%= websiteSettings.template === tpl ? 'checked' : '' %>>
+                    <strong><%= templateLabels[tpl] || tpl %></strong>
+                    <span><%= tpl %></span>
+                  </label>
+                <% }) %>
+              </div>
             </div>
 
             <div class="card" style="box-shadow:none; background:var(--surface-2);">
-              <label><input type="checkbox" name="serviceTrainingEnabled" <%= websiteSettings.serviceTrainingEnabled ? 'checked' : '' %>> Afficher Dressage / Éducation</label>
-              <div class="form-group"><label>Titre</label><input name="serviceTrainingTitle" value="<%= websiteSettings.serviceTrainingTitle || '' %>"></div>
-              <div class="form-group"><label>Texte</label><textarea name="serviceTrainingText" rows="3"><%= websiteSettings.serviceTrainingText || '' %></textarea></div>
-              <div class="form-group"><label>Bouton</label><input name="serviceTrainingButton" value="<%= websiteSettings.serviceTrainingButton || '' %>"></div>
-              <% if (websiteSettings.serviceTrainingImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.serviceTrainingImageUrl %>" alt="Dressage"></div><label><input type="checkbox" name="clear_service_training_image"> Supprimer l’image</label><% } %>
-              <div class="form-group"><label>Image dressage</label><input type="file" name="service_training_image" accept="image/png, image/jpeg, image/webp"></div>
+              <div class="section-title compact"><span class="section-kicker">Accueil</span><h3>Hero de page</h3></div>
+              <div class="form-group"><label>Titre principal</label><input name="heroTitle" value="<%= websiteSettings.heroTitle || '' %>"></div>
+              <div class="form-group"><label>Texte d’introduction</label><textarea name="heroSubtitle" rows="4"><%= websiteSettings.heroSubtitle || '' %></textarea></div>
+              <div class="form-group"><label>Slogan d’en-tête</label><input name="siteSlogan" value="<%= websiteSettings.siteSlogan || '' %>"></div>
+              <% if (websiteSettings.heroImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.heroImageUrl %>" alt="Image d’accueil"></div><label><input type="checkbox" name="clearHeroImage"> Supprimer l’image d’accueil</label><% } %>
+              <div class="form-group"><label>Image d’accueil</label><input type="file" name="hero_image" accept="image/png, image/jpeg, image/webp"></div>
             </div>
-          </div>
 
-          <div class="card" style="box-shadow:none; background:var(--surface-2); margin-top:1rem;">
-            <label><input type="checkbox" name="serviceBreedingEnabled" <%= websiteSettings.serviceBreedingEnabled ? 'checked' : '' %>> Afficher Élevage de sélection</label>
-            <div class="form-group"><label>Titre</label><input name="serviceBreedingTitle" value="<%= websiteSettings.serviceBreedingTitle || '' %>"></div>
-            <div class="form-group"><label>Texte</label><textarea name="serviceBreedingText" rows="3"><%= websiteSettings.serviceBreedingText || '' %></textarea></div>
-            <div class="form-group"><label>Bouton</label><input name="serviceBreedingButton" value="<%= websiteSettings.serviceBreedingButton || '' %>"></div>
-            <% if (websiteSettings.serviceBreedingImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.serviceBreedingImageUrl %>" alt="Élevage"></div><label><input type="checkbox" name="clear_service_breeding_image"> Supprimer l’image</label><% } %>
-            <div class="form-group"><label>Image élevage</label><input type="file" name="service_breeding_image" accept="image/png, image/jpeg, image/webp"></div>
-          </div>
-        </div>
-
-        <div class="dashboard-columns">
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Introduction</span><h3>Texte éditorial</h3></div>
-            <div class="form-group"><label>Titre introduction</label><input name="introTitle" value="<%= websiteSettings.introTitle || '' %>"></div>
-            <div class="form-group"><label>Texte introduction</label><textarea name="introText" rows="5"><%= websiteSettings.introText || '' %></textarea></div>
-          </div>
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Points forts & contact</span><h3>Textes publics</h3></div>
-            <div class="form-grid"><div class="form-group"><label>Accroche points forts</label><input name="strengthsKicker" value="<%= websiteSettings.strengthsKicker || '' %>"></div><div class="form-group"><label>Titre points forts</label><input name="strengthsTitle" value="<%= websiteSettings.strengthsTitle || '' %>"></div></div>
-            <div class="form-group"><label>Points forts — un par ligne</label><textarea name="strengths" rows="5"><%= websiteSettings.strengths || '' %></textarea></div>
-            <div class="form-grid"><div class="form-group"><label>Horaires</label><input name="openingHours" value="<%= websiteSettings.openingHours || '' %>"></div><div class="form-group"><label>Instagram</label><input name="instagram" value="<%= websiteSettings.instagram || '' %>"></div><div class="form-group"><label>Facebook</label><input name="facebook" value="<%= websiteSettings.facebook || '' %>"></div></div>
-          </div>
-        </div>
-
-        <div class="dashboard-columns">
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Contact</span><h3>Bloc engagement</h3></div>
-            <div class="form-group"><label>Titre du panneau contact</label><input name="contactPanelTitle" value="<%= websiteSettings.contactPanelTitle || '' %>"></div>
-            <div class="form-group"><label>Texte du panneau contact</label><textarea name="contactPanelText" rows="4"><%= websiteSettings.contactPanelText || '' %></textarea></div>
-          </div>
-          <div class="card" style="box-shadow:none; background:var(--surface-2);">
-            <div class="section-title compact"><span class="section-kicker">Footer</span><h3>Pied de page</h3></div>
-            <div class="form-group"><label>Texte du footer</label><textarea name="footerText" rows="4"><%= websiteSettings.footerText || '' %></textarea></div>
-          </div>
-        </div>
-
-        <div class="settings-panel">
-          <div class="section-title compact"><span class="section-kicker">Galerie</span><h3>Photos générales du site</h3></div>
-          <div class="form-group"><label>Ajouter des photos</label><input type="file" name="gallery_images" accept="image/png, image/jpeg, image/webp" multiple></div>
-          <% if (websiteSettings.gallery && websiteSettings.gallery.length) { %>
-            <div class="image-manage-grid">
-              <% websiteSettings.gallery.forEach((image) => { %>
-                <label class="image-manage-card"><img src="<%= image.url %>" alt="Photo vitrine"><span><input type="checkbox" name="removeGallery" value="<%= image.url %>"> Supprimer</span></label>
-              <% }) %>
+            <div class="card" style="box-shadow:none; background:var(--surface-2);">
+              <div class="section-title compact"><span class="section-kicker">Couleurs</span><h3>Palette complète</h3></div>
+              <div class="form-grid">
+                <div class="form-group"><label>Vert principal</label><input type="color" name="primaryColor" value="<%= websiteSettings.primaryColor || '#29422c' %>"></div>
+                <div class="form-group"><label>Doré / sable</label><input type="color" name="secondaryColor" value="<%= websiteSettings.secondaryColor || '#bda66f' %>"></div>
+                <div class="form-group"><label>Accent</label><input type="color" name="accentColor" value="<%= websiteSettings.accentColor || '#f4efe2' %>"></div>
+                <div class="form-group"><label>Fond</label><input type="color" name="backgroundColor" value="<%= websiteSettings.backgroundColor || '#f6f1e8' %>"></div>
+                <div class="form-group"><label>Texte</label><input type="color" name="textColor" value="<%= websiteSettings.textColor || '#24301f' %>"></div>
+              </div>
             </div>
-          <% } %>
+
+            <div class="card" style="box-shadow:none; background:var(--surface-2);">
+              <div class="section-title compact"><span class="section-kicker">Sections</span><h3>Afficher / masquer</h3></div>
+              <label><input type="checkbox" name="showIntro" <%= websiteSettings.showIntro ? 'checked' : '' %>> Introduction</label><br>
+              <label><input type="checkbox" name="showServices" <%= websiteSettings.showServices ? 'checked' : '' %>> Services</label><br>
+              <label><input type="checkbox" name="showDogs" <%= websiteSettings.showDogs ? 'checked' : '' %>> Chiens adultes par race</label><br>
+              <label><input type="checkbox" name="showLitters" <%= websiteSettings.showLitters ? 'checked' : '' %>> Portées par race</label><br>
+              <label><input type="checkbox" name="showPuppies" <%= websiteSettings.showPuppies ? 'checked' : '' %>> Chiots par race</label><br>
+              <label><input type="checkbox" name="showGallery" <%= websiteSettings.showGallery ? 'checked' : '' %>> Galerie</label><br>
+              <label><input type="checkbox" name="showStrengths" <%= websiteSettings.showStrengths ? 'checked' : '' %>> Pourquoi nous choisir</label><br>
+              <label><input type="checkbox" name="showContact" <%= websiteSettings.showContact ? 'checked' : '' %>> Contact</label>
+            </div>
+
+            <div class="card" style="box-shadow:none; background:var(--surface-2);">
+              <div class="section-title compact"><span class="section-kicker">Bande annonce</span><h3>Message sous le hero</h3></div>
+              <div class="form-group"><label>Annonce</label><input name="contactStripTitle" value="<%= websiteSettings.contactStripTitle || '' %>"></div>
+              <div class="form-group"><label>Lien / sous-texte</label><input name="contactStripText" value="<%= websiteSettings.contactStripText || '' %>"></div>
+              <div class="form-grid"><div class="form-group"><label>Bouton principal</label><input name="primaryCtaLabel" value="<%= websiteSettings.primaryCtaLabel || '' %>"></div><div class="form-group"><label>Bouton secondaire</label><input name="secondaryCtaLabel" value="<%= websiteSettings.secondaryCtaLabel || '' %>"></div></div>
+            </div>
+
+            <div class="settings-panel">
+              <div class="section-title compact"><span class="section-kicker">Services</span><h3>Choisir les activités proposées</h3></div>
+              <p class="muted">Coche uniquement les services réellement proposés. Chaque bloc peut avoir son texte, son bouton et son image.</p>
+              <div class="card" style="box-shadow:none; background:var(--surface-2);">
+                <label><input type="checkbox" name="servicePensionEnabled" <%= websiteSettings.servicePensionEnabled ? 'checked' : '' %>> Afficher Pension canine</label>
+                <div class="form-group"><label>Titre</label><input name="servicePensionTitle" value="<%= websiteSettings.servicePensionTitle || '' %>"></div>
+                <div class="form-group"><label>Texte</label><textarea name="servicePensionText" rows="3"><%= websiteSettings.servicePensionText || '' %></textarea></div>
+                <div class="form-group"><label>Bouton</label><input name="servicePensionButton" value="<%= websiteSettings.servicePensionButton || '' %>"></div>
+                <% if (websiteSettings.servicePensionImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.servicePensionImageUrl %>" alt="Pension"></div><label><input type="checkbox" name="clear_service_pension_image"> Supprimer l’image</label><% } %>
+                <div class="form-group"><label>Image pension</label><input type="file" name="service_pension_image" accept="image/png, image/jpeg, image/webp"></div>
+              </div>
+              <div class="card" style="box-shadow:none; background:var(--surface-2);">
+                <label><input type="checkbox" name="serviceTrainingEnabled" <%= websiteSettings.serviceTrainingEnabled ? 'checked' : '' %>> Afficher Dressage / Éducation</label>
+                <div class="form-group"><label>Titre</label><input name="serviceTrainingTitle" value="<%= websiteSettings.serviceTrainingTitle || '' %>"></div>
+                <div class="form-group"><label>Texte</label><textarea name="serviceTrainingText" rows="3"><%= websiteSettings.serviceTrainingText || '' %></textarea></div>
+                <div class="form-group"><label>Bouton</label><input name="serviceTrainingButton" value="<%= websiteSettings.serviceTrainingButton || '' %>"></div>
+                <% if (websiteSettings.serviceTrainingImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.serviceTrainingImageUrl %>" alt="Dressage"></div><label><input type="checkbox" name="clear_service_training_image"> Supprimer l’image</label><% } %>
+                <div class="form-group"><label>Image dressage</label><input type="file" name="service_training_image" accept="image/png, image/jpeg, image/webp"></div>
+              </div>
+              <div class="card" style="box-shadow:none; background:var(--surface-2);">
+                <label><input type="checkbox" name="serviceBreedingEnabled" <%= websiteSettings.serviceBreedingEnabled ? 'checked' : '' %>> Afficher Élevage de sélection</label>
+                <div class="form-group"><label>Titre</label><input name="serviceBreedingTitle" value="<%= websiteSettings.serviceBreedingTitle || '' %>"></div>
+                <div class="form-group"><label>Texte</label><textarea name="serviceBreedingText" rows="3"><%= websiteSettings.serviceBreedingText || '' %></textarea></div>
+                <div class="form-group"><label>Bouton</label><input name="serviceBreedingButton" value="<%= websiteSettings.serviceBreedingButton || '' %>"></div>
+                <% if (websiteSettings.serviceBreedingImageUrl) { %><div class="mini-gallery"><img src="<%= websiteSettings.serviceBreedingImageUrl %>" alt="Élevage"></div><label><input type="checkbox" name="clear_service_breeding_image"> Supprimer l’image</label><% } %>
+                <div class="form-group"><label>Image élevage</label><input type="file" name="service_breeding_image" accept="image/png, image/jpeg, image/webp"></div>
+              </div>
+            </div>
+
+            <div class="card" style="box-shadow:none; background:var(--surface-2);">
+              <div class="section-title compact"><span class="section-kicker">Introduction</span><h3>Texte éditorial</h3></div>
+              <div class="form-group"><label>Titre introduction</label><input name="introTitle" value="<%= websiteSettings.introTitle || '' %>"></div>
+              <div class="form-group"><label>Texte introduction</label><textarea name="introText" rows="5"><%= websiteSettings.introText || '' %></textarea></div>
+            </div>
+
+            <div class="card" style="box-shadow:none; background:var(--surface-2);">
+              <div class="section-title compact"><span class="section-kicker">Points forts & contact</span><h3>Textes publics</h3></div>
+              <div class="form-grid"><div class="form-group"><label>Accroche points forts</label><input name="strengthsKicker" value="<%= websiteSettings.strengthsKicker || '' %>"></div><div class="form-group"><label>Titre points forts</label><input name="strengthsTitle" value="<%= websiteSettings.strengthsTitle || '' %>"></div></div>
+              <div class="form-group"><label>Points forts — un par ligne</label><textarea name="strengths" rows="5"><%= websiteSettings.strengths || '' %></textarea></div>
+              <div class="form-grid"><div class="form-group"><label>Horaires</label><input name="openingHours" value="<%= websiteSettings.openingHours || '' %>"></div><div class="form-group"><label>Instagram</label><input name="instagram" value="<%= websiteSettings.instagram || '' %>"></div><div class="form-group"><label>Facebook</label><input name="facebook" value="<%= websiteSettings.facebook || '' %>"></div></div>
+            </div>
+
+            <div class="card" style="box-shadow:none; background:var(--surface-2);">
+              <div class="section-title compact"><span class="section-kicker">Contact</span><h3>Bloc engagement</h3></div>
+              <div class="form-group"><label>Titre du panneau contact</label><input name="contactPanelTitle" value="<%= websiteSettings.contactPanelTitle || '' %>"></div>
+              <div class="form-group"><label>Texte du panneau contact</label><textarea name="contactPanelText" rows="4"><%= websiteSettings.contactPanelText || '' %></textarea></div>
+              <div class="form-group"><label>Texte du footer</label><textarea name="footerText" rows="4"><%= websiteSettings.footerText || '' %></textarea></div>
+            </div>
+
+            <div class="settings-panel">
+              <div class="section-title compact"><span class="section-kicker">Galerie</span><h3>Photos générales du site</h3></div>
+              <div class="form-group"><label>Ajouter des photos</label><input type="file" name="gallery_images" accept="image/png, image/jpeg, image/webp" multiple></div>
+              <% if (websiteSettings.gallery && websiteSettings.gallery.length) { %>
+                <div class="image-manage-grid">
+                  <% websiteSettings.gallery.forEach((image) => { %>
+                    <label class="image-manage-card"><img src="<%= image.url %>" alt="Photo vitrine"><span><input type="checkbox" name="removeGallery" value="<%= image.url %>"> Supprimer</span></label>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Enregistrer le site vitrine</button>
+          </form>
         </div>
 
-        <button type="submit" class="btn btn-primary">Enregistrer le site vitrine</button>
-      </form>
+        <aside class="website-live-preview" aria-label="Aperçu du site vitrine">
+          <header>
+            <span>Aperçu temps réel</span>
+            <% if (typeof publicSiteUrl !== 'undefined') { %><a href="<%= publicSiteUrl %>" target="_blank">Ouvrir</a><% } %>
+          </header>
+          <div class="website-preview-frame-wrap">
+            <iframe id="website-preview-frame" src="<%= publicSiteUrl %>" title="Aperçu du site vitrine"></iframe>
+          </div>
+        </aside>
+      </div>
     </section>
+    <script src="/js/website-preview.js" defer></script>
   <% } %>
 </main>
 
