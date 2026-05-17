@@ -165,15 +165,6 @@ const modules = [
     accent: 'violet',
   },
   {
-    key: 'breeder',
-    labelKey: 'nav.breeder',
-    descriptionKey: 'modules.breeder.description',
-    href: '/breeder',
-    icon: 'badge',
-    group: 'communication',
-    accent: 'blue',
-  },
-  {
     key: 'website',
     labelKey: 'nav.website',
     descriptionKey: 'modules.website.description',
