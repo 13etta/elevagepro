@@ -2,6 +2,7 @@ const moduleGroups = [
   { key: 'pilotage', labelKey: 'groups.pilotage' },
   { key: 'cheptel', labelKey: 'groups.cheptel' },
   { key: 'sante', labelKey: 'groups.sante' },
+  { key: 'structure', labelKey: 'groups.structure' },
   { key: 'reproduction', labelKey: 'groups.reproduction' },
   { key: 'commercial', labelKey: 'groups.commercial' },
   { key: 'selection', labelKey: 'groups.selection' },
@@ -63,6 +64,15 @@ const modules = [
     icon: 'monitor_weight',
     group: 'sante',
     accent: 'green',
+  },
+  {
+    key: 'structure',
+    labelKey: 'nav.structure',
+    descriptionKey: 'modules.structure.description',
+    href: '/structure',
+    icon: 'domain',
+    group: 'structure',
+    accent: 'gold',
   },
   {
     key: 'reproductionDashboard',

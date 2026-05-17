@@ -1,0 +1,124 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container structure-page">
+  <section class="structure-hero">
+    <div>
+      <h1>Gestion de la Structure</h1>
+      <p>Pilotez vos infrastructures, votre équipe et vos obligations légales avec une précision professionnelle.</p>
+    </div>
+    <div class="structure-actions">
+      <button type="button" class="structure-btn secondary"><span class="material-symbols-outlined">download</span> Exporter</button>
+      <button type="button" class="structure-btn primary" onclick="document.getElementById('new-building-form').classList.toggle('is-open')"><span class="material-symbols-outlined">add</span> Nouveau bâtiment</button>
+    </div>
+  </section>
+
+  <form id="new-building-form" class="structure-new-building" action="/structure/infrastructures" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="name" placeholder="Nom du bâtiment" required>
+    <select name="type">
+      <option value="kennel">Chenil / Box</option>
+      <option value="nursery">Nurserie</option>
+      <option value="infirmary">Infirmerie</option>
+      <option value="yard">Parc extérieur</option>
+      <option value="other">Autre</option>
+    </select>
+    <input type="number" name="capacity" min="0" placeholder="Capacité">
+    <select name="status">
+      <option value="Actif">Actif</option>
+      <option value="Libre">Libre</option>
+      <option value="Attention">Attention</option>
+      <option value="Maintenance">Maintenance</option>
+    </select>
+    <input name="image_url" placeholder="URL image de fond">
+    <textarea name="description" placeholder="Description"></textarea>
+    <button type="submit">Créer</button>
+  </form>
+
+  <section class="structure-layout">
+    <div class="structure-main">
+      <div class="structure-section-title">
+        <h2>Infrastructures</h2>
+        <div class="structure-view-toggle"><span class="material-symbols-outlined">grid_view</span><span class="material-symbols-outlined">table_rows</span></div>
+      </div>
+
+      <div class="structure-grid">
+        <% infrastructures.forEach((item) => { %>
+          <article class="structure-card structure-card-bg" style="--structure-image:url('<%= item.image_url || '' %>')">
+            <div class="structure-card-media"></div>
+            <div class="structure-card-content">
+              <div class="structure-card-top">
+                <span class="structure-icon material-symbols-outlined"><%= item.type === 'nursery' ? 'child_care' : item.type === 'infirmary' ? 'medical_services' : item.type === 'yard' ? 'park' : 'warehouse' %></span>
+                <span class="structure-status <%= String(item.displayStatus || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') %>"><%= item.displayStatus %></span>
+              </div>
+              <h3><%= item.name %></h3>
+              <p><%= item.description || 'Infrastructure opérationnelle' %></p>
+              <div class="structure-occupancy">
+                <div><span>Occupation globale</span><strong><%= item.occupied %> / <%= item.capacity || 0 %> places</strong></div>
+                <div class="structure-progress"><span style="width:<%= item.occupancyRate %>%"></span></div>
+              </div>
+              <div class="structure-lines">
+                <span><%= item.zone_label || 'Zone principale' %></span>
+                <strong><%= item.status || 'Actif' %></strong>
+              </div>
+              <div class="structure-card-actions">
+                <button type="button">Modifier</button>
+                <button type="button" class="brown">Assigner</button>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+
+      <section class="legal-section">
+        <div class="legal-title">
+          <h2><span class="material-symbols-outlined">gavel</span> Registres Légaux</h2>
+          <a href="/structure">Consulter tout l'historique <span class="material-symbols-outlined">arrow_forward</span></a>
+        </div>
+        <div class="legal-grid">
+          <article class="legal-card">
+            <div class="legal-cover movements-cover"><span>CERFA N°15048-01<br>Mouvements</span></div>
+            <div>
+              <h3>Registre des Entrées & Sorties</h3>
+              <p>Suivi obligatoire de tous les mouvements d’animaux.</p>
+              <% if (movements.length) { %><small>Dernier mouvement : <%= formatDate(movements[0].movement_date) %> · <%= movements[0].animal_name || '-' %></small><% } else { %><small>Aucun mouvement récent.</small><% } %>
+            </div>
+          </article>
+          <article class="legal-card">
+            <div class="legal-cover sanitary-cover"><span>Réglementation 2024<br>Sanitaire</span></div>
+            <div>
+              <h3>Registre Sanitaire de l'Élevage</h3>
+              <p>Journal des soins, vaccinations, vermifuges et visites.</p>
+              <% if (sanitary.length) { %><small>Dernier acte : <%= formatDate(sanitary[0].event_date) %> · <%= sanitary[0].event_type || '-' %></small><% } else { %><small>Registre à jour.</small><% } %>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <aside class="structure-aside">
+      <article class="team-panel">
+        <header><h2>Équipe</h2><span class="material-symbols-outlined">group_add</span></header>
+        <% if (!staff.length) { %>
+          <p class="empty-team">Aucun membre d’équipe renseigné.</p>
+        <% } %>
+        <% staff.forEach((person) => { %>
+          <div class="team-line">
+            <span class="team-avatar"><%= (person.first_name || '?').slice(0,1) %></span>
+            <div><strong><%= person.first_name %> <%= person.last_name %></strong><small><%= person.role || person.contract_type || 'Équipe' %></small></div>
+            <i></i>
+          </div>
+        <% }) %>
+        <a href="/settings" class="team-planning">Planning hebdomadaire</a>
+      </article>
+
+      <article class="sanitary-score">
+        <span>Statut sanitaire</span>
+        <strong><%= stats.sanitaryScore %>%</strong>
+        <p>Tous les registres sanitaires sont à jour pour le contrôle DDPP.</p>
+      </article>
+    </aside>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
