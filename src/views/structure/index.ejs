@@ -8,7 +8,7 @@
       <p>Pilotez vos infrastructures, votre équipe et vos obligations légales avec une précision professionnelle.</p>
     </div>
     <div class="structure-actions">
-      <button type="button" class="structure-btn secondary"><span class="material-symbols-outlined">download</span> Exporter</button>
+      <a href="/breeder/register/entries" class="structure-btn secondary"><span class="material-symbols-outlined">download</span> Exporter</a>
       <button type="button" class="structure-btn primary" onclick="document.getElementById('new-building-form').classList.toggle('is-open')"><span class="material-symbols-outlined">add</span> Nouveau bâtiment</button>
     </div>
   </section>
@@ -17,21 +17,21 @@
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <input name="name" placeholder="Nom du bâtiment" required>
     <select name="type">
-      <option value="kennel">Chenil / Box</option>
-      <option value="nursery">Nurserie</option>
-      <option value="infirmary">Infirmerie</option>
-      <option value="yard">Parc extérieur</option>
-      <option value="other">Autre</option>
+      <option value="box">Chenil / Box</option>
+      <option value="nurserie">Nurserie / Mise bas</option>
+      <option value="infirmerie">Infirmerie / Quarantaine</option>
+      <option value="parc">Parc extérieur</option>
+      <option value="autre">Autre</option>
     </select>
     <input type="number" name="capacity" min="0" placeholder="Capacité">
     <select name="status">
-      <option value="Actif">Actif</option>
-      <option value="Libre">Libre</option>
-      <option value="Attention">Attention</option>
-      <option value="Maintenance">Maintenance</option>
+      <option value="actif">Actif</option>
+      <option value="libre">Libre</option>
+      <option value="attention">Attention</option>
+      <option value="maintenance">Maintenance</option>
     </select>
-    <input name="image_url" placeholder="URL image de fond">
-    <textarea name="description" placeholder="Description"></textarea>
+    <input name="image_url" placeholder="URL image de fond — facultatif">
+    <textarea name="description" placeholder="Description — facultatif"></textarea>
     <button type="submit">Créer</button>
   </form>
 
@@ -44,12 +44,11 @@
 
       <div class="structure-grid">
         <% infrastructures.forEach((item) => { %>
-          <article class="structure-card structure-card-bg" style="--structure-image:url('<%= item.image_url || '' %>')">
-            <div class="structure-card-media"></div>
+          <article class="structure-card structure-card-bg" style="--structure-image:url('<%= item.cardImageUrl %>')">
             <div class="structure-card-content">
               <div class="structure-card-top">
-                <span class="structure-icon material-symbols-outlined"><%= item.type === 'nursery' ? 'child_care' : item.type === 'infirmary' ? 'medical_services' : item.type === 'yard' ? 'park' : 'warehouse' %></span>
-                <span class="structure-status <%= String(item.displayStatus || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') %>"><%= item.displayStatus %></span>
+                <span class="structure-icon material-symbols-outlined"><%= item.icon || 'warehouse' %></span>
+                <span class="structure-status <%= item.statusClass %>"><%= item.displayStatus %></span>
               </div>
               <h3><%= item.name %></h3>
               <p><%= item.description || 'Infrastructure opérationnelle' %></p>
@@ -59,11 +58,11 @@
               </div>
               <div class="structure-lines">
                 <span><%= item.zone_label || 'Zone principale' %></span>
-                <strong><%= item.status || 'Actif' %></strong>
+                <strong><%= item.displayStatus %></strong>
               </div>
               <div class="structure-card-actions">
-                <button type="button">Modifier</button>
-                <button type="button" class="brown">Assigner</button>
+                <a href="/breeder/infrastructure/<%= item.id %>/edit">Modifier</a>
+                <a href="/dogs" class="brown">Assigner</a>
               </div>
             </div>
           </article>
@@ -73,23 +72,23 @@
       <section class="legal-section">
         <div class="legal-title">
           <h2><span class="material-symbols-outlined">gavel</span> Registres Légaux</h2>
-          <a href="/structure">Consulter tout l'historique <span class="material-symbols-outlined">arrow_forward</span></a>
+          <a href="/breeder/register/entries">Consulter tout l'historique <span class="material-symbols-outlined">arrow_forward</span></a>
         </div>
         <div class="legal-grid">
           <article class="legal-card">
-            <div class="legal-cover movements-cover"><span>CERFA N°15048-01<br>Mouvements</span></div>
+            <a class="legal-cover movements-cover" href="/breeder/register/entries"><span>CERFA N°15048-01<br>Mouvements</span></a>
             <div>
               <h3>Registre des Entrées & Sorties</h3>
               <p>Suivi obligatoire de tous les mouvements d’animaux.</p>
-              <% if (movements.length) { %><small>Dernier mouvement : <%= formatDate(movements[0].movement_date) %> · <%= movements[0].animal_name || '-' %></small><% } else { %><small>Aucun mouvement récent.</small><% } %>
+              <% if (movements.length) { %><small>Dernier mouvement : <%= formatDate(movements[0].movement_date) %> · <%= movements[0].animal_name || '-' %></small><% } else { %><small>Aucun mouvement enregistré.</small><% } %>
             </div>
           </article>
           <article class="legal-card">
-            <div class="legal-cover sanitary-cover"><span>Réglementation 2024<br>Sanitaire</span></div>
+            <a class="legal-cover sanitary-cover" href="/breeder/register/health"><span>Réglementation 2024<br>Sanitaire</span></a>
             <div>
               <h3>Registre Sanitaire de l'Élevage</h3>
               <p>Journal des soins, vaccinations, vermifuges et visites.</p>
-              <% if (sanitary.length) { %><small>Dernier acte : <%= formatDate(sanitary[0].event_date) %> · <%= sanitary[0].event_type || '-' %></small><% } else { %><small>Registre à jour.</small><% } %>
+              <% if (sanitary.length) { %><small>Dernier acte : <%= formatDate(sanitary[0].event_date) %> · <%= sanitary[0].event_type || '-' %></small><% } else { %><small>Aucun acte sanitaire enregistré.</small><% } %>
             </div>
           </article>
         </div>
@@ -112,10 +111,18 @@
         <a href="/settings" class="team-planning">Planning hebdomadaire</a>
       </article>
 
-      <article class="sanitary-score">
+      <article class="sanitary-score <%= stats.sanitaryScore < 100 ? 'is-incomplete' : '' %>">
         <span>Statut sanitaire</span>
         <strong><%= stats.sanitaryScore %>%</strong>
-        <p>Tous les registres sanitaires sont à jour pour le contrôle DDPP.</p>
+        <p><%= stats.sanitaryMessage %></p>
+        <% if (stats.sanitaryMissing && stats.sanitaryMissing.length) { %>
+          <ul>
+            <% stats.sanitaryMissing.forEach((missing) => { %><li><%= missing %></li><% }) %>
+          </ul>
+          <a href="/breeder/register/health">Compléter le registre</a>
+        <% } else { %>
+          <a href="/breeder/register/health">Ouvrir le registre</a>
+        <% } %>
       </article>
     </aside>
   </section>
