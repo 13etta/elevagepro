@@ -33,6 +33,7 @@ async function ensureProfitabilityTables() {
 
   await pool.query('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP').catch(() => {});
   await pool.query('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS puppy_id UUID').catch(() => {});
+  await pool.query('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS dog_id UUID').catch(() => {});
   await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS sale_price NUMERIC(10,2)').catch(() => {});
   await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE').catch(() => {});
   await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE').catch(() => {});
@@ -80,7 +81,7 @@ function computeAverageSalePrice(puppies, sales) {
 }
 
 function buildLitterLabel(litter) {
-  if (!litter) return 'Aucune portée';
+  if (!litter) return 'Charges générales de l’élevage';
   const mother = litter.mother_name || 'Mère non renseignée';
   const date = litter.birth_date ? new Date(litter.birth_date).toLocaleDateString('fr-FR') : 'date inconnue';
   return `${mother} — ${date}`;
@@ -131,7 +132,14 @@ exports.getProfitability = async (req, res) => {
           WHERE e.breeder_id = $1 AND e.litter_id = $2
           ORDER BY e.expense_date DESC, e.created_at DESC
         `, [breederId, selectedId])
-      : { rows: [] };
+      : await pool.query(`
+          SELECT e.*, p.name AS puppy_name, d.name AS dog_name
+          FROM expenses e
+          LEFT JOIN puppies p ON e.puppy_id = p.id
+          LEFT JOIN dogs d ON e.dog_id = d.id
+          WHERE e.breeder_id = $1 AND e.litter_id IS NULL
+          ORDER BY e.expense_date DESC, e.created_at DESC
+        `, [breederId]);
 
     const salesResult = selectedId
       ? await pool.query(`
@@ -194,6 +202,7 @@ exports.getProfitability = async (req, res) => {
       litters: littersResult.rows,
       selectedLitter,
       selectedLitterLabel: buildLitterLabel(selectedLitter),
+      selectedId,
       puppies,
       expenses,
       sales,
@@ -224,15 +233,30 @@ exports.addExpense = async (req, res) => {
   try {
     await ensureProfitabilityTables();
     const breederId = req.session.user.breeder_id;
-    const { litter_id, puppy_id, expense_date, category, label, amount, notes } = req.body;
+    const { expense_date, category, label, amount, notes } = req.body;
+    let { litter_id, puppy_id } = req.body;
 
-    if (!litter_id) {
-      return res.status(400).send('Sélectionnez une portée avant d’ajouter une charge.');
+    litter_id = litter_id && String(litter_id).trim() ? litter_id : null;
+    puppy_id = puppy_id && String(puppy_id).trim() ? puppy_id : null;
+
+    if (puppy_id) {
+      const puppyCheck = await pool.query(
+        'SELECT id, litter_id FROM puppies WHERE id = $1 AND breeder_id = $2',
+        [puppy_id, breederId],
+      );
+      if (!puppyCheck.rows.length) {
+        return res.status(404).send('Chiot introuvable pour cet élevage.');
+      }
+      if (!litter_id && puppyCheck.rows[0].litter_id) {
+        litter_id = puppyCheck.rows[0].litter_id;
+      }
     }
 
-    const litterCheck = await pool.query('SELECT id FROM litters WHERE id = $1 AND breeder_id = $2', [litter_id, breederId]);
-    if (!litterCheck.rows.length) {
-      return res.status(404).send('Portée introuvable pour cet élevage.');
+    if (litter_id) {
+      const litterCheck = await pool.query('SELECT id FROM litters WHERE id = $1 AND breeder_id = $2', [litter_id, breederId]);
+      if (!litterCheck.rows.length) {
+        return res.status(404).send('Portée introuvable pour cet élevage.');
+      }
     }
 
     const cleanAmount = parseMoney(amount);
@@ -246,7 +270,7 @@ exports.addExpense = async (req, res) => {
     `, [
       breederId,
       litter_id,
-      puppy_id || null,
+      puppy_id,
       expense_date || new Date().toISOString().split('T')[0],
       category || 'autre',
       String(label || '').trim() || 'Charge sans libellé',
@@ -254,7 +278,7 @@ exports.addExpense = async (req, res) => {
       notes || null,
     ]);
 
-    res.redirect(`/profitability?litter_id=${litter_id}`);
+    res.redirect(`/profitability${litter_id ? '?litter_id=' + litter_id : ''}`);
   } catch (error) {
     console.error('Erreur ajout dépense:', error);
     res.status(500).send('Erreur lors de l’enregistrement de la dépense.');
