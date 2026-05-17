@@ -8,6 +8,11 @@
       <h1>Analyse de rentabilité</h1>
       <p>Suivez les revenus signés, les acomptes réellement encaissés, les charges et la marge par portée.</p>
     </div>
+    <div class="form-actions">
+      <a class="btn btn-secondary" href="/litters/new">Nouvelle portée</a>
+      <a class="btn btn-secondary" href="/puppies/new">Ajouter un chiot</a>
+      <a class="btn btn-primary" href="/sales/new">Nouvelle vente</a>
+    </div>
   </section>
 
   <section class="dashboard-columns">
@@ -17,23 +22,37 @@
         <h2>Sélection</h2>
         <% if (selectedLitter) { %>
           <p class="muted"><%= selectedLitterLabel %><% if (selectedLitter.mother_breed) { %> · <%= selectedLitter.mother_breed %><% } %></p>
+        <% } else { %>
+          <p class="muted">Aucune portée sélectionnée. Créez ou sélectionnez une portée pour activer les calculs.</p>
         <% } %>
       </div>
-      <form method="GET" action="/profitability" class="stacked-form">
-        <div class="form-group">
-          <label for="litter_id">Portée analysée</label>
-          <select id="litter_id" name="litter_id" onchange="this.form.submit()" <%= !litters.length ? 'disabled' : '' %>>
-            <% if (!litters.length) { %>
-              <option>Aucune portée enregistrée</option>
-            <% } %>
-            <% litters.forEach((litter) => { %>
-              <option value="<%= litter.id %>" <%= selectedLitter && String(selectedLitter.id) === String(litter.id) ? 'selected' : '' %>>
-                <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
-              </option>
-            <% }) %>
-          </select>
+
+      <% if (!litters.length) { %>
+        <div class="empty-state">
+          <strong>Aucune portée enregistrée</strong>
+          <p>La rentabilité se calcule portée par portée. Commencez par créer une portée.</p>
+          <a class="btn btn-primary" href="/litters/new">Créer une portée</a>
         </div>
-      </form>
+      <% } else { %>
+        <form method="GET" action="/profitability" class="stacked-form">
+          <div class="form-group">
+            <label for="litter_id">Portée analysée</label>
+            <select id="litter_id" name="litter_id">
+              <% litters.forEach((litter) => { %>
+                <option value="<%= litter.id %>" <%= selectedLitter && String(selectedLitter.id) === String(litter.id) ? 'selected' : '' %>>
+                  <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Analyser cette portée</button>
+            <% if (selectedLitter) { %>
+              <a class="btn btn-secondary" href="/litters/<%= selectedLitter.id %>">Ouvrir la portée</a>
+            <% } %>
+          </div>
+        </form>
+      <% } %>
     </article>
 
     <article class="card">
@@ -42,19 +61,19 @@
         <h2>État commercial</h2>
       </div>
       <section class="kpi-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0;">
-        <article class="kpi-card"><span>Total</span><strong><%= puppyStats.total || 0 %></strong></article>
-        <article class="kpi-card"><span>Disponibles</span><strong><%= puppyStats.available || 0 %></strong></article>
-        <article class="kpi-card"><span>Réservés</span><strong><%= puppyStats.reserved || 0 %></strong></article>
-        <article class="kpi-card"><span>Vendus</span><strong><%= puppyStats.sold || 0 %></strong></article>
+        <a class="kpi-card profitability-link-card" href="/puppies"><span>Total</span><strong><%= puppyStats.total || 0 %></strong></a>
+        <a class="kpi-card profitability-link-card" href="/puppies?status=disponible"><span>Disponibles</span><strong><%= puppyStats.available || 0 %></strong></a>
+        <a class="kpi-card profitability-link-card" href="/puppies?status=reserve"><span>Réservés</span><strong><%= puppyStats.reserved || 0 %></strong></a>
+        <a class="kpi-card profitability-link-card" href="/sales"><span>Vendus</span><strong><%= puppyStats.sold || 0 %></strong></a>
       </section>
     </article>
   </section>
 
   <section class="kpi-grid">
-    <article class="kpi-card"><span>CA signé</span><strong><%= Number(bookedRevenue || 0).toFixed(2) %> €</strong></article>
-    <article class="kpi-card"><span>Encaissement réel</span><strong><%= Number(paidRevenue || 0).toFixed(2) %> €</strong></article>
-    <article class="kpi-card"><span>CA prévisionnel</span><strong><%= Number(projectedRevenue || 0).toFixed(2) %> €</strong></article>
-    <article class="kpi-card"><span>Charges</span><strong><%= Number(totalExpenses || 0).toFixed(2) %> €</strong></article>
+    <a class="kpi-card profitability-link-card" href="/sales"><span>CA signé</span><strong><%= Number(bookedRevenue || 0).toFixed(2) %> €</strong></a>
+    <a class="kpi-card profitability-link-card" href="/sales"><span>Encaissement réel</span><strong><%= Number(paidRevenue || 0).toFixed(2) %> €</strong></a>
+    <a class="kpi-card profitability-link-card" href="/sales/new"><span>CA prévisionnel</span><strong><%= Number(projectedRevenue || 0).toFixed(2) %> €</strong></a>
+    <a class="kpi-card profitability-link-card" href="#profitability-expense-form"><span>Charges</span><strong><%= Number(totalExpenses || 0).toFixed(2) %> €</strong></a>
     <article class="kpi-card"><span>Marge réelle</span><strong><%= Number(cashProfit || 0).toFixed(2) %> €</strong></article>
     <article class="kpi-card"><span>Marge prévisionnelle</span><strong><%= Number(projectedProfit || 0).toFixed(2) %> €</strong></article>
     <article class="kpi-card"><span>Taux de marge</span><strong><%= marginRate || 0 %>%</strong></article>
@@ -62,53 +81,64 @@
   </section>
 
   <section class="dashboard-columns">
-    <article class="card">
+    <article class="card" id="profitability-expense-form">
       <div class="section-title compact">
         <span class="section-kicker">Charges</span>
         <h2>Ajouter une dépense</h2>
       </div>
-      <form action="/profitability/expenses" method="POST" class="stacked-form">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="hidden" name="litter_id" value="<%= selectedLitter ? selectedLitter.id : '' %>">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>" <%= !hasLitter ? 'disabled' : '' %>>
+
+      <% if (!hasLitter) { %>
+        <div class="empty-state">
+          <strong>Portée obligatoire</strong>
+          <p>Créez ou sélectionnez une portée avant d’ajouter une charge.</p>
+          <a class="btn btn-primary" href="/litters/new">Créer une portée</a>
+        </div>
+      <% } else { %>
+        <form action="/profitability/expenses" method="POST" class="stacked-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="litter_id" value="<%= selectedLitter ? selectedLitter.id : '' %>">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>">
+            </div>
+            <div class="form-group">
+              <label>Catégorie</label>
+              <select name="category" required>
+                <% expenseCategories.forEach(([value, label]) => { %>
+                  <option value="<%= value %>"><%= label %></option>
+                <% }) %>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Rattacher à un chiot</label>
+              <select name="puppy_id">
+                <option value="">Charge générale portée</option>
+                <% puppies.forEach((puppy) => { %>
+                  <option value="<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %> · <%= puppy.sex || '-' %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Montant (€)</label>
+              <input type="number" step="0.01" min="0.01" name="amount" required>
+            </div>
           </div>
           <div class="form-group">
-            <label>Catégorie</label>
-            <select name="category" required <%= !hasLitter ? 'disabled' : '' %>>
-              <% expenseCategories.forEach(([value, label]) => { %>
-                <option value="<%= value %>"><%= label %></option>
-              <% }) %>
-            </select>
-          </div>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Rattacher à un chiot</label>
-            <select name="puppy_id" <%= !hasLitter ? 'disabled' : '' %>>
-              <option value="">Charge générale portée</option>
-              <% puppies.forEach((puppy) => { %>
-                <option value="<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %> · <%= puppy.sex || '-' %></option>
-              <% }) %>
-            </select>
+            <label>Libellé</label>
+            <input type="text" name="label" required placeholder="Ex : croquettes chiots, visite vétérinaire, vaccin...">
           </div>
           <div class="form-group">
-            <label>Montant (€)</label>
-            <input type="number" step="0.01" min="0.01" name="amount" required <%= !hasLitter ? 'disabled' : '' %>>
+            <label>Note</label>
+            <input type="text" name="notes">
           </div>
-        </div>
-        <div class="form-group">
-          <label>Libellé</label>
-          <input type="text" name="label" required placeholder="Ex : croquettes chiots, visite vétérinaire, vaccin..." <%= !hasLitter ? 'disabled' : '' %>>
-        </div>
-        <div class="form-group">
-          <label>Note</label>
-          <input type="text" name="notes" <%= !hasLitter ? 'disabled' : '' %>>
-        </div>
-        <button class="btn btn-primary" type="submit" <%= !hasLitter ? 'disabled' : '' %>>Ajouter la charge</button>
-      </form>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Ajouter la charge</button>
+          </div>
+        </form>
+      <% } %>
     </article>
 
     <article class="table-block">
@@ -116,12 +146,20 @@
         <span class="section-kicker">Ventes</span>
         <h2>Revenus de la portée</h2>
         <p class="muted">Acomptes : <%= Number(depositRevenue || 0).toFixed(2) %> € · Reste prévisionnel non vendu : <%= Number(projectedUnsoldRevenue || 0).toFixed(2) %> €</p>
+        <div class="form-actions" style="justify-content:flex-start; margin-top:10px;">
+          <a class="btn btn-primary" href="/sales/new">Ajouter une vente</a>
+          <a class="btn btn-secondary" href="/sales">Voir les ventes</a>
+        </div>
       </div>
       <% if (!sales.length) { %>
-        <%- include('../partials/empty-state', { emptyTitle: 'Aucune vente', emptyText: 'Aucune vente ou réservation rattachée à cette portée.' }) %>
+        <div class="empty-state">
+          <strong>Aucune vente</strong>
+          <p>Aucune vente ou réservation rattachée à cette portée.</p>
+          <a class="btn btn-primary" href="/sales/new">Créer une vente</a>
+        </div>
       <% } else { %>
         <table>
-          <thead><tr><th>Chiot</th><th>Acquéreur</th><th>Prix</th><th>Acompte</th><th>Statut</th></tr></thead>
+          <thead><tr><th>Chiot</th><th>Acquéreur</th><th>Prix</th><th>Acompte</th><th>Statut</th><th>Action</th></tr></thead>
           <tbody>
             <% sales.forEach((sale) => { %>
               <tr>
@@ -130,6 +168,7 @@
                 <td><strong><%= Number(sale.price || 0).toFixed(2) %> €</strong></td>
                 <td><%= Number(sale.deposit_amount || 0).toFixed(2) %> €</td>
                 <td><span class="badge"><%= sale.is_reservation ? 'Réservation' : 'Vente définitive' %></span></td>
+                <td><a class="btn btn-secondary" href="/sales/<%= sale.id %>/edit">Ouvrir</a></td>
               </tr>
             <% }) %>
           </tbody>
@@ -143,12 +182,20 @@
       <div class="section-title compact">
         <span class="section-kicker">Chiots</span>
         <h2>Détail commercial</h2>
+        <div class="form-actions" style="justify-content:flex-start; margin-top:10px;">
+          <a class="btn btn-primary" href="/puppies/new">Ajouter un chiot</a>
+          <a class="btn btn-secondary" href="/puppies">Voir les chiots</a>
+        </div>
       </div>
       <% if (!puppies.length) { %>
-        <%- include('../partials/empty-state', { emptyTitle: 'Aucun chiot', emptyText: 'Ajoutez les chiots dans la portée pour obtenir une rentabilité fiable.' }) %>
+        <div class="empty-state">
+          <strong>Aucun chiot</strong>
+          <p>Ajoutez les chiots dans la portée pour obtenir une rentabilité fiable.</p>
+          <a class="btn btn-primary" href="/puppies/new">Ajouter un chiot</a>
+        </div>
       <% } else { %>
         <table>
-          <thead><tr><th>Chiot</th><th>Sexe</th><th>Robe</th><th>Statut</th><th>Prix fiche</th></tr></thead>
+          <thead><tr><th>Chiot</th><th>Sexe</th><th>Robe</th><th>Statut</th><th>Prix fiche</th><th>Action</th></tr></thead>
           <tbody>
             <% puppies.forEach((puppy) => { %>
               <tr>
@@ -157,6 +204,7 @@
                 <td><%= puppy.color || '-' %></td>
                 <td><span class="badge"><%= puppy.status || 'Disponible' %></span></td>
                 <td><%= Number(puppy.sale_price || 0).toFixed(2) %> €</td>
+                <td><a class="btn btn-secondary" href="/puppies/<%= puppy.id %>/edit">Ouvrir</a></td>
               </tr>
             <% }) %>
           </tbody>
@@ -170,7 +218,11 @@
         <h2>Répartition</h2>
       </div>
       <% if (!expenseByCategory.length) { %>
-        <%- include('../partials/empty-state', { emptyTitle: 'Aucune répartition', emptyText: 'Les catégories apparaîtront dès les premières charges.' }) %>
+        <div class="empty-state">
+          <strong>Aucune répartition</strong>
+          <p>Les catégories apparaîtront dès les premières charges.</p>
+          <a class="btn btn-primary" href="#profitability-expense-form">Ajouter une charge</a>
+        </div>
       <% } else { %>
         <table>
           <thead><tr><th>Catégorie</th><th>Montant</th></tr></thead>
@@ -190,7 +242,11 @@
       <h2>Charges enregistrées</h2>
     </div>
     <% if (!expenses.length) { %>
-      <%- include('../partials/empty-state', { emptyTitle: 'Aucune charge', emptyText: 'Ajoutez les charges liées à la portée pour calculer une marge réaliste.' }) %>
+      <div class="empty-state">
+        <strong>Aucune charge</strong>
+        <p>Ajoutez les charges liées à la portée pour calculer une marge réaliste.</p>
+        <a class="btn btn-primary" href="#profitability-expense-form">Ajouter une charge</a>
+      </div>
     <% } else { %>
       <table>
         <thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Rattachement</th><th>Montant</th><th>Action</th></tr></thead>
