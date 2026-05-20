@@ -31,6 +31,7 @@ async function runMigrations() {
     '012_registry_automation.sql',
     '013_registry_backfill_existing_dogs.sql',
     '014_registry_litter_events.sql',
+    '015_qa_hardening.sql',
   ];
 
   console.log('Démarrage des migrations...');
