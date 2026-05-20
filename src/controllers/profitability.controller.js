@@ -39,6 +39,14 @@ async function ensureProfitabilityTables() {
   await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE').catch(() => {});
   await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount NUMERIC(10,2) DEFAULT 0').catch(() => {});
   await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP').catch(() => {});
+  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS puppies_count_total INTEGER').catch(() => {});
+  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS puppies_count INTEGER').catch(() => {});
+  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS nb_puppies INTEGER').catch(() => {});
+  await pool.query(`
+    UPDATE litters
+    SET puppies_count_total = COALESCE(puppies_count_total, puppies_count, nb_puppies)
+    WHERE puppies_count_total IS NULL
+  `).catch(() => {});
   await pool.query('CREATE INDEX IF NOT EXISTS idx_expenses_breeder_date ON expenses(breeder_id, expense_date DESC)').catch(() => {});
   await pool.query('CREATE INDEX IF NOT EXISTS idx_expenses_litter ON expenses(breeder_id, litter_id)').catch(() => {});
 }
@@ -67,14 +75,10 @@ function isReservedStatus(value) {
 }
 
 function computeAverageSalePrice(puppies, sales) {
-  const salePrices = sales
-    .map((sale) => parseMoney(sale.price))
-    .filter((price) => price > 0);
+  const salePrices = sales.map((sale) => parseMoney(sale.price)).filter((price) => price > 0);
   if (salePrices.length) return salePrices.reduce((sum, price) => sum + price, 0) / salePrices.length;
 
-  const listedPrices = puppies
-    .map((puppy) => parseMoney(puppy.sale_price))
-    .filter((price) => price > 0);
+  const listedPrices = puppies.map((puppy) => parseMoney(puppy.sale_price)).filter((price) => price > 0);
   if (listedPrices.length) return listedPrices.reduce((sum, price) => sum + price, 0) / listedPrices.length;
 
   return 0;
@@ -97,7 +101,7 @@ exports.getProfitability = async (req, res) => {
       SELECT
         l.id,
         l.birth_date,
-        l.puppies_count_total,
+        COALESCE(l.puppies_count_total, l.puppies_count, l.nb_puppies, 0) AS puppies_count_total,
         l.status,
         l.notes,
         COALESCE(mother.name, female.name) AS mother_name,
@@ -171,11 +175,7 @@ exports.getProfitability = async (req, res) => {
     const totalExpenses = expenses.reduce((sum, row) => sum + parseMoney(row.amount), 0);
     const bookedRevenue = sales.reduce((sum, row) => sum + parseMoney(row.price), 0);
     const depositRevenue = sales.reduce((sum, row) => sum + parseMoney(row.deposit_amount), 0);
-    const paidRevenue = sales.reduce((sum, row) => {
-      const price = parseMoney(row.price);
-      const deposit = parseMoney(row.deposit_amount);
-      return sum + (row.is_reservation ? deposit : price);
-    }, 0);
+    const paidRevenue = sales.reduce((sum, row) => sum + (row.is_reservation ? parseMoney(row.deposit_amount) : parseMoney(row.price)), 0);
 
     const averageSalePrice = computeAverageSalePrice(puppies, sales);
     const projectedUnsoldRevenue = puppies
@@ -240,43 +240,23 @@ exports.addExpense = async (req, res) => {
     puppy_id = puppy_id && String(puppy_id).trim() ? puppy_id : null;
 
     if (puppy_id) {
-      const puppyCheck = await pool.query(
-        'SELECT id, litter_id FROM puppies WHERE id = $1 AND breeder_id = $2',
-        [puppy_id, breederId],
-      );
-      if (!puppyCheck.rows.length) {
-        return res.status(404).send('Chiot introuvable pour cet élevage.');
-      }
-      if (!litter_id && puppyCheck.rows[0].litter_id) {
-        litter_id = puppyCheck.rows[0].litter_id;
-      }
+      const puppyCheck = await pool.query('SELECT id, litter_id FROM puppies WHERE id = $1 AND breeder_id = $2', [puppy_id, breederId]);
+      if (!puppyCheck.rows.length) return res.status(404).send('Chiot introuvable pour cet élevage.');
+      if (!litter_id && puppyCheck.rows[0].litter_id) litter_id = puppyCheck.rows[0].litter_id;
     }
 
     if (litter_id) {
       const litterCheck = await pool.query('SELECT id FROM litters WHERE id = $1 AND breeder_id = $2', [litter_id, breederId]);
-      if (!litterCheck.rows.length) {
-        return res.status(404).send('Portée introuvable pour cet élevage.');
-      }
+      if (!litterCheck.rows.length) return res.status(404).send('Portée introuvable pour cet élevage.');
     }
 
     const cleanAmount = parseMoney(amount);
-    if (cleanAmount <= 0) {
-      return res.status(400).send('Le montant de la charge doit être supérieur à 0.');
-    }
+    if (cleanAmount <= 0) return res.status(400).send('Le montant de la charge doit être supérieur à 0.');
 
     await pool.query(`
       INSERT INTO expenses (breeder_id, litter_id, puppy_id, expense_date, category, label, amount, notes)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    `, [
-      breederId,
-      litter_id,
-      puppy_id,
-      expense_date || new Date().toISOString().split('T')[0],
-      category || 'autre',
-      String(label || '').trim() || 'Charge sans libellé',
-      cleanAmount,
-      notes || null,
-    ]);
+    `, [breederId, litter_id, puppy_id, expense_date || new Date().toISOString().split('T')[0], category || 'autre', String(label || '').trim() || 'Charge sans libellé', cleanAmount, notes || null]);
 
     res.redirect(`/profitability${litter_id ? '?litter_id=' + litter_id : ''}`);
   } catch (error) {
@@ -289,12 +269,7 @@ exports.deleteExpense = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const expenseId = req.params.id;
-
-    const result = await pool.query(
-      'DELETE FROM expenses WHERE id = $1 AND breeder_id = $2 RETURNING litter_id',
-      [expenseId, breederId],
-    );
-
+    const result = await pool.query('DELETE FROM expenses WHERE id = $1 AND breeder_id = $2 RETURNING litter_id', [expenseId, breederId]);
     const litterId = result.rows[0]?.litter_id;
     res.redirect(`/profitability${litterId ? '?litter_id=' + litterId : ''}`);
   } catch (error) {
