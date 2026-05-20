@@ -36,4 +36,18 @@
     const state = body.classList.contains('sidebar-compact') ? 'compact' : 'expanded';
     window.localStorage?.setItem('elevagepro-sidebar', state);
   });
+
+  document.querySelectorAll('form').forEach((form) => {
+    form.addEventListener('submit', () => {
+      if (form.dataset.submitting === 'true') return;
+      form.dataset.submitting = 'true';
+      form.querySelectorAll('button[type="submit"]').forEach((button) => {
+        if (button.dataset.noDisable === 'true') return;
+        button.dataset.originalText = button.textContent.trim();
+        button.disabled = true;
+        button.classList.add('is-loading');
+        button.textContent = 'Enregistrement...';
+      });
+    });
+  });
 })();
