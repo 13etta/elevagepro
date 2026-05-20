@@ -1,11 +1,12 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
+<link rel="stylesheet" href="/css/structure-assignments.css">
 
 <main class="container structure-page">
   <section class="structure-hero">
     <div>
       <h1>Gestion de la Structure</h1>
-      <p>Pilotez vos infrastructures, votre équipe et vos obligations légales avec une précision professionnelle.</p>
+      <p>Pilotez vos infrastructures, vos box, les affectations d’animaux et vos obligations sanitaires avec une précision professionnelle.</p>
     </div>
     <div class="structure-actions">
       <a href="/breeder/register/entries" class="structure-btn secondary"><span class="material-symbols-outlined">download</span> Exporter</a>
@@ -13,9 +14,13 @@
     </div>
   </section>
 
+  <% if (flash) { %>
+    <div class="structure-flash <%= flash.type || 'info' %>"><%= flash.message %></div>
+  <% } %>
+
   <form id="new-building-form" class="structure-new-building" action="/structure/infrastructures" method="POST">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <input name="name" placeholder="Nom du bâtiment" required>
+    <input name="name" placeholder="Nom du bâtiment ou du box" required>
     <select name="type">
       <option value="box">Chenil / Box</option>
       <option value="nurserie">Nurserie / Mise bas</option>
@@ -34,6 +39,56 @@
     <textarea name="description" placeholder="Description — facultatif"></textarea>
     <button type="submit">Créer</button>
   </form>
+
+  <section class="structure-assignment-panel" id="assignment-panel">
+    <div class="assignment-copy">
+      <span class="eyebrow">Affectation sanitaire</span>
+      <h2>Placer un chien ou un chiot dans un box</h2>
+      <p>Utilisez ce panneau pour savoir immédiatement quel animal occupe quel espace, et conserver un historique exploitable en cas de contamination, quarantaine ou nettoyage renforcé.</p>
+    </div>
+    <form class="assignment-form" action="/structure/assign" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <select name="animal_ref" required>
+        <option value="">Animal à affecter</option>
+        <% if (assignableDogs && assignableDogs.length) { %>
+          <optgroup label="Chiens adultes">
+            <% assignableDogs.forEach((dog) => { %>
+              <option value="dog:<%= dog.id %>"><%= dog.name %><%= dog.infrastructure_name ? ' — ' + dog.infrastructure_name : ' — non assigné' %></option>
+            <% }) %>
+          </optgroup>
+        <% } %>
+        <% if (assignablePuppies && assignablePuppies.length) { %>
+          <optgroup label="Chiots non vendus">
+            <% assignablePuppies.forEach((puppy) => { %>
+              <option value="puppy:<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %><%= puppy.infrastructure_name ? ' — ' + puppy.infrastructure_name : ' — non assigné' %></option>
+            <% }) %>
+          </optgroup>
+        <% } %>
+      </select>
+      <select name="infrastructure_id" id="assignment-target">
+        <option value="">Sortir du box / non assigné</option>
+        <% infrastructures.forEach((item) => { %>
+          <option value="<%= item.id %>"><%= item.name %> — <%= item.occupied %>/<%= item.capacity || 0 %></option>
+        <% }) %>
+      </select>
+      <select name="sanitary_context">
+        <option value="routine">Routine</option>
+        <option value="quarantaine">Quarantaine</option>
+        <option value="isolement sanitaire">Isolement sanitaire</option>
+        <option value="suspicion contamination">Suspicion contamination</option>
+        <option value="nettoyage / désinfection">Nettoyage / désinfection</option>
+      </select>
+      <input name="reason" placeholder="Motif : repos, chaleur, toux, diarrhée, quarantaine...">
+      <button type="submit"><span class="material-symbols-outlined">login</span> Assigner</button>
+    </form>
+  </section>
+
+  <section class="structure-kpis">
+    <article><span>Capacité totale</span><strong><%= stats.totalOccupied %> / <%= stats.totalCapacity %></strong></article>
+    <article><span>Chiens non affectés</span><strong><%= stats.unassignedDogs %></strong></article>
+    <article><span>Chiots non affectés</span><strong><%= stats.unassignedPuppies %></strong></article>
+    <article><span>Statut sanitaire</span><strong><%= stats.sanitaryScore %>%</strong></article>
+  </section>
 
   <section class="structure-layout">
     <div class="structure-main">
@@ -58,16 +113,59 @@
               </div>
               <div class="structure-lines">
                 <span><%= item.zone_label || 'Zone principale' %></span>
-                <strong><%= item.displayStatus %></strong>
+                <strong><%= item.freePlaces === null ? 'Capacité libre' : item.freePlaces + ' place(s) libre(s)' %></strong>
               </div>
+
+              <div class="structure-residents">
+                <h4>Présents dans ce box</h4>
+                <% if (item.residents && item.residents.length) { %>
+                  <% item.residents.forEach((resident) => { %>
+                    <div class="resident-line">
+                      <span><%= resident.animal_type === 'dog' ? 'Chien' : 'Chiot' %></span>
+                      <strong><%= resident.display_name %></strong>
+                      <form action="/structure/assign" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="animal_ref" value="<%= resident.animal_ref %>">
+                        <input type="hidden" name="infrastructure_id" value="">
+                        <input type="hidden" name="sanitary_context" value="sortie">
+                        <input type="hidden" name="reason" value="Sortie du box depuis la carte structure">
+                        <button type="submit" title="Sortir du box"><span class="material-symbols-outlined">logout</span></button>
+                      </form>
+                    </div>
+                  <% }) %>
+                <% } else { %>
+                  <p class="empty-residents">Aucun animal affecté.</p>
+                <% } %>
+              </div>
+
               <div class="structure-card-actions">
                 <a href="/breeder/infrastructure/<%= item.id %>/edit">Modifier</a>
-                <a href="/dogs" class="brown">Assigner</a>
+                <button type="button" class="brown" data-assign-target="<%= item.id %>">Assigner ici</button>
               </div>
             </div>
           </article>
         <% }) %>
       </div>
+
+      <section class="assignment-history">
+        <div class="legal-title">
+          <h2><span class="material-symbols-outlined">history</span> Historique des affectations</h2>
+        </div>
+        <% if (assignmentHistory && assignmentHistory.length) { %>
+          <div class="history-table">
+            <% assignmentHistory.forEach((entry) => { %>
+              <div class="history-row">
+                <span><%= formatDate(entry.assigned_at) %></span>
+                <strong><%= entry.animal_name %></strong>
+                <em><%= entry.previous_infrastructure_name || 'Non assigné' %> → <%= entry.infrastructure_name || 'Non assigné' %></em>
+                <small><%= entry.sanitary_context || 'routine' %><%= entry.reason ? ' · ' + entry.reason : '' %></small>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="empty-residents">Aucune affectation enregistrée pour le moment.</p>
+        <% } %>
+      </section>
 
       <section class="legal-section">
         <div class="legal-title">
@@ -127,5 +225,16 @@
     </aside>
   </section>
 </main>
+
+<script>
+  document.querySelectorAll('[data-assign-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = document.getElementById('assignment-target');
+      const panel = document.getElementById('assignment-panel');
+      if (target) target.value = button.dataset.assignTarget || '';
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+</script>
 
 <%- include('../partials/foot') %>
