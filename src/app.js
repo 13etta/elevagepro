@@ -7,6 +7,7 @@ const db = require('./db');
 const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
 const { modules, moduleGroups } = require('./config/modules');
+const { formatDateFr, dateInputValue } = require('./utils/dates');
 
 const authRoutes = require('./routes/auth.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
@@ -97,6 +98,9 @@ app.use((req, res, next) => {
 
   req.session.preferences.theme = theme;
 
+  const flash = req.session.flash || null;
+  delete req.session.flash;
+
   res.locals.__ = res.__.bind(req);
   res.locals.currentLang = currentLang;
   res.locals.theme = theme;
@@ -104,11 +108,12 @@ app.use((req, res, next) => {
   res.locals.moduleGroups = moduleGroups;
   res.locals.currentPath = req.path;
   res.locals.user = req.session?.user || null;
-  res.locals.formatDate = (value) => {
-    if (!value) return '-';
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR');
+  res.locals.flash = flash;
+  res.locals.formatDate = formatDateFr;
+  res.locals.dateInputValue = dateInputValue;
+
+  res.locals.setFlash = (type, message) => {
+    req.session.flash = { type, message };
   };
 
   next();

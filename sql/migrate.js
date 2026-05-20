@@ -6,7 +6,19 @@ require('dotenv').config();
 
 // Codespaces et certains conteneurs peuvent résoudre PostgreSQL en IPv6
 // alors que le réseau sortant IPv6 est indisponible.
+// On force donc la résolution IPv4 sauf désactivation explicite.
 dns.setDefaultResultOrder?.('ipv4first');
+
+if (process.env.PG_FORCE_IPV4 !== 'false') {
+  const originalLookup = dns.lookup.bind(dns);
+  dns.lookup = (hostname, options, callback) => {
+    if (typeof options === 'function') {
+      return originalLookup(hostname, { family: 4 }, options);
+    }
+
+    return originalLookup(hostname, { ...(options || {}), family: 4 }, callback);
+  };
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -31,6 +43,7 @@ async function runMigrations() {
     '012_registry_automation.sql',
     '013_registry_backfill_existing_dogs.sql',
     '014_registry_litter_events.sql',
+    '015_qa_hardening.sql',
   ];
 
   console.log('Démarrage des migrations...');
