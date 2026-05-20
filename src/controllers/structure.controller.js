@@ -1,11 +1,36 @@
 const { pool } = require('../db');
 
 const VISUALS = {
-  box: { icon: 'warehouse', label: 'Zone chenil', imageUrl: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1600&q=82', description: 'Zone d’hébergement et de repos des chiens adultes.' },
-  nurserie: { icon: 'child_care', label: 'Zone maternité', imageUrl: 'https://www.loyatdesdunes.fr/oktThemes/ra145-s/images/integration/elevage/el1.jpg', description: 'Espace maternité, mise bas et premiers jours des chiots.' },
-  infirmerie: { icon: 'medical_services', label: 'Zone sanitaire', imageUrl: 'https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=1600&q=82', description: 'Zone soins, isolement, observation et hygiène sanitaire.' },
-  parc: { icon: 'park', label: 'Zone extérieure', imageUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82', description: 'Aire extérieure de détente, activité et socialisation.' },
-  autre: { icon: 'domain', label: 'Zone principale', imageUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82', description: 'Infrastructure opérationnelle de l’élevage.' },
+  box: {
+    icon: 'warehouse',
+    label: 'Zone chenil',
+    imageUrl: 'https://i.postimg.cc/50PHnQXw/Chat-GPT-Image-20-mai-2026-14-52-33.png',
+    description: 'Zone d’hébergement et de repos des chiens adultes.'
+  },
+  nurserie: {
+    icon: 'child_care',
+    label: 'Zone maternité',
+    imageUrl: 'https://www.loyatdesdunes.fr/oktThemes/ra145-s/images/integration/elevage/el1.jpg',
+    description: 'Espace maternité, mise bas et premiers jours des chiots.'
+  },
+  infirmerie: {
+    icon: 'medical_services',
+    label: 'Zone sanitaire',
+    imageUrl: 'https://i.postimg.cc/JnTyPHsz/Chat-GPT-Image-20-mai-2026-14-58-13.png',
+    description: 'Zone soins, isolement, observation et hygiène sanitaire.'
+  },
+  parc: {
+    icon: 'park',
+    label: 'Zone extérieure',
+    imageUrl: 'https://www.epagneul-breton.ws/wp-content/uploads/2021/08/Activites-epagneul-breton-1024x683.jpeg',
+    description: 'Aire extérieure de détente, activité et socialisation.'
+  },
+  autre: {
+    icon: 'domain',
+    label: 'Zone principale',
+    imageUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82',
+    description: 'Infrastructure opérationnelle de l’élevage.'
+  },
 };
 
 const DEFAULT_INFRASTRUCTURES = [
