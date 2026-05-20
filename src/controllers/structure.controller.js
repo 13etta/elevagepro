@@ -1,11 +1,27 @@
 const { pool } = require('../db');
 
+const STRUCTURE_IMAGES = {
+  box: 'https://i.postimg.cc/50PHnQXw/Chat-GPT-Image-20-mai-2026-14-52-33.png',
+  nurserie: 'https://www.loyatdesdunes.fr/oktThemes/ra145-s/images/integration/elevage/el1.jpg',
+  infirmerie: 'https://i.postimg.cc/JnTyPHsz/Chat-GPT-Image-20-mai-2026-14-58-13.png',
+  parc: 'https://www.epagneul-breton.ws/wp-content/uploads/2021/08/Activites-epagneul-breton-1024x683.jpeg',
+  autre: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82',
+};
+
+const LEGACY_DEFAULT_IMAGES = new Set([
+  'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1600&q=82',
+  'https://images.unsplash.com/photo-1593134257782-e89567b7718a?auto=format&fit=crop&w=1600&q=82',
+  'https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=1600&q=82',
+  'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82',
+  '/images/structure/default-chenil-box.svg',
+]);
+
 const VISUALS = {
-  box: { icon: 'warehouse', label: 'Zone chenil', imageUrl: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1600&q=82', description: 'Zone d’hébergement et de repos des chiens adultes.' },
-  nurserie: { icon: 'child_care', label: 'Zone maternité', imageUrl: 'https://www.loyatdesdunes.fr/oktThemes/ra145-s/images/integration/elevage/el1.jpg', description: 'Espace maternité, mise bas et premiers jours des chiots.' },
-  infirmerie: { icon: 'medical_services', label: 'Zone sanitaire', imageUrl: 'https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=1600&q=82', description: 'Zone soins, isolement, observation et hygiène sanitaire.' },
-  parc: { icon: 'park', label: 'Zone extérieure', imageUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82', description: 'Aire extérieure de détente, activité et socialisation.' },
-  autre: { icon: 'domain', label: 'Zone principale', imageUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=82', description: 'Infrastructure opérationnelle de l’élevage.' },
+  box: { icon: 'warehouse', label: 'Zone chenil', imageUrl: STRUCTURE_IMAGES.box, description: 'Zone d’hébergement et de repos des chiens adultes.' },
+  nurserie: { icon: 'child_care', label: 'Zone maternité', imageUrl: STRUCTURE_IMAGES.nurserie, description: 'Espace maternité, mise bas et premiers jours des chiots.' },
+  infirmerie: { icon: 'medical_services', label: 'Zone sanitaire', imageUrl: STRUCTURE_IMAGES.infirmerie, description: 'Zone soins, isolement, observation et hygiène sanitaire.' },
+  parc: { icon: 'park', label: 'Zone extérieure', imageUrl: STRUCTURE_IMAGES.parc, description: 'Aire extérieure de détente, activité et socialisation.' },
+  autre: { icon: 'domain', label: 'Zone principale', imageUrl: STRUCTURE_IMAGES.autre, description: 'Infrastructure opérationnelle de l’élevage.' },
 };
 
 const DEFAULT_INFRASTRUCTURES = [
@@ -14,6 +30,9 @@ const DEFAULT_INFRASTRUCTURES = [
   { name: 'Infirmerie / Quarantaine', type: 'infirmerie', capacity: 2, status: 'attention' },
   { name: "Parcs d'ébats", type: 'parc', capacity: 3, status: 'libre' },
 ];
+
+let schemaReadyPromise = null;
+const bootstrappedBreeders = new Set();
 
 function setFlash(req, type, message) {
   req.session.flash = { type, message };
@@ -37,10 +56,16 @@ function parseNullableInteger(value) {
 function visualFor(item = {}) {
   const haystack = `${normalize(item.type)} ${normalize(item.name)} ${normalize(item.description)}`;
   if (haystack.includes('nurserie') || haystack.includes('maternite') || haystack.includes('mise bas')) return VISUALS.nurserie;
-  if (haystack.includes('infirmerie') || haystack.includes('quarantaine') || haystack.includes('soin')) return VISUALS.infirmerie;
-  if (haystack.includes('parc') || haystack.includes('exterieur') || haystack.includes('ebats')) return VISUALS.parc;
+  if (haystack.includes('infirmerie') || haystack.includes('quarantaine') || haystack.includes('soin') || haystack.includes('sanitaire')) return VISUALS.infirmerie;
+  if (haystack.includes('parc') || haystack.includes('exterieur') || haystack.includes('ebats') || haystack.includes('exercice')) return VISUALS.parc;
   if (haystack.includes('box') || haystack.includes('chenil') || haystack.includes('kennel')) return VISUALS.box;
   return VISUALS.autre;
+}
+
+function resolveImageUrl(item, visual) {
+  const imageUrl = clean(item.image_url);
+  if (!imageUrl || LEGACY_DEFAULT_IMAGES.has(imageUrl)) return visual.imageUrl;
+  return imageUrl;
 }
 
 function displayStatus(status, occupied, capacity) {
@@ -55,6 +80,10 @@ function displayStatus(status, occupied, capacity) {
 
 function slugClass(value) {
   return normalize(value).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'actif';
+}
+
+function animalLabel(row) {
+  return [row.name || 'Sans nom', row.sex, row.breed].filter(Boolean).join(' · ');
 }
 
 function parseAnimalRef(body) {
@@ -113,8 +142,22 @@ async function ensureStructureSchema() {
       CHECK ((animal_type = 'dog' AND dog_id IS NOT NULL AND puppy_id IS NULL) OR (animal_type = 'puppy' AND puppy_id IS NOT NULL AND dog_id IS NULL))
     )
   `);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_infrastructures_breeder_type ON infrastructures(breeder_id, type, name)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_dogs_infrastructure ON dogs(breeder_id, infrastructure_id)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_puppies_infrastructure ON puppies(breeder_id, infrastructure_id)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_infrastructure_assignments_breeder_date ON infrastructure_assignments(breeder_id, assigned_at DESC)');
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS ux_infra_active_dog ON infrastructure_assignments(breeder_id, dog_id) WHERE ended_at IS NULL AND dog_id IS NOT NULL');
   await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS ux_infra_active_puppy ON infrastructure_assignments(breeder_id, puppy_id) WHERE ended_at IS NULL AND puppy_id IS NOT NULL');
+}
+
+function ensureStructureSchemaOnce() {
+  if (!schemaReadyPromise) {
+    schemaReadyPromise = ensureStructureSchema().catch((error) => {
+      schemaReadyPromise = null;
+      throw error;
+    });
+  }
+  return schemaReadyPromise;
 }
 
 async function seedDefaultInfrastructures(breederId) {
@@ -130,27 +173,24 @@ async function seedDefaultInfrastructures(breederId) {
   }
 }
 
-async function refreshPresentationAndOccupancy(clientOrPool, breederId) {
-  const rows = await clientOrPool.query('SELECT * FROM infrastructures WHERE breeder_id = $1', [breederId]);
-  for (const infra of rows.rows) {
-    const visual = visualFor(infra);
-    await clientOrPool.query(
-      `UPDATE infrastructures
-       SET description = COALESCE(NULLIF(description, ''), $1),
-           image_url = COALESCE(NULLIF(image_url, ''), $2),
-           zone_label = COALESCE(NULLIF(zone_label, ''), $3)
-       WHERE id = $4 AND breeder_id = $5`,
-      [visual.description, visual.imageUrl, visual.label, infra.id, breederId],
-    );
-  }
+async function bootstrapStructureForBreeder(breederId) {
+  await ensureStructureSchemaOnce();
+  if (bootstrappedBreeders.has(String(breederId))) return;
+  await seedDefaultInfrastructures(breederId);
+  bootstrappedBreeders.add(String(breederId));
+}
+
+async function refreshSelectedOccupancy(clientOrPool, breederId, infrastructureIds = []) {
+  const ids = [...new Set(infrastructureIds.filter(Boolean).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+  if (!ids.length) return;
   await clientOrPool.query(
     `UPDATE infrastructures i
      SET occupied_count =
        (SELECT COUNT(*)::int FROM dogs d WHERE d.breeder_id = $1 AND d.infrastructure_id = i.id) +
        (SELECT COUNT(*)::int FROM puppies p WHERE p.breeder_id = $1 AND p.infrastructure_id = i.id AND COALESCE(p.is_sold, false) = false),
        updated_at = CURRENT_TIMESTAMP
-     WHERE i.breeder_id = $1`,
-    [breederId],
+     WHERE i.breeder_id = $1 AND i.id = ANY($2::int[])`,
+    [breederId, ids],
   );
 }
 
@@ -173,78 +213,73 @@ function buildSanitaryCompliance({ sanitaryCount, cleaningCount, movementCount }
   return { score, missing, message };
 }
 
-function animalLabel(row) {
-  return [row.name || 'Sans nom', row.sex, row.breed].filter(Boolean).join(' · ');
+function mapResidents(dogs, puppies) {
+  const residents = [
+    ...dogs.filter((dog) => dog.infrastructure_id).map((dog) => ({ ...dog, animal_type: 'dog', animal_ref: `dog:${dog.id}`, display_name: animalLabel(dog) })),
+    ...puppies.filter((puppy) => puppy.infrastructure_id).map((puppy) => ({ ...puppy, animal_type: 'puppy', animal_ref: `puppy:${puppy.id}`, display_name: animalLabel(puppy) })),
+  ];
+
+  return residents.reduce((acc, resident) => {
+    const key = String(resident.infrastructure_id);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(resident);
+    return acc;
+  }, {});
 }
 
 exports.index = async (req, res) => {
   try {
-    await ensureStructureSchema();
     const breederId = req.session.user.breeder_id;
-    await seedDefaultInfrastructures(breederId);
-    await refreshPresentationAndOccupancy(pool, breederId);
+    await bootstrapStructureForBreeder(breederId);
 
-    const infrastructuresResult = await pool.query(
+    const infrastructuresPromise = pool.query(
       `SELECT i.*,
         COALESCE(dc.total, 0) + COALESCE(pc.total, 0) AS computed_occupied
        FROM infrastructures i
-       LEFT JOIN (SELECT infrastructure_id, COUNT(*)::int AS total FROM dogs WHERE breeder_id = $1 AND infrastructure_id IS NOT NULL GROUP BY infrastructure_id) dc ON dc.infrastructure_id = i.id
-       LEFT JOIN (SELECT infrastructure_id, COUNT(*)::int AS total FROM puppies WHERE breeder_id = $1 AND infrastructure_id IS NOT NULL AND COALESCE(is_sold, false) = false GROUP BY infrastructure_id) pc ON pc.infrastructure_id = i.id
+       LEFT JOIN (
+         SELECT infrastructure_id, COUNT(*)::int AS total
+         FROM dogs
+         WHERE breeder_id = $1 AND infrastructure_id IS NOT NULL
+         GROUP BY infrastructure_id
+       ) dc ON dc.infrastructure_id = i.id
+       LEFT JOIN (
+         SELECT infrastructure_id, COUNT(*)::int AS total
+         FROM puppies
+         WHERE breeder_id = $1 AND infrastructure_id IS NOT NULL AND COALESCE(is_sold, false) = false
+         GROUP BY infrastructure_id
+       ) pc ON pc.infrastructure_id = i.id
        WHERE i.breeder_id = $1
-       ORDER BY i.type ASC, i.name ASC`,
+       ORDER BY
+         CASE
+           WHEN lower(COALESCE(i.type, '')) IN ('box', 'chenil', 'kennel') THEN 1
+           WHEN lower(COALESCE(i.type, '')) IN ('nurserie', 'nursery') THEN 2
+           WHEN lower(COALESCE(i.type, '')) IN ('infirmerie', 'infirmary', 'sanitaire') THEN 3
+           WHEN lower(COALESCE(i.type, '')) IN ('parc', 'yard', 'exercice') THEN 4
+           ELSE 10
+         END,
+         i.name ASC`,
       [breederId],
     );
 
-    const dogs = await safeRows(
+    const dogsPromise = safeRows(
       `SELECT d.id, d.name, d.sex, d.breed, d.status, d.chip_number, d.infrastructure_id, i.name AS infrastructure_name
-       FROM dogs d LEFT JOIN infrastructures i ON i.id = d.infrastructure_id AND i.breeder_id = d.breeder_id
-       WHERE d.breeder_id = $1 ORDER BY d.name ASC`,
+       FROM dogs d
+       LEFT JOIN infrastructures i ON i.id = d.infrastructure_id AND i.breeder_id = d.breeder_id
+       WHERE d.breeder_id = $1
+       ORDER BY d.name ASC`,
       [breederId],
     );
 
-    const puppies = await safeRows(
+    const puppiesPromise = safeRows(
       `SELECT p.id, p.name, p.sex, p.color AS breed, p.status, p.chip_number, p.infrastructure_id, i.name AS infrastructure_name
-       FROM puppies p LEFT JOIN infrastructures i ON i.id = p.infrastructure_id AND i.breeder_id = p.breeder_id
+       FROM puppies p
+       LEFT JOIN infrastructures i ON i.id = p.infrastructure_id AND i.breeder_id = p.breeder_id
        WHERE p.breeder_id = $1 AND COALESCE(p.is_sold, false) = false
        ORDER BY p.name ASC NULLS LAST, p.created_at ASC`,
       [breederId],
     );
 
-    const residents = [
-      ...dogs.filter((dog) => dog.infrastructure_id).map((dog) => ({ ...dog, animal_type: 'dog', animal_ref: `dog:${dog.id}`, display_name: animalLabel(dog) })),
-      ...puppies.filter((puppy) => puppy.infrastructure_id).map((puppy) => ({ ...puppy, animal_type: 'puppy', animal_ref: `puppy:${puppy.id}`, display_name: animalLabel(puppy) })),
-    ];
-
-    const residentsByInfrastructure = residents.reduce((acc, resident) => {
-      const key = String(resident.infrastructure_id);
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(resident);
-      return acc;
-    }, {});
-
-    const infrastructures = infrastructuresResult.rows.map((item) => {
-      const visual = visualFor(item);
-      const itemResidents = residentsByInfrastructure[String(item.id)] || [];
-      const occupied = itemResidents.length || Number(item.computed_occupied || item.occupied_count || 0);
-      const capacity = Number(item.capacity || 0);
-      const status = displayStatus(item.status, occupied, capacity);
-      return {
-        ...item,
-        occupied,
-        capacity,
-        residents: itemResidents,
-        freePlaces: capacity > 0 ? Math.max(0, capacity - occupied) : null,
-        icon: visual.icon,
-        cardImageUrl: item.image_url || visual.imageUrl,
-        description: item.description || visual.description,
-        zone_label: item.zone_label || visual.label,
-        occupancyRate: capacity > 0 ? Math.min(100, Math.round((occupied / capacity) * 100)) : 0,
-        displayStatus: status,
-        statusClass: slugClass(status),
-      };
-    });
-
-    const history = await safeRows(
+    const historyPromise = safeRows(
       `SELECT ia.*, COALESCE(d.name, p.name, 'Animal supprimé') AS animal_name,
               COALESCE(i.name, 'Non assigné') AS infrastructure_name,
               COALESCE(pi.name, 'Non assigné') AS previous_infrastructure_name
@@ -259,14 +294,64 @@ exports.index = async (req, res) => {
       [breederId],
     );
 
-    const staff = await safeRows('SELECT * FROM staff WHERE breeder_id = $1 ORDER BY status ASC NULLS LAST, role ASC NULLS LAST, last_name ASC NULLS LAST LIMIT 8', [breederId]);
-    const movements = await safeRows('SELECT * FROM movements WHERE breeder_id = $1 ORDER BY movement_date DESC NULLS LAST, created_at DESC NULLS LAST LIMIT 3', [breederId]);
-    const sanitary = await safeRows('SELECT * FROM sanitary_records WHERE breeder_id = $1 ORDER BY event_date DESC NULLS LAST, created_at DESC NULLS LAST LIMIT 3', [breederId]);
-    const cleaning = await safeRows('SELECT * FROM cleaning_logs WHERE breeder_id = $1 ORDER BY cleaning_date DESC NULLS LAST, created_at DESC NULLS LAST LIMIT 3', [breederId]);
+    const staffPromise = safeRows('SELECT * FROM staff WHERE breeder_id = $1 ORDER BY status ASC NULLS LAST, role ASC NULLS LAST, last_name ASC NULLS LAST LIMIT 8', [breederId]);
+    const movementsPromise = safeRows('SELECT * FROM movements WHERE breeder_id = $1 ORDER BY movement_date DESC NULLS LAST, created_at DESC NULLS LAST LIMIT 3', [breederId]);
+    const sanitaryPromise = safeRows('SELECT * FROM sanitary_records WHERE breeder_id = $1 ORDER BY event_date DESC NULLS LAST, created_at DESC NULLS LAST LIMIT 3', [breederId]);
+    const cleaningPromise = safeRows('SELECT * FROM cleaning_logs WHERE breeder_id = $1 ORDER BY cleaning_date DESC NULLS LAST, created_at DESC NULLS LAST LIMIT 3', [breederId]);
+    const sanitaryCountPromise = safeCount('SELECT COUNT(*)::int AS total FROM sanitary_records WHERE breeder_id = $1', [breederId]);
+    const cleaningCountPromise = safeCount('SELECT COUNT(*)::int AS total FROM cleaning_logs WHERE breeder_id = $1', [breederId]);
+    const movementCountPromise = safeCount('SELECT COUNT(*)::int AS total FROM movements WHERE breeder_id = $1', [breederId]);
 
-    const sanitaryCount = await safeCount('SELECT COUNT(*)::int AS total FROM sanitary_records WHERE breeder_id = $1', [breederId]);
-    const cleaningCount = await safeCount('SELECT COUNT(*)::int AS total FROM cleaning_logs WHERE breeder_id = $1', [breederId]);
-    const movementCount = await safeCount('SELECT COUNT(*)::int AS total FROM movements WHERE breeder_id = $1', [breederId]);
+    const [
+      infrastructuresResult,
+      dogs,
+      puppies,
+      assignmentHistory,
+      staff,
+      movements,
+      sanitary,
+      cleaning,
+      sanitaryCount,
+      cleaningCount,
+      movementCount,
+    ] = await Promise.all([
+      infrastructuresPromise,
+      dogsPromise,
+      puppiesPromise,
+      historyPromise,
+      staffPromise,
+      movementsPromise,
+      sanitaryPromise,
+      cleaningPromise,
+      sanitaryCountPromise,
+      cleaningCountPromise,
+      movementCountPromise,
+    ]);
+
+    const residentsByInfrastructure = mapResidents(dogs, puppies);
+
+    const infrastructures = infrastructuresResult.rows.map((item) => {
+      const visual = visualFor(item);
+      const itemResidents = residentsByInfrastructure[String(item.id)] || [];
+      const occupied = itemResidents.length || Number(item.computed_occupied || item.occupied_count || 0);
+      const capacity = Number(item.capacity || 0);
+      const status = displayStatus(item.status, occupied, capacity);
+      return {
+        ...item,
+        occupied,
+        capacity,
+        residents: itemResidents,
+        freePlaces: capacity > 0 ? Math.max(0, capacity - occupied) : null,
+        icon: visual.icon,
+        cardImageUrl: resolveImageUrl(item, visual),
+        description: item.description || visual.description,
+        zone_label: item.zone_label || visual.label,
+        occupancyRate: capacity > 0 ? Math.min(100, Math.round((occupied / capacity) * 100)) : 0,
+        displayStatus: status,
+        statusClass: slugClass(status),
+      };
+    });
+
     const sanitaryCompliance = buildSanitaryCompliance({ sanitaryCount, cleaningCount, movementCount });
 
     res.render('structure/index', {
@@ -274,7 +359,7 @@ exports.index = async (req, res) => {
       infrastructures,
       assignableDogs: dogs,
       assignablePuppies: puppies,
-      assignmentHistory: history,
+      assignmentHistory,
       staff,
       movements,
       sanitary,
@@ -299,7 +384,7 @@ exports.index = async (req, res) => {
 
 exports.storeInfrastructure = async (req, res) => {
   try {
-    await ensureStructureSchema();
+    await ensureStructureSchemaOnce();
     const breederId = req.session.user.breeder_id;
     const name = clean(req.body.name);
     if (!name) {
@@ -326,7 +411,7 @@ exports.storeInfrastructure = async (req, res) => {
 exports.assignInfrastructure = async (req, res) => {
   const client = await pool.connect();
   try {
-    await ensureStructureSchema();
+    await ensureStructureSchemaOnce();
     const breederId = req.session.user.breeder_id;
     const infrastructureId = parseNullableInteger(req.body.infrastructure_id);
     const { animalType, dogId, puppyId } = parseAnimalRef(req.body);
@@ -341,20 +426,34 @@ exports.assignInfrastructure = async (req, res) => {
       : ['SELECT id, name, infrastructure_id FROM puppies WHERE id = $1 AND breeder_id = $2 AND COALESCE(is_sold, false) = false FOR UPDATE', [puppyId, breederId]];
     const animalResult = await client.query(animalQuery[0], animalQuery[1]);
     const animal = animalResult.rows[0];
+
     if (!animal) {
       await client.query('ROLLBACK');
       setFlash(req, 'error', animalType === 'dog' ? 'Chien introuvable pour cet élevage.' : 'Chiot introuvable ou déjà vendu.');
       return res.redirect('/structure');
     }
 
+    if ((animal.infrastructure_id || null) === infrastructureId) {
+      await client.query('ROLLBACK');
+      setFlash(req, 'warning', `${animal.name || 'Animal'} est déjà affecté à cet emplacement.`);
+      return res.redirect('/structure');
+    }
+
     let target = null;
     if (infrastructureId) {
       const targetResult = await client.query(
-        `SELECT i.*, COALESCE(dc.total, 0) + COALESCE(pc.total, 0) AS occupied
+        `SELECT i.*,
+           (
+             SELECT COUNT(*)::int FROM dogs d
+             WHERE d.breeder_id = $1 AND d.infrastructure_id = i.id
+           ) +
+           (
+             SELECT COUNT(*)::int FROM puppies p
+             WHERE p.breeder_id = $1 AND p.infrastructure_id = i.id AND COALESCE(p.is_sold, false) = false
+           ) AS occupied
          FROM infrastructures i
-         LEFT JOIN (SELECT infrastructure_id, COUNT(*)::int AS total FROM dogs WHERE breeder_id = $1 GROUP BY infrastructure_id) dc ON dc.infrastructure_id = i.id
-         LEFT JOIN (SELECT infrastructure_id, COUNT(*)::int AS total FROM puppies WHERE breeder_id = $1 AND COALESCE(is_sold, false) = false GROUP BY infrastructure_id) pc ON pc.infrastructure_id = i.id
-         WHERE i.id = $2 AND i.breeder_id = $1`,
+         WHERE i.id = $2 AND i.breeder_id = $1
+         FOR UPDATE`,
         [breederId, infrastructureId],
       );
       target = targetResult.rows[0];
@@ -368,12 +467,6 @@ exports.assignInfrastructure = async (req, res) => {
         setFlash(req, 'error', `${target.name} est complet. Libérez une place avant d’affecter un nouvel animal.`);
         return res.redirect('/structure');
       }
-    }
-
-    if ((animal.infrastructure_id || null) === infrastructureId) {
-      await client.query('ROLLBACK');
-      setFlash(req, 'warning', `${animal.name || 'Animal'} est déjà affecté à cet emplacement.`);
-      return res.redirect('/structure');
     }
 
     if (animalType === 'dog') {
@@ -390,7 +483,7 @@ exports.assignInfrastructure = async (req, res) => {
       [breederId, infrastructureId, animal.infrastructure_id || null, animalType, dogId, puppyId, clean(req.body.reason), clean(req.body.sanitary_context), req.session.user.id],
     );
 
-    await refreshPresentationAndOccupancy(client, breederId);
+    await refreshSelectedOccupancy(client, breederId, [animal.infrastructure_id, infrastructureId]);
     await client.query('COMMIT');
     setFlash(req, 'success', `${animal.name || 'Animal'} affecté vers : ${target?.name || 'non assigné'}.`);
     res.redirect('/structure');
