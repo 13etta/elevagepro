@@ -45,6 +45,8 @@ async function runMigrations() {
     '014_registry_litter_events.sql',
     '015_qa_hardening.sql',
     '016_structure_assignments.sql',
+    '017_structure_default_parc_image.sql',
+    '018_structure_default_chenil_box_image.sql',
   ];
 
   console.log('Démarrage des migrations...');
