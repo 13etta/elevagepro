@@ -1,0 +1,240 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<link rel="stylesheet" href="/css/structure-assignments.css">
+
+<main class="container structure-page">
+  <section class="structure-hero">
+    <div>
+      <h1>Gestion de la Structure</h1>
+      <p>Pilotez vos infrastructures, vos box, les affectations d’animaux et vos obligations sanitaires avec une précision professionnelle.</p>
+    </div>
+    <div class="structure-actions">
+      <a href="/breeder/register/entries" class="structure-btn secondary"><span class="material-symbols-outlined">download</span> Exporter</a>
+      <button type="button" class="structure-btn primary" onclick="document.getElementById('new-building-form').classList.toggle('is-open')"><span class="material-symbols-outlined">add</span> Nouveau bâtiment</button>
+    </div>
+  </section>
+
+  <% if (flash) { %>
+    <div class="structure-flash <%= flash.type || 'info' %>"><%= flash.message %></div>
+  <% } %>
+
+  <form id="new-building-form" class="structure-new-building" action="/structure/infrastructures" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input name="name" placeholder="Nom du bâtiment ou du box" required>
+    <select name="type">
+      <option value="box">Chenil / Box</option>
+      <option value="nurserie">Nurserie / Mise bas</option>
+      <option value="infirmerie">Infirmerie / Quarantaine</option>
+      <option value="parc">Parc extérieur</option>
+      <option value="autre">Autre</option>
+    </select>
+    <input type="number" name="capacity" min="0" placeholder="Capacité">
+    <select name="status">
+      <option value="actif">Actif</option>
+      <option value="libre">Libre</option>
+      <option value="attention">Attention</option>
+      <option value="maintenance">Maintenance</option>
+    </select>
+    <input name="image_url" placeholder="URL image de fond — facultatif">
+    <textarea name="description" placeholder="Description — facultatif"></textarea>
+    <button type="submit">Créer</button>
+  </form>
+
+  <section class="structure-assignment-panel" id="assignment-panel">
+    <div class="assignment-copy">
+      <span class="eyebrow">Affectation sanitaire</span>
+      <h2>Placer un chien ou un chiot dans un box</h2>
+      <p>Utilisez ce panneau pour savoir immédiatement quel animal occupe quel espace, et conserver un historique exploitable en cas de contamination, quarantaine ou nettoyage renforcé.</p>
+    </div>
+    <form class="assignment-form" action="/structure/assign" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <select name="animal_ref" required>
+        <option value="">Animal à affecter</option>
+        <% if (assignableDogs && assignableDogs.length) { %>
+          <optgroup label="Chiens adultes">
+            <% assignableDogs.forEach((dog) => { %>
+              <option value="dog:<%= dog.id %>"><%= dog.name %><%= dog.infrastructure_name ? ' — ' + dog.infrastructure_name : ' — non assigné' %></option>
+            <% }) %>
+          </optgroup>
+        <% } %>
+        <% if (assignablePuppies && assignablePuppies.length) { %>
+          <optgroup label="Chiots non vendus">
+            <% assignablePuppies.forEach((puppy) => { %>
+              <option value="puppy:<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %><%= puppy.infrastructure_name ? ' — ' + puppy.infrastructure_name : ' — non assigné' %></option>
+            <% }) %>
+          </optgroup>
+        <% } %>
+      </select>
+      <select name="infrastructure_id" id="assignment-target">
+        <option value="">Sortir du box / non assigné</option>
+        <% infrastructures.forEach((item) => { %>
+          <option value="<%= item.id %>"><%= item.name %> — <%= item.occupied %>/<%= item.capacity || 0 %></option>
+        <% }) %>
+      </select>
+      <select name="sanitary_context">
+        <option value="routine">Routine</option>
+        <option value="quarantaine">Quarantaine</option>
+        <option value="isolement sanitaire">Isolement sanitaire</option>
+        <option value="suspicion contamination">Suspicion contamination</option>
+        <option value="nettoyage / désinfection">Nettoyage / désinfection</option>
+      </select>
+      <input name="reason" placeholder="Motif : repos, chaleur, toux, diarrhée, quarantaine...">
+      <button type="submit"><span class="material-symbols-outlined">login</span> Assigner</button>
+    </form>
+  </section>
+
+  <section class="structure-kpis">
+    <article><span>Capacité totale</span><strong><%= stats.totalOccupied %> / <%= stats.totalCapacity %></strong></article>
+    <article><span>Chiens non affectés</span><strong><%= stats.unassignedDogs %></strong></article>
+    <article><span>Chiots non affectés</span><strong><%= stats.unassignedPuppies %></strong></article>
+    <article><span>Statut sanitaire</span><strong><%= stats.sanitaryScore %>%</strong></article>
+  </section>
+
+  <section class="structure-layout">
+    <div class="structure-main">
+      <div class="structure-section-title">
+        <h2>Infrastructures</h2>
+        <div class="structure-view-toggle"><span class="material-symbols-outlined">grid_view</span><span class="material-symbols-outlined">table_rows</span></div>
+      </div>
+
+      <div class="structure-grid">
+        <% infrastructures.forEach((item) => { %>
+          <article class="structure-card structure-card-bg" style="--structure-image:url('<%= item.cardImageUrl %>')">
+            <div class="structure-card-content">
+              <div class="structure-card-top">
+                <span class="structure-icon material-symbols-outlined"><%= item.icon || 'warehouse' %></span>
+                <span class="structure-status <%= item.statusClass %>"><%= item.displayStatus %></span>
+              </div>
+              <h3><%= item.name %></h3>
+              <p><%= item.description || 'Infrastructure opérationnelle' %></p>
+              <div class="structure-occupancy">
+                <div><span>Occupation globale</span><strong><%= item.occupied %> / <%= item.capacity || 0 %> places</strong></div>
+                <div class="structure-progress"><span style="width:<%= item.occupancyRate %>%"></span></div>
+              </div>
+              <div class="structure-lines">
+                <span><%= item.zone_label || 'Zone principale' %></span>
+                <strong><%= item.freePlaces === null ? 'Capacité libre' : item.freePlaces + ' place(s) libre(s)' %></strong>
+              </div>
+
+              <div class="structure-residents">
+                <h4>Présents dans ce box</h4>
+                <% if (item.residents && item.residents.length) { %>
+                  <% item.residents.forEach((resident) => { %>
+                    <div class="resident-line">
+                      <span><%= resident.animal_type === 'dog' ? 'Chien' : 'Chiot' %></span>
+                      <strong><%= resident.display_name %></strong>
+                      <form action="/structure/assign" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="animal_ref" value="<%= resident.animal_ref %>">
+                        <input type="hidden" name="infrastructure_id" value="">
+                        <input type="hidden" name="sanitary_context" value="sortie">
+                        <input type="hidden" name="reason" value="Sortie du box depuis la carte structure">
+                        <button type="submit" title="Sortir du box"><span class="material-symbols-outlined">logout</span></button>
+                      </form>
+                    </div>
+                  <% }) %>
+                <% } else { %>
+                  <p class="empty-residents">Aucun animal affecté.</p>
+                <% } %>
+              </div>
+
+              <div class="structure-card-actions">
+                <a href="/breeder/infrastructure/<%= item.id %>/edit">Modifier</a>
+                <button type="button" class="brown" data-assign-target="<%= item.id %>">Assigner ici</button>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+
+      <section class="assignment-history">
+        <div class="legal-title">
+          <h2><span class="material-symbols-outlined">history</span> Historique des affectations</h2>
+        </div>
+        <% if (assignmentHistory && assignmentHistory.length) { %>
+          <div class="history-table">
+            <% assignmentHistory.forEach((entry) => { %>
+              <div class="history-row">
+                <span><%= formatDate(entry.assigned_at) %></span>
+                <strong><%= entry.animal_name %></strong>
+                <em><%= entry.previous_infrastructure_name || 'Non assigné' %> → <%= entry.infrastructure_name || 'Non assigné' %></em>
+                <small><%= entry.sanitary_context || 'routine' %><%= entry.reason ? ' · ' + entry.reason : '' %></small>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="empty-residents">Aucune affectation enregistrée pour le moment.</p>
+        <% } %>
+      </section>
+
+      <section class="legal-section">
+        <div class="legal-title">
+          <h2><span class="material-symbols-outlined">gavel</span> Registres Légaux</h2>
+          <a href="/breeder/register/entries">Consulter tout l'historique <span class="material-symbols-outlined">arrow_forward</span></a>
+        </div>
+        <div class="legal-grid">
+          <article class="legal-card">
+            <a class="legal-cover movements-cover" href="/breeder/register/entries"><span>CERFA N°15048-01<br>Mouvements</span></a>
+            <div>
+              <h3>Registre des Entrées & Sorties</h3>
+              <p>Suivi obligatoire de tous les mouvements d’animaux.</p>
+              <% if (movements.length) { %><small>Dernier mouvement : <%= formatDate(movements[0].movement_date) %> · <%= movements[0].animal_name || '-' %></small><% } else { %><small>Aucun mouvement enregistré.</small><% } %>
+            </div>
+          </article>
+          <article class="legal-card">
+            <a class="legal-cover sanitary-cover" href="/breeder/register/health"><span>Réglementation 2024<br>Sanitaire</span></a>
+            <div>
+              <h3>Registre Sanitaire de l'Élevage</h3>
+              <p>Journal des soins, vaccinations, vermifuges et visites.</p>
+              <% if (sanitary.length) { %><small>Dernier acte : <%= formatDate(sanitary[0].event_date) %> · <%= sanitary[0].event_type || '-' %></small><% } else { %><small>Aucun acte sanitaire enregistré.</small><% } %>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <aside class="structure-aside">
+      <article class="team-panel">
+        <header><h2>Équipe</h2><span class="material-symbols-outlined">group_add</span></header>
+        <% if (!staff.length) { %>
+          <p class="empty-team">Aucun membre d’équipe renseigné.</p>
+        <% } %>
+        <% staff.forEach((person) => { %>
+          <div class="team-line">
+            <span class="team-avatar"><%= (person.first_name || '?').slice(0,1) %></span>
+            <div><strong><%= person.first_name %> <%= person.last_name %></strong><small><%= person.role || person.contract_type || 'Équipe' %></small></div>
+            <i></i>
+          </div>
+        <% }) %>
+        <a href="/settings" class="team-planning">Planning hebdomadaire</a>
+      </article>
+
+      <article class="sanitary-score <%= stats.sanitaryScore < 100 ? 'is-incomplete' : '' %>">
+        <span>Statut sanitaire</span>
+        <strong><%= stats.sanitaryScore %>%</strong>
+        <p><%= stats.sanitaryMessage %></p>
+        <% if (stats.sanitaryMissing && stats.sanitaryMissing.length) { %>
+          <ul>
+            <% stats.sanitaryMissing.forEach((missing) => { %><li><%= missing %></li><% }) %>
+          </ul>
+          <a href="/breeder/register/health">Compléter le registre</a>
+        <% } else { %>
+          <a href="/breeder/register/health">Ouvrir le registre</a>
+        <% } %>
+      </article>
+    </aside>
+  </section>
+</main>
+
+<script>
+  document.querySelectorAll('[data-assign-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = document.getElementById('assignment-target');
+      const panel = document.getElementById('assignment-panel');
+      if (target) target.value = button.dataset.assignTarget || '';
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+</script>
+
+<%- include('../partials/foot') %>

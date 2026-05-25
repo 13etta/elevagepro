@@ -3,7 +3,7 @@
     <span class="brand-mark">EP</span>
     <span>
       <strong>ElevagePro</strong>
-      <small>Elite Canine Management</small>
+      <small>Gestion d'élevage canin</small>
     </span>
   </a>
   <button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-sidebar" aria-expanded="false">
@@ -20,11 +20,11 @@
   <a class="brand" href="/dashboard" aria-label="ElevagePro">
     <span class="brand-text">
       <strong>ElevagePro</strong>
-      <small>Elite Canine Management</small>
+      <small>Gestion d'élevage canin</small>
     </span>
   </a>
 
-  <button class="sidebar-collapse" type="button" data-sidebar-collapse aria-label="Reduire le menu">
+  <button class="sidebar-collapse" type="button" data-sidebar-collapse aria-label="Réduire le menu">
     <span></span>
   </button>
 
@@ -59,11 +59,18 @@
     </form>
 
     <div class="topbar-actions">
-      <a class="topbar-btn topbar-btn-light" href="/sales"><span class="material-symbols-outlined">description</span>Generate Document</a>
-      <a class="topbar-btn topbar-btn-primary" href="/dogs/new"><span class="material-symbols-outlined">add</span>Add Dog</a>
+      <a class="topbar-btn topbar-btn-light" href="/sales"><span class="material-symbols-outlined">description</span>Documents</a>
+      <a class="topbar-btn topbar-btn-primary" href="/dogs/new"><span class="material-symbols-outlined">add</span>Ajouter un chien</a>
       <span class="topbar-divider"></span>
       <a class="icon-action" href="/reminders" aria-label="Rappels"><span class="material-symbols-outlined">notifications</span></a>
       <a class="icon-action" href="/settings" aria-label="Paramètres"><span class="material-symbols-outlined">settings</span></a>
       <a class="user-avatar" href="/settings" aria-label="Profil"><span><%= user && user.name ? user.name.charAt(0).toUpperCase() : 'E' %></span></a>
     </div>
   </header>
+
+  <% if (typeof flash !== 'undefined' && flash && flash.message) { %>
+    <div class="flash-message flash-<%= flash.type || 'info' %>" role="status" aria-live="polite">
+      <span class="material-symbols-outlined"><%= flash.type === 'error' ? 'error' : flash.type === 'success' ? 'check_circle' : 'info' %></span>
+      <span><%= flash.message %></span>
+    </div>
+  <% } %>

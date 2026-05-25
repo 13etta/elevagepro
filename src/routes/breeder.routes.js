@@ -5,8 +5,8 @@ const { requireAuth } = require('../middleware/auth');
 
 router.use(requireAuth);
 
-// Tableau de bord principal
-router.get('/', breederController.getDashboard);
+// Ancien tableau de bord structure : redirection vers la nouvelle interface premium.
+router.get('/', (req, res) => res.redirect('/structure'));
 
 // --- Gestion des Infrastructures ---
 // Afficher le formulaire (Création)
@@ -23,13 +23,11 @@ router.post('/infrastructure/:id/edit', breederController.saveInfra);
 router.post('/infrastructure/:id/delete', breederController.deleteInfra);
 // --- Registres Légaux ---
 // Registre des Entrées et Sorties
-// Registre des Entrées et Sorties
 router.get('/register/entries', breederController.getEntriesRegister);
 
 // Modification d'une ligne du registre
 router.get('/register/movements/:id/edit', breederController.getEditMovementForm);
 router.post('/register/movements/:id/edit', breederController.updateMovement);
-module.exports = router;
 
 // --- Registre Sanitaire & Marche en Avant ---
 router.get('/register/health', breederController.getHealthRegister);
@@ -39,3 +37,5 @@ router.post('/register/health/record', breederController.addSanitaryRecord);
 
 // Validation d'une tâche de nettoyage (Marche en avant)
 router.post('/register/health/cleaning', breederController.addCleaningLog);
+
+module.exports = router;

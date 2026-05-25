@@ -25,6 +25,31 @@
   transition: opacity .55s ease, filter .55s ease;
 }
 
+.auth-canine-video-visual {
+  background:
+    linear-gradient(180deg, rgba(8, 12, 7, .02), rgba(8, 12, 7, .18)),
+    linear-gradient(90deg, rgba(8, 18, 10, .06), rgba(8, 18, 10, .00)),
+    var(--auth-canine-bg) var(--auth-canine-position) / cover no-repeat;
+}
+
+.auth-canine-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  opacity: 1;
+  filter: saturate(.94) contrast(1.04) brightness(.86);
+  transform: scale(1.01);
+}
+
+.auth-canine-video.is-hidden,
+.auth-canine-video:not([src]) {
+  display: none;
+}
+
 .auth-canine-visual.is-changing {
   opacity: .88;
   filter: saturate(.92) contrast(.98);
@@ -34,13 +59,20 @@
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
-    linear-gradient(180deg, rgba(0,0,0,.04) 0%, rgba(0,0,0,.04) 42%, rgba(8, 20, 12, .72) 100%),
-    radial-gradient(circle at 18% 12%, rgba(255, 239, 199, .30), transparent 30rem);
+    linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.12) 36%, rgba(8, 20, 12, .78) 100%),
+    radial-gradient(circle at 18% 12%, rgba(255, 239, 199, .24), transparent 30rem);
 }
 
 .auth-canine-visual::after {
-  display: none;
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 42%;
+  background: linear-gradient(180deg, transparent, rgba(5, 28, 16, .38));
+  pointer-events: none;
 }
 
 .auth-canine-visual-overlay {
@@ -283,8 +315,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-canine-visual {
+  .auth-canine-visual,
+  .auth-canine-video {
     transition: none;
+  }
+
+  .auth-canine-video {
+    display: none;
   }
 }
 

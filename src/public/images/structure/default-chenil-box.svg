@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 960" role="img" aria-label="Chenil moderne en bois avec box extérieurs">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dceef7"/>
+      <stop offset="1" stop-color="#f8fbf6"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#78a84f"/>
+      <stop offset="1" stop-color="#2f5f2d"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d0a267"/>
+      <stop offset="1" stop-color="#9f6d38"/>
+    </linearGradient>
+    <linearGradient id="concrete" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6f4ec"/>
+      <stop offset="1" stop-color="#cfc7b8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#1a1a1a" flood-opacity=".22"/>
+    </filter>
+  </defs>
+
+  <rect width="1440" height="960" fill="url(#sky)"/>
+  <path d="M0 515 C220 470 390 520 580 490 C835 450 1040 515 1440 470 L1440 960 L0 960 Z" fill="#6f9d58" opacity=".8"/>
+  <path d="M0 635 C260 600 565 640 820 610 C1060 582 1240 600 1440 575 L1440 960 L0 960 Z" fill="url(#grass)"/>
+
+  <g opacity=".95">
+    <circle cx="120" cy="300" r="130" fill="#315d38"/>
+    <circle cx="260" cy="265" r="180" fill="#426f43"/>
+    <circle cx="1140" cy="245" r="190" fill="#315d38"/>
+    <circle cx="1305" cy="315" r="150" fill="#436f41"/>
+    <rect x="95" y="300" width="30" height="330" fill="#4b3927"/>
+    <rect x="1130" y="300" width="34" height="350" fill="#4b3927"/>
+  </g>
+
+  <polygon points="135,590 1330,560 1440,690 0,740" fill="#eee9df" opacity=".96"/>
+  <polygon points="175,555 1280,535 1370,602 80,665" fill="url(#concrete)"/>
+
+  <g filter="url(#shadow)">
+    <polygon points="125,315 1070,310 1240,425 245,450" fill="#686868"/>
+    <polygon points="155,345 1050,338 1200,430 260,455" fill="#a7a39a"/>
+    <rect x="185" y="385" width="900" height="235" fill="url(#wood)"/>
+    <rect x="185" y="565" width="900" height="75" fill="#ece7da"/>
+    <polygon points="185,385 1085,385 1200,430 260,455" fill="#b67f43" opacity=".52"/>
+  </g>
+
+  <g opacity=".34" stroke="#6e4727" stroke-width="2">
+    <line x1="230" y1="390" x2="230" y2="618"/>
+    <line x1="285" y1="388" x2="285" y2="618"/>
+    <line x1="340" y1="388" x2="340" y2="618"/>
+    <line x1="395" y1="388" x2="395" y2="618"/>
+    <line x1="450" y1="388" x2="450" y2="618"/>
+    <line x1="505" y1="388" x2="505" y2="618"/>
+    <line x1="560" y1="388" x2="560" y2="618"/>
+    <line x1="615" y1="388" x2="615" y2="618"/>
+    <line x1="670" y1="388" x2="670" y2="618"/>
+    <line x1="725" y1="388" x2="725" y2="618"/>
+    <line x1="780" y1="388" x2="780" y2="618"/>
+    <line x1="835" y1="388" x2="835" y2="618"/>
+    <line x1="890" y1="388" x2="890" y2="618"/>
+    <line x1="945" y1="388" x2="945" y2="618"/>
+    <line x1="1000" y1="388" x2="1000" y2="618"/>
+  </g>
+
+  <g stroke="#222d33" stroke-width="7" stroke-linecap="round" fill="none">
+    <line x1="245" y1="430" x2="245" y2="735"/>
+    <line x1="390" y1="425" x2="390" y2="720"/>
+    <line x1="535" y1="420" x2="535" y2="705"/>
+    <line x1="680" y1="416" x2="680" y2="690"/>
+    <line x1="825" y1="413" x2="825" y2="675"/>
+    <line x1="970" y1="410" x2="970" y2="660"/>
+    <line x1="1115" y1="430" x2="1115" y2="650"/>
+    <line x1="245" y1="430" x2="1115" y2="430"/>
+    <line x1="245" y1="735" x2="1115" y2="650"/>
+  </g>
+
+  <g stroke="#2f3a3f" stroke-width="2" opacity=".9">
+    <line x1="250" y1="460" x2="1110" y2="460"/>
+    <line x1="250" y1="500" x2="1110" y2="495"/>
+    <line x1="250" y1="540" x2="1110" y2="530"/>
+    <line x1="250" y1="580" x2="1110" y2="565"/>
+    <line x1="250" y1="620" x2="1110" y2="600"/>
+    <line x1="250" y1="660" x2="1110" y2="635"/>
+    <line x1="285" y1="430" x2="285" y2="730"/>
+    <line x1="320" y1="430" x2="320" y2="725"/>
+    <line x1="355" y1="428" x2="355" y2="723"/>
+    <line x1="430" y1="424" x2="430" y2="716"/>
+    <line x1="465" y1="423" x2="465" y2="712"/>
+    <line x1="500" y1="421" x2="500" y2="708"/>
+    <line x1="575" y1="419" x2="575" y2="700"/>
+    <line x1="610" y1="418" x2="610" y2="696"/>
+    <line x1="645" y1="417" x2="645" y2="692"/>
+    <line x1="720" y1="415" x2="720" y2="686"/>
+    <line x1="755" y1="414" x2="755" y2="682"/>
+    <line x1="790" y1="414" x2="790" y2="678"/>
+    <line x1="865" y1="412" x2="865" y2="672"/>
+    <line x1="900" y1="412" x2="900" y2="668"/>
+    <line x1="935" y1="411" x2="935" y2="664"/>
+    <line x1="1010" y1="412" x2="1010" y2="656"/>
+    <line x1="1045" y1="416" x2="1045" y2="653"/>
+    <line x1="1080" y1="422" x2="1080" y2="650"/>
+  </g>
+
+  <g fill="#54341e">
+    <path d="M360 560 h95 v75 h-95 z" fill="#8b5e34"/>
+    <path d="M385 635 v-48 a22 22 0 0 1 44 0 v48 z" fill="#171717"/>
+    <path d="M645 545 h105 v78 h-105 z" fill="#8b5e34"/>
+    <path d="M678 623 v-50 a24 24 0 0 1 48 0 v50 z" fill="#171717"/>
+    <path d="M910 535 h110 v75 h-110 z" fill="#8b5e34"/>
+    <path d="M944 610 v-47 a24 24 0 0 1 48 0 v47 z" fill="#171717"/>
+  </g>
+
+  <g opacity=".25" fill="#0f1a14">
+    <ellipse cx="670" cy="780" rx="530" ry="80"/>
+    <ellipse cx="1120" cy="775" rx="320" ry="70"/>
+  </g>
+
+  <rect width="1440" height="960" fill="none" stroke="rgba(0,0,0,.05)" stroke-width="12"/>
+</svg>

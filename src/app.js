@@ -7,6 +7,7 @@ const db = require('./db');
 const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
 const { modules, moduleGroups } = require('./config/modules');
+const { formatDateFr, dateInputValue } = require('./utils/dates');
 
 const authRoutes = require('./routes/auth.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');

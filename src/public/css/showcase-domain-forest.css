@@ -1,0 +1,363 @@
+/* Site vitrine public — style Domaine / Forêt */
+
+:root {
+  --forest-primary: #29422c;
+  --forest-secondary: #bda66f;
+  --forest-bg: #f6f1e8;
+  --forest-text: #24301f;
+  --forest-cream: #f7f2e6;
+  --forest-dark: #243822;
+  --forest-muted: rgba(36, 48, 31, .72);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body.domain-forest-site {
+  margin: 0;
+  background: var(--forest-bg);
+  color: var(--forest-text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.forest-header {
+  min-height: 74px;
+  display: grid;
+  place-items: center;
+  background: rgba(247, 242, 230, .96);
+  border-bottom: 1px solid rgba(36,48,31,.08);
+}
+.forest-logo {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  color: var(--forest-text);
+  text-decoration: none;
+}
+.forest-logo img { max-height: 42px; max-width: 120px; object-fit: contain; }
+.forest-logo-mark { font-size: 34px; line-height: 1; color: var(--forest-primary); }
+.forest-logo strong {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.forest-hero {
+  min-height: 430px;
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.54), rgba(0,0,0,.18)),
+    url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1800&q=82') center / cover no-repeat;
+}
+.forest-hero-inner {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 70px 24px;
+  color: #fff;
+}
+.forest-hero h1 {
+  max-width: 590px;
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  line-height: .92;
+  letter-spacing: -.035em;
+  font-weight: 600;
+  text-shadow: 0 3px 24px rgba(0,0,0,.34);
+}
+.forest-hero p {
+  max-width: 430px;
+  margin: 18px 0 0;
+  font-size: 18px;
+  line-height: 1.45;
+  text-shadow: 0 2px 18px rgba(0,0,0,.36);
+}
+.forest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 28px;
+}
+.forest-actions a,
+.forest-service-copy a,
+.forest-contact-form button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 28px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--forest-primary);
+  color: #fff;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-size: 12px;
+  font-weight: 800;
+}
+.forest-actions a.secondary {
+  background: rgba(189,166,111,.92);
+  color: #fff;
+}
+
+.forest-newsbar {
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  padding: 16px 20px;
+  text-align: center;
+  background: var(--forest-primary);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 14px;
+  font-weight: 700;
+}
+.forest-newsbar a { color: #fff; font-size: 11px; }
+
+.forest-services {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: 38px 24px 20px;
+}
+.forest-service {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 34px;
+  margin-bottom: 8px;
+}
+.forest-service.reverse .forest-service-image { order: 2; }
+.forest-service-image img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+}
+.forest-service-copy h2,
+.forest-section-title h2,
+.forest-strengths h2,
+.forest-contact-form h2 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: var(--forest-text);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+  font-weight: 600;
+}
+.forest-service-copy p {
+  max-width: 470px;
+  margin: 14px 0 18px;
+  color: #111;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.forest-section {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 56px 24px;
+}
+.forest-section-title {
+  margin-bottom: 28px;
+  text-align: center;
+}
+.forest-section-title span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--forest-secondary);
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  font-size: 11px;
+  font-weight: 900;
+}
+.forest-breed-block {
+  margin-top: 32px;
+}
+.forest-breed-block h3 {
+  margin: 0 0 16px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid rgba(36,48,31,.18);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--forest-primary);
+}
+.forest-animal-grid,
+.forest-puppy-grid,
+.forest-litter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.forest-animal-card,
+.forest-puppy-card,
+.forest-litter-card {
+  overflow: hidden;
+  background: rgba(255,255,255,.58);
+  border: 1px solid rgba(36,48,31,.12);
+  box-shadow: 0 14px 34px rgba(36,48,31,.07);
+}
+.forest-animal-card img,
+.forest-puppy-card img,
+.forest-litter-card img {
+  width: 100%;
+  height: 210px;
+  display: block;
+  object-fit: cover;
+}
+.forest-animal-card > div,
+.forest-puppy-card > div,
+.forest-litter-card > div {
+  padding: 18px;
+}
+.forest-animal-card span,
+.forest-puppy-card span {
+  display: inline-flex;
+  margin-bottom: 7px;
+  color: var(--forest-secondary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: 11px;
+  font-weight: 900;
+}
+.forest-animal-card h4,
+.forest-puppy-card h4,
+.forest-litter-card h4 {
+  margin: 0 0 8px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--forest-text);
+}
+.forest-animal-card p,
+.forest-puppy-card p,
+.forest-litter-card p {
+  margin: 5px 0;
+  color: var(--forest-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.forest-price {
+  color: var(--forest-primary) !important;
+  font-weight: 900;
+}
+
+.forest-strengths {
+  padding: 56px 24px 64px;
+  background: var(--forest-secondary);
+  color: #fff;
+  text-align: center;
+}
+.forest-strengths h2 { color: #fff; margin-bottom: 34px; }
+.forest-strengths > div {
+  width: min(100%, 1050px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 38px;
+}
+.forest-strengths article span {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 42px;
+}
+.forest-strengths article strong {
+  display: block;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+.forest-strengths article p {
+  margin: 8px auto 0;
+  max-width: 260px;
+  color: rgba(255,255,255,.78);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.forest-gallery > div:last-child {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.forest-gallery img {
+  width: 100%;
+  aspect-ratio: 1.25;
+  object-fit: cover;
+}
+
+.forest-contact {
+  padding: 58px 24px;
+  background: linear-gradient(135deg, #263f28, #162916);
+  color: #fff;
+}
+.forest-contact-inner {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.3fr .8fr;
+  gap: 34px;
+  align-items: start;
+}
+.forest-contact-form h2 { color: #fff; margin-bottom: 20px; }
+.forest-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.forest-contact input,
+.forest-contact textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 3px;
+  padding: 10px 12px;
+  font: inherit;
+}
+.forest-contact textarea {
+  min-height: 104px;
+  margin-top: 10px;
+  resize: vertical;
+}
+.forest-contact-form button {
+  width: 100%;
+  margin-top: 14px;
+  background: #6f8a57;
+}
+.forest-contact-details {
+  color: rgba(255,255,255,.84);
+  line-height: 1.7;
+}
+.forest-contact-details a { color: inherit; }
+
+.forest-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 24px;
+  background: #111a10;
+  color: rgba(255,255,255,.72);
+}
+.forest-footer strong { color: #fff; }
+
+@media (max-width: 900px) {
+  .forest-service,
+  .forest-contact-inner { grid-template-columns: 1fr; }
+  .forest-service.reverse .forest-service-image { order: initial; }
+  .forest-animal-grid,
+  .forest-puppy-grid,
+  .forest-litter-grid,
+  .forest-strengths > div { grid-template-columns: 1fr; }
+  .forest-gallery > div:last-child { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .forest-hero { min-height: 520px; }
+  .forest-form-grid { grid-template-columns: 1fr; }
+  .forest-header { padding: 10px; }
+  .forest-logo strong { text-align: center; }
+}

@@ -1,174 +1,152 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
 
-<main class="container">
-  <section class="page-hero dog-hero">
-    <div class="dog-hero-media">
-      <% if (dog.photo_url) { %>
-        <img src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
-      <% } else { %>
-        <span><%= dogInitials(dog.name) %></span>
-      <% } %>
+<main class="container dog-profile-page">
+  <div class="dog-profile-toolbar">
+    <a class="dog-profile-back" href="/dogs"><span class="material-symbols-outlined">arrow_back</span> Dog profile</a>
+    <div class="dog-profile-actions">
+      <a class="btn btn-secondary" href="/dogs"><span class="material-symbols-outlined">arrow_back</span> Retour</a>
+      <a class="btn btn-primary" href="/dogs/<%= dog.id %>/edit"><span class="material-symbols-outlined">edit</span> Modifier</a>
     </div>
-    <div class="dog-hero-content">
-      <p class="eyebrow">Fiche cynotechnique</p>
-      <h1><%= dog.name %></h1>
-      <p>
-        <%= dog.breed || 'Race non renseignée' %>
-        —
-        <%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %>
-      </p>
-      <div class="dog-hero-meta">
-        <span><%= dog.status || 'Statut non renseigne' %></span>
-        <span>Dossier complete a <%= completeness.percent %>%</span>
+  </div>
+
+  <section class="dog-profile-hero <%= dog.photo_url ? 'has-photo' : 'no-photo' %>">
+    <% if (dog.photo_url) { %>
+      <img class="dog-profile-hero-img" src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
+    <% } %>
+    <div class="dog-profile-hero-overlay"></div>
+    <div class="dog-profile-hero-content">
+      <div>
+        <h1><%= dog.name %></h1>
+        <p><%= dog.breed || 'Race non renseignée' %> — <%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %></p>
       </div>
+      <dl class="dog-profile-identity">
+        <div><dt>Date de naissance</dt><dd><%= dog.birth_date ? formatDate(dog.birth_date) : '-' %></dd></div>
+        <div><dt>ID</dt><dd><%= dog.chip_number || dog.id_scc || '-' %></dd></div>
+        <div><dt>LOF</dt><dd><%= dog.lof || dog.pedigree_number || '-' %></dd></div>
+      </dl>
+      <span class="dog-profile-status"><%= dog.status || 'actif' %></span>
     </div>
-    <div class="topbar-actions">
-      <a class="btn btn-secondary" href="/dogs">Retour</a>
-      <a class="btn btn-primary" href="/dogs/<%= dog.id %>/edit">Modifier</a>
-    </div>
+    <a class="dog-profile-hero-edit" href="/dogs/<%= dog.id %>/edit"><span class="material-symbols-outlined">edit</span> Modifier</a>
+    <% if (!dog.photo_url) { %>
+      <div class="dog-profile-placeholder"><span><%= dogInitials(dog.name) %></span></div>
+    <% } %>
   </section>
 
-  <section class="kpi-grid">
-    <article class="kpi-card"><span>Statut</span><strong><%= dog.status || '-' %></strong></article>
-    <article class="kpi-card"><span>Puce</span><strong><%= dog.chip_number || '-' %></strong></article>
-    <article class="kpi-card"><span>Naissance</span><strong><%= dog.birth_date ? formatDate(dog.birth_date) : '-' %></strong></article>
-    <article class="kpi-card"><span>LOF</span><strong><%= dog.lof || dog.pedigree_number || '-' %></strong></article>
-  </section>
-
-  <section class="dashboard-columns">
-    <article class="card">
-      <div class="section-title compact">
-        <span class="section-kicker">Qualite dossier</span>
-        <h2>Immersion & suivi</h2>
+  <section class="dog-profile-grid dog-profile-grid-main">
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head">
+        <h2>Immersion & Suivi</h2>
       </div>
-      <div class="dog-completeness">
-        <div class="dog-completeness-bar"><span style="width: <%= completeness.percent %>%;"></span></div>
-        <strong><%= completeness.percent %>%</strong>
+      <div class="dog-profile-progress-row">
+        <strong>Progress</strong>
+        <span><%= completeness.percent %>%</span>
       </div>
+      <div class="dog-profile-progress"><span style="width: <%= completeness.percent %>%;"></span></div>
       <% if (completeness.missing.length) { %>
-        <p class="muted">A completer pour une fiche plus riche : <%= completeness.missing.join(', ') %>.</p>
+        <p>À compléter : <%= completeness.missing.join(', ') %>.</p>
       <% } else { %>
-        <p class="muted">Fiche bien documentee pour le suivi interne et les usages commerciaux.</p>
+        <p>Fiche bien documentée pour le suivi interne et les usages commerciaux.</p>
       <% } %>
     </article>
 
-    <article class="card">
-      <div class="section-title compact">
-        <span class="section-kicker">Identité</span>
-        <h2>Informations générales</h2>
-      </div>
-      <p><strong>Nom :</strong> <%= dog.name %></p>
-      <p><strong>Race :</strong> <%= dog.breed || '-' %></p>
-      <p><strong>Sexe :</strong> <%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %></p>
-      <p><strong>N° puce :</strong> <%= dog.chip_number || '-' %></p>
-      <p><strong>ID SCC :</strong> <%= dog.id_scc || '-' %></p>
-      <p><strong>Père :</strong> <%= dog.father_name || dog.father_name_external || '-' %></p>
-      <p><strong>Mère :</strong> <%= dog.mother_name || dog.mother_name_external || '-' %></p>
-    </article>
-
-    <article class="card">
-      <div class="section-title compact">
-        <span class="section-kicker">Notes</span>
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head">
         <h2>Observations</h2>
       </div>
-      <p><%= dog.notes || 'Aucune observation renseignée.' %></p>
+      <p><%= dog.notes || 'Aucune observation renseignée. Ajoutez ici les éléments utiles : acquisition, caractère, aptitudes, comportement, recommandations ou restrictions.' %></p>
+    </article>
+
+    <article class="dog-profile-card dog-profile-health-card">
+      <div class="dog-profile-card-head">
+        <h2>Santé</h2>
+      </div>
+      <% if (!soins.length) { %>
+        <p class="dog-profile-empty">Aucun soin enregistré.</p>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Date</span><span>Acte</span></div>
+          <% soins.slice(0, 4).forEach((soin) => { %>
+            <div class="dog-profile-mini-row">
+              <span><%= formatDate(soin.event_date) %></span>
+              <span><%= soin.label %><small><%= soin.next_due ? 'Échéance: ' + formatDate(soin.next_due) : '' %></small></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+      <a class="dog-profile-card-button" href="/soins">Ajouter un soin</a>
+    </article>
+
+    <article class="dog-profile-card dog-profile-repro-card">
+      <div class="dog-profile-card-head">
+        <h2>Reproduction</h2>
+      </div>
+      <h3>Portées liées</h3>
+      <% if (!litters.length) { %>
+        <div class="dog-profile-mini-table muted-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Portée</span><span>Issus</span></div>
+          <p class="dog-profile-empty centered">Non portée actuellement</p>
+        </div>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Date</span><span>Chiots</span></div>
+          <% litters.slice(0, 3).forEach((litter) => { %>
+            <div class="dog-profile-mini-row"><span><%= formatDate(litter.birth_date) %></span><span><%= litter.puppies_count_total || '-' %></span></div>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <h3>Chiots issus des portées</h3>
+      <% if (!puppies.length) { %>
+        <div class="dog-profile-mini-table muted-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Portée</span><span>Statut</span></div>
+          <p class="dog-profile-empty centered">Non portée actuellement</p>
+        </div>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Nom</span><span>Statut</span></div>
+          <% puppies.slice(0, 4).forEach((puppy) => { %>
+            <a class="dog-profile-mini-row link-row" href="/puppies/<%= puppy.id %>"><span><%= puppy.name || 'Chiot sans nom' %></span><span><%= puppy.status || '-' %></span></a>
+          <% }) %>
+        </div>
+      <% } %>
     </article>
   </section>
 
-  <section class="dashboard-columns">
-    <article class="table-block">
-      <div class="section-title compact">
-        <span class="section-kicker">Santé</span>
-        <h2>Soins récents</h2>
+  <section class="dog-profile-grid dog-profile-grid-secondary">
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head">
+        <span>Identité</span>
+        <h2>Informations générales</h2>
       </div>
-      <% if (!soins.length) { %>
-        <p class="muted">Aucun soin enregistré pour ce chien.</p>
-      <% } else { %>
-        <table>
-          <thead><tr><th>Date</th><th>Acte</th><th>Échéance</th></tr></thead>
-          <tbody>
-            <% soins.forEach((soin) => { %>
-              <tr>
-                <td><%= formatDate(soin.event_date) %></td>
-                <td><%= soin.label %> <small>(<%= soin.type %>)</small></td>
-                <td><%= soin.next_due ? formatDate(soin.next_due) : '-' %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
-      <div style="margin-top: 1rem;">
-        <a class="btn btn-secondary" href="/soins">Ajouter un soin</a>
-      </div>
+      <dl class="dog-profile-info-list">
+        <div><dt>Nom</dt><dd><%= dog.name %></dd></div>
+        <div><dt>Race</dt><dd><%= dog.breed || '-' %></dd></div>
+        <div><dt>Sexe</dt><dd><%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %></dd></div>
+        <div><dt>N° puce</dt><dd><%= dog.chip_number || '-' %></dd></div>
+        <div><dt>ID SCC</dt><dd><%= dog.id_scc || '-' %></dd></div>
+        <div><dt>Père</dt><dd><%= dog.father_name || dog.father_name_external || '-' %></dd></div>
+        <div><dt>Mère</dt><dd><%= dog.mother_name || dog.mother_name_external || '-' %></dd></div>
+      </dl>
     </article>
 
-    <article class="table-block">
-      <div class="section-title compact">
-        <span class="section-kicker">Prioritaire</span>
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head">
+        <span>Prioritaire</span>
         <h2>Rappels à venir</h2>
       </div>
       <% if (!reminders.length) { %>
-        <p class="muted">Aucun rappel actif.</p>
+        <p class="dog-profile-empty">Aucun rappel actif.</p>
       <% } else { %>
-        <table>
-          <thead><tr><th>Date</th><th>Libellé</th></tr></thead>
-          <tbody>
-            <% reminders.forEach((reminder) => { %>
-              <tr>
-                <td><%= formatDate(reminder.due_date) %></td>
-                <td><%= reminder.title %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
-    </article>
-  </section>
-
-  <section class="dashboard-columns">
-    <article class="table-block">
-      <div class="section-title compact">
-        <span class="section-kicker">Reproduction</span>
-        <h2>Portées liées</h2>
-      </div>
-      <% if (!litters.length) { %>
-        <p class="muted">Aucune portée enregistrée pour cette chienne.</p>
-      <% } else { %>
-        <table>
-          <thead><tr><th>Date</th><th>Nombre</th></tr></thead>
-          <tbody>
-            <% litters.forEach((litter) => { %>
-              <tr>
-                <td><%= formatDate(litter.birth_date) %></td>
-                <td><%= litter.puppies_count_total || '-' %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
-    </article>
-
-    <article class="table-block">
-      <div class="section-title compact">
-        <span class="section-kicker">Descendance</span>
-        <h2>Chiots issus des portées</h2>
-      </div>
-      <% if (!puppies.length) { %>
-        <p class="muted">Aucun chiot rattaché à cette chienne.</p>
-      <% } else { %>
-        <table>
-          <thead><tr><th>Nom</th><th>Sexe</th><th>Statut</th></tr></thead>
-          <tbody>
-            <% puppies.forEach((puppy) => { %>
-              <tr>
-                <td><a href="/puppies/<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %></a></td>
-                <td><%= puppy.sex || '-' %></td>
-                <td><span class="badge"><%= puppy.status || '-' %></span></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
+        <div class="dog-profile-reminders">
+          <% reminders.slice(0, 6).forEach((reminder) => { %>
+            <a href="/reminders" class="dog-profile-reminder">
+              <span class="material-symbols-outlined">notifications_active</span>
+              <strong><%= reminder.title %></strong>
+              <small><%= formatDate(reminder.due_date) %></small>
+            </a>
+          <% }) %>
+        </div>
       <% } %>
     </article>
   </section>

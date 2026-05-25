@@ -21,6 +21,10 @@
       </div>
 
       <form action="/health-tests" method="POST" class="stacked-form" enctype="multipart/form-data">
+        <% if (typeof csrfToken !== 'undefined') { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% } %>
+
         <div class="form-group">
           <label for="dog_id">Chien *</label>
           <select id="dog_id" name="dog_id" required onchange="if(this.value) window.location='/health-tests?dog_id=' + this.value">
@@ -36,7 +40,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="test_type">Catégorie *</label>
-            <select id="test_type" name="test_type" required>
+            <select id="test_type" name="test_type" required data-health-test-type>
               <option value="">Sélectionner</option>
               <option value="ADN">ADN</option>
               <option value="Dysplasie hanches">Dysplasie hanches</option>
@@ -48,14 +52,17 @@
           </div>
           <div class="form-group">
             <label for="test_name">Nom du test *</label>
-            <input id="test_name" name="test_name" type="text" required placeholder="APR, NF, HD-A, ED-0...">
+            <input id="test_name" name="test_name" type="text" required placeholder="APR, NF, HD, ED...">
           </div>
         </div>
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="result">Résultat</label>
-            <input id="result" name="result" type="text" placeholder="Sain, porteur, atteint, A/A, B/B...">
+            <label for="result">Résultat normalisé</label>
+            <select id="result" name="result" data-health-result>
+              <option value="">Sélectionner une catégorie</option>
+            </select>
+            <small>Les valeurs sont normalisées selon la catégorie afin d'éviter les dossiers santé incohérents.</small>
           </div>
           <div class="form-group">
             <label for="test_date">Date du test</label>
@@ -141,6 +148,9 @@
               </td>
               <td>
                 <form action="/health-tests/<%= test.id %>/delete" method="POST" onsubmit="return confirm('Supprimer ce test de santé ?')">
+                  <% if (typeof csrfToken !== 'undefined') { %>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <% } %>
                   <button type="submit" class="btn btn-secondary">Supprimer</button>
                 </form>
               </td>
@@ -151,5 +161,10 @@
     <% } %>
   </section>
 </main>
+
+<script>
+  window.healthResultOptions = <%- JSON.stringify(resultOptions || {}) %>;
+</script>
+<script src="/js/health-tests.js" defer></script>
 
 <%- include('../partials/foot') %>

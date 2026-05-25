@@ -1,146 +1,278 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
 
-<main class="container">
-  <section class="page-hero">
-    <div>
+<%
+  const toNumber = (value) => {
+    const parsed = Number(value || 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const money = (value) => `${toNumber(value).toFixed(2)} €`;
+  const clamp = (value) => Math.max(0, Math.min(100, Math.round(value || 0)));
+  const projectedRevenueNumber = toNumber(projectedRevenue);
+  const bookedRevenueNumber = toNumber(bookedRevenue);
+  const paidRevenueNumber = toNumber(paidRevenue);
+  const totalExpensesNumber = toNumber(totalExpenses);
+  const projectedProfitNumber = toNumber(projectedProfit);
+  const cashProfitNumber = toNumber(cashProfit);
+  const averageSalePriceNumber = toNumber(averageSalePrice);
+  const totalPuppies = toNumber(puppyStats.total);
+  const soldPuppies = toNumber(puppyStats.sold);
+  const reservedPuppies = toNumber(puppyStats.reserved);
+  const availablePuppies = toNumber(puppyStats.available);
+  const cashCollectionRate = bookedRevenueNumber > 0 ? clamp((paidRevenueNumber / bookedRevenueNumber) * 100) : 0;
+  const commercializationRate = totalPuppies > 0 ? clamp(((soldPuppies + reservedPuppies) / totalPuppies) * 100) : 0;
+  const soldRate = totalPuppies > 0 ? clamp((soldPuppies / totalPuppies) * 100) : 0;
+  const expenseWeight = projectedRevenueNumber > 0 ? clamp((totalExpensesNumber / projectedRevenueNumber) * 100) : 0;
+  const projectedMarginRate = projectedRevenueNumber > 0 ? Math.round((projectedProfitNumber / projectedRevenueNumber) * 100) : 0;
+  const revenueBase = Math.max(projectedRevenueNumber, totalExpensesNumber, Math.abs(projectedProfitNumber), 1);
+  const categoryMax = Math.max(...expenseByCategory.map((item) => toNumber(item.amount)), 1);
+  const breakEvenPuppies = averageSalePriceNumber > 0 ? Math.ceil(totalExpensesNumber / averageSalePriceNumber) : 0;
+  const statusTone = projectedProfitNumber >= 0 ? 'positive' : 'negative';
+  const cashTone = cashProfitNumber >= 0 ? 'positive' : 'warning';
+%>
+
+<main class="container profitability-page profitability-stitch">
+  <section class="profitability-hero">
+    <div class="profitability-hero-content">
       <p class="eyebrow">Pilotage économique</p>
-      <h1>Analyse de rentabilité</h1>
-      <p>Suivez les revenus, les acomptes, les charges et la marge réelle ou prévisionnelle par portée.</p>
+      <h1>Rentabilité d’élevage</h1>
+      <p>Une lecture claire de la portée : revenus signés, encaissement réel, charges engagées, marge prévisionnelle et seuil d’équilibre.</p>
+      <div class="profitability-hero-tags">
+        <span><span class="material-symbols-outlined">pets</span><%= selectedLitterLabel %></span>
+        <% if (selectedLitter && selectedLitter.mother_breed) { %>
+          <span><span class="material-symbols-outlined">verified</span><%= selectedLitter.mother_breed %></span>
+        <% } %>
+        <span><span class="material-symbols-outlined">calendar_month</span><%= selectedLitter && selectedLitter.birth_date ? formatDate(selectedLitter.birth_date) : 'Charges générales' %></span>
+      </div>
     </div>
+
+    <aside class="profitability-hero-panel">
+      <span class="profitability-panel-label">Marge prévisionnelle</span>
+      <strong class="<%= statusTone %>"><%= money(projectedProfitNumber) %></strong>
+      <span class="profitability-status-pill <%= statusTone %>">
+        <span class="material-symbols-outlined"><%= projectedProfitNumber >= 0 ? 'trending_up' : 'warning' %></span>
+        <%= projectedProfitNumber >= 0 ? 'Portée rentable' : 'Marge à surveiller' %>
+      </span>
+      <div class="profitability-hero-actions">
+        <a class="btn btn-primary" href="/sales/new">Nouvelle vente</a>
+        <a class="btn btn-secondary" href="#profitability-expense-form">Ajouter une charge</a>
+      </div>
+    </aside>
   </section>
 
-  <section class="dashboard-columns">
-    <article class="card">
-      <div class="section-title compact">
+  <section class="profitability-command-grid">
+    <article class="profitability-command-card profitability-litter-selector">
+      <div>
         <span class="section-kicker">Portée</span>
-        <h2>Sélection</h2>
+        <h2>Sélection active</h2>
+        <% if (selectedLitter) { %>
+          <p><%= selectedLitterLabel %><% if (selectedLitter.mother_breed) { %> · <%= selectedLitter.mother_breed %><% } %></p>
+        <% } else { %>
+          <p>Charges générales de l’élevage, hors portée spécifique.</p>
+        <% } %>
       </div>
-      <form method="GET" action="/profitability" class="stacked-form">
-        <div class="form-group">
-          <label for="litter_id">Portée analysée</label>
-          <select id="litter_id" name="litter_id" onchange="this.form.submit()">
-            <% litters.forEach((litter) => { %>
-              <option value="<%= litter.id %>" <%= selectedLitter && selectedLitter.id === litter.id ? 'selected' : '' %>>
-                <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
-              </option>
-            <% }) %>
-          </select>
+
+      <% if (!litters.length) { %>
+        <div class="empty-state">
+          <strong>Aucune portée enregistrée</strong>
+          <p>Créez une portée pour obtenir une analyse économique complète par naissance.</p>
+          <a class="btn btn-primary" href="/litters/new">Créer une portée</a>
         </div>
-      </form>
+      <% } else { %>
+        <form method="GET" action="/profitability" class="profitability-inline-form">
+          <div class="form-group">
+            <label for="litter_id">Portée analysée</label>
+            <select id="litter_id" name="litter_id">
+              <option value="">Charges générales de l’élevage</option>
+              <% litters.forEach((litter) => { %>
+                <option value="<%= litter.id %>" <%= selectedLitter && String(selectedLitter.id) === String(litter.id) ? 'selected' : '' %>>
+                  <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          <button class="btn btn-primary" type="submit">Analyser</button>
+          <% if (selectedLitter) { %>
+            <a class="btn btn-secondary" href="/litters/<%= selectedLitter.id %>">Ouvrir</a>
+          <% } %>
+        </form>
+      <% } %>
     </article>
 
-    <article class="card">
+    <article class="profitability-command-card">
+      <span class="section-kicker">Seuil</span>
+      <h2><%= breakEvenPuppies || '-' %> chiot<%= breakEvenPuppies > 1 ? 's' : '' %></h2>
+      <p>Nombre estimé de chiots à vendre pour couvrir les charges au prix moyen observé.</p>
+      <small>Prix moyen : <%= money(averageSalePriceNumber) %></small>
+    </article>
+
+    <article class="profitability-command-card">
+      <span class="section-kicker">Encaissement</span>
+      <h2><%= cashCollectionRate %>%</h2>
+      <p>Part du chiffre d’affaires signé déjà réellement encaissée.</p>
+      <div class="profitability-progress"><span style="width:<%= cashCollectionRate %>%"></span></div>
+    </article>
+
+    <article class="profitability-command-card">
+      <span class="section-kicker">Commercialisation</span>
+      <h2><%= commercializationRate %>%</h2>
+      <p>Chiots vendus ou réservés sur le total de la portée.</p>
+      <div class="profitability-progress bronze"><span style="width:<%= commercializationRate %>%"></span></div>
+    </article>
+  </section>
+
+  <section class="profitability-kpi-grid">
+    <a class="profitability-kpi-card" href="/sales">
+      <span>CA signé</span>
+      <strong><%= money(bookedRevenueNumber) %></strong>
+      <small>Ventes et réservations contractualisées</small>
+    </a>
+    <a class="profitability-kpi-card" href="/sales">
+      <span>Encaissement réel</span>
+      <strong><%= money(paidRevenueNumber) %></strong>
+      <small>Acomptes + ventes définitives encaissées</small>
+    </a>
+    <a class="profitability-kpi-card" href="/sales/new">
+      <span>CA prévisionnel</span>
+      <strong><%= money(projectedRevenueNumber) %></strong>
+      <small>Signé + potentiel restant</small>
+    </a>
+    <a class="profitability-kpi-card warning" href="#profitability-expense-form">
+      <span>Charges</span>
+      <strong><%= money(totalExpensesNumber) %></strong>
+      <small><%= expenseWeight %>% du CA prévisionnel</small>
+    </a>
+    <article class="profitability-kpi-card <%= cashTone %>">
+      <span>Marge réelle</span>
+      <strong><%= money(cashProfitNumber) %></strong>
+      <small>À partir de l’argent réellement rentré</small>
+    </article>
+    <article class="profitability-kpi-card dark">
+      <span>Taux de marge</span>
+      <strong><%= projectedMarginRate %>%</strong>
+      <small>Marge prévisionnelle / CA prévisionnel</small>
+    </article>
+  </section>
+
+  <section class="profitability-cockpit-grid">
+    <article class="profitability-cockpit">
       <div class="section-title compact">
-        <span class="section-kicker">Chiots</span>
-        <h2>État commercial</h2>
+        <span class="section-kicker">Projection</span>
+        <h2>Lecture économique de la portée</h2>
+        <p class="muted">Vue synthétique pour décider : continuer, ajuster le prix, réduire les charges ou accélérer les réservations.</p>
       </div>
-      <section class="kpi-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 0;">
-        <article class="kpi-card"><span>Total</span><strong><%= puppyStats.total || 0 %></strong></article>
-        <article class="kpi-card"><span>Réservés</span><strong><%= puppyStats.reserved || 0 %></strong></article>
-        <article class="kpi-card"><span>Vendus</span><strong><%= puppyStats.sold || 0 %></strong></article>
-      </section>
+
+      <div class="profitability-waterfall">
+        <div class="profitability-waterfall-row">
+          <div><span>CA prévisionnel</span><strong><%= money(projectedRevenueNumber) %></strong></div>
+          <div class="profitability-meter"><span style="width:<%= clamp((projectedRevenueNumber / revenueBase) * 100) %>%"></span></div>
+        </div>
+        <div class="profitability-waterfall-row expense">
+          <div><span>Charges engagées</span><strong>- <%= money(totalExpensesNumber) %></strong></div>
+          <div class="profitability-meter"><span style="width:<%= clamp((totalExpensesNumber / revenueBase) * 100) %>%"></span></div>
+        </div>
+        <div class="profitability-waterfall-row result <%= statusTone %>">
+          <div><span>Résultat prévisionnel</span><strong><%= money(projectedProfitNumber) %></strong></div>
+          <div class="profitability-meter"><span style="width:<%= clamp((Math.abs(projectedProfitNumber) / revenueBase) * 100) %>%"></span></div>
+        </div>
+      </div>
+
+      <div class="profitability-mini-stats">
+        <div><span>Coût / chiot</span><strong><%= money(costPerPuppy) %></strong></div>
+        <div><span>CA / chiot</span><strong><%= money(revenuePerPuppy) %></strong></div>
+        <div><span>Reste prévisionnel</span><strong><%= money(projectedUnsoldRevenue) %></strong></div>
+        <div><span>Acomptes</span><strong><%= money(depositRevenue) %></strong></div>
+      </div>
     </article>
-  </section>
 
-  <section class="kpi-grid">
-    <article class="kpi-card"><span>Chiffre d'affaires signé</span><strong><%= bookedRevenue.toFixed(2) %> €</strong></article>
-    <article class="kpi-card"><span>Encaissement réel</span><strong><%= paidRevenue.toFixed(2) %> €</strong></article>
-    <article class="kpi-card"><span>Charges</span><strong><%= totalExpenses.toFixed(2) %> €</strong></article>
-    <article class="kpi-card"><span>Marge prévisionnelle</span><strong><%= projectedProfit.toFixed(2) %> €</strong></article>
-  </section>
-
-  <section class="dashboard-columns">
-    <article class="card">
+    <article class="profitability-expense-card" id="profitability-expense-form">
       <div class="section-title compact">
         <span class="section-kicker">Charges</span>
         <h2>Ajouter une dépense</h2>
+        <% if (!selectedLitter) { %><p class="muted">Aucune portée sélectionnée : la charge sera enregistrée comme charge générale de l’élevage.</p><% } %>
       </div>
+
       <form action="/profitability/expenses" method="POST" class="stacked-form">
-        <input type="hidden" name="litter_id" value="<%= selectedLitter ? selectedLitter.id : '' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="form-grid">
           <div class="form-group">
-            <label>Date</label>
-            <input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>">
-          </div>
-          <div class="form-group">
-            <label>Catégorie</label>
-            <select name="category" required>
-              <option value="alimentation">Alimentation</option>
-              <option value="veterinaire">Vétérinaire</option>
-              <option value="vermifuge">Vermifuge</option>
-              <option value="vaccin">Vaccin</option>
-              <option value="administratif">Administratif</option>
-              <option value="materiel">Matériel</option>
-              <option value="autre">Autre</option>
+            <label>Portée concernée</label>
+            <select name="litter_id">
+              <option value="">Charge générale élevage</option>
+              <% litters.forEach((litter) => { %>
+                <option value="<%= litter.id %>" <%= selectedLitter && String(selectedLitter.id) === String(litter.id) ? 'selected' : '' %>>
+                  <%= litter.mother_name || 'Portée' %> — <%= formatDate(litter.birth_date) %>
+                </option>
+              <% }) %>
             </select>
           </div>
+          <div class="form-group"><label>Date</label><input type="date" name="expense_date" required value="<%= new Date().toISOString().split('T')[0] %>"></div>
         </div>
-        <div class="form-group">
-          <label>Libellé</label>
-          <input type="text" name="label" required placeholder="Ex : croquettes chiots, visite vétérinaire, vaccin...">
-        </div>
+
         <div class="form-grid">
-          <div class="form-group">
-            <label>Montant (€)</label>
-            <input type="number" step="0.01" name="amount" required>
-          </div>
-          <div class="form-group">
-            <label>Note</label>
-            <input type="text" name="notes">
-          </div>
+          <div class="form-group"><label>Catégorie</label><select name="category" required><% expenseCategories.forEach(([value, label]) => { %><option value="<%= value %>"><%= label %></option><% }) %></select></div>
+          <div class="form-group"><label>Montant (€)</label><input type="number" step="0.01" min="0.01" name="amount" required placeholder="0.00"></div>
         </div>
-        <button class="btn btn-primary" type="submit">Ajouter la charge</button>
+
+        <div class="form-group"><label>Rattacher à un chiot</label><select name="puppy_id"><option value="">Aucun chiot / charge générale</option><% puppies.forEach((puppy) => { %><option value="<%= puppy.id %>"><%= puppy.name || 'Chiot sans nom' %> · <%= puppy.sex || '-' %></option><% }) %></select></div>
+        <div class="form-group"><label>Libellé</label><input type="text" name="label" required placeholder="Ex : croquettes chiots, visite vétérinaire, vaccin..."></div>
+        <div class="form-group"><label>Note</label><input type="text" name="notes" placeholder="Optionnel"></div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter la charge</button></div>
       </form>
     </article>
+  </section>
 
-    <article class="table-block">
+  <section class="profitability-command-grid profitability-puppy-grid">
+    <a class="profitability-command-card" href="/puppies"><span class="section-kicker">Chiots</span><h2><%= totalPuppies || 0 %></h2><p>Total rattaché à la portée analysée.</p></a>
+    <a class="profitability-command-card" href="/puppies?status=disponible"><span class="section-kicker">Disponibles</span><h2><%= availablePuppies || 0 %></h2><p>Potentiel commercial restant à transformer.</p></a>
+    <a class="profitability-command-card" href="/puppies?status=reserve"><span class="section-kicker">Réservés</span><h2><%= reservedPuppies || 0 %></h2><p>Réservations à sécuriser jusqu’au solde.</p></a>
+    <a class="profitability-command-card" href="/sales"><span class="section-kicker">Vendus</span><h2><%= soldPuppies || 0 %></h2><p><%= soldRate %>% de la portée en vente définitive.</p></a>
+  </section>
+
+  <section class="profitability-two-columns">
+    <article class="table-block profitability-table-card">
       <div class="section-title compact">
-        <span class="section-kicker">Ventes</span>
-        <h2>Revenus de la portée</h2>
+        <span class="section-kicker">Ventes</span><h2>Revenus de la portée</h2>
+        <p class="muted">Acomptes : <%= money(depositRevenue) %> · Reste prévisionnel non vendu : <%= money(projectedUnsoldRevenue) %></p>
+        <div class="form-actions"><a class="btn btn-primary" href="/sales/new">Ajouter une vente</a><a class="btn btn-secondary" href="/sales">Voir les ventes</a></div>
       </div>
       <% if (!sales.length) { %>
-        <%- include('../partials/empty-state', { emptyTitle: 'Aucune vente', emptyText: 'Aucune vente ou réservation rattachée à cette portée.' }) %>
+        <div class="empty-state"><strong>Aucune vente</strong><p>Aucune vente ou réservation rattachée à cette portée.</p><a class="btn btn-primary" href="/sales/new">Créer une vente</a></div>
       <% } else { %>
-        <table>
-          <thead><tr><th>Chiot</th><th>Acquéreur</th><th>Prix</th><th>Statut</th></tr></thead>
-          <tbody>
-            <% sales.forEach((sale) => { %>
-              <tr>
-                <td><%= sale.puppy_name || '-' %></td>
-                <td><%= sale.buyer_name || '-' %></td>
-                <td><%= sale.price || 0 %> €</td>
-                <td><span class="badge"><%= sale.is_reservation ? 'Réservation' : 'Vente définitive' %></span></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
+        <div class="profit-table-scroll"><table><thead><tr><th>Chiot</th><th>Acquéreur</th><th>Prix</th><th>Acompte</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+          <% sales.forEach((sale) => { %><tr><td><strong><%= sale.puppy_name || '-' %></strong></td><td><%= sale.buyer_name || '-' %></td><td><strong><%= money(sale.price) %></strong></td><td><%= money(sale.deposit_amount) %></td><td><span class="badge <%= sale.is_reservation ? 'badge-warning' : 'badge-success' %>"><%= sale.is_reservation ? 'Réservation' : 'Vente définitive' %></span></td><td><a class="btn btn-secondary btn-sm" href="/sales/<%= sale.id %>/edit">Ouvrir</a></td></tr><% }) %>
+        </tbody></table></div>
+      <% } %>
+    </article>
+
+    <article class="table-block profitability-table-card">
+      <div class="section-title compact"><span class="section-kicker">Charges</span><h2>Répartition</h2><p class="muted">Identification immédiate des postes qui consomment la marge.</p></div>
+      <% if (!expenseByCategory.length) { %>
+        <div class="empty-state"><strong>Aucune répartition</strong><p>Les catégories apparaîtront dès les premières charges.</p><a class="btn btn-primary" href="#profitability-expense-form">Ajouter une charge</a></div>
+      <% } else { %>
+        <div class="profitability-category-list"><% expenseByCategory.forEach((item) => { %><div class="profitability-category-row"><div><span class="badge"><%= item.label %></span><strong><%= money(item.amount) %></strong></div><div class="profitability-progress"><span style="width:<%= clamp((toNumber(item.amount) / categoryMax) * 100) %>%"></span></div></div><% }) %></div>
       <% } %>
     </article>
   </section>
 
-  <section class="table-block">
-    <div class="section-title compact">
-      <span class="section-kicker">Historique</span>
-      <h2>Charges enregistrées</h2>
-    </div>
-    <% if (!expenses.length) { %>
-      <%- include('../partials/empty-state', { emptyTitle: 'Aucune charge', emptyText: 'Ajoutez les charges liées à la portée pour calculer une marge réaliste.' }) %>
-    <% } else { %>
-      <table>
-        <thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Montant</th></tr></thead>
-        <tbody>
-          <% expenses.forEach((expense) => { %>
-            <tr>
-              <td><%= formatDate(expense.expense_date) %></td>
-              <td><span class="badge"><%= expense.category %></span></td>
-              <td><%= expense.label %></td>
-              <td><strong><%= Number(expense.amount || 0).toFixed(2) %> €</strong></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    <% } %>
+  <section class="profitability-two-columns">
+    <article class="table-block profitability-table-card">
+      <div class="section-title compact"><span class="section-kicker">Chiots</span><h2>Détail commercial</h2><div class="form-actions"><a class="btn btn-primary" href="/puppies/new">Ajouter un chiot</a><a class="btn btn-secondary" href="/puppies">Voir les chiots</a></div></div>
+      <% if (!puppies.length) { %>
+        <div class="empty-state"><strong>Aucun chiot</strong><p>Ajoutez les chiots dans la portée pour obtenir une rentabilité fiable.</p><a class="btn btn-primary" href="/puppies/new">Ajouter un chiot</a></div>
+      <% } else { %>
+        <div class="profit-table-scroll"><table><thead><tr><th>Chiot</th><th>Sexe</th><th>Robe</th><th>Statut</th><th>Prix fiche</th><th>Action</th></tr></thead><tbody><% puppies.forEach((puppy) => { %><tr><td><strong><%= puppy.name || 'Sans nom' %></strong></td><td><%= puppy.sex || '-' %></td><td><%= puppy.color || '-' %></td><td><span class="badge"><%= puppy.status || 'Disponible' %></span></td><td><%= money(puppy.sale_price) %></td><td><a class="btn btn-secondary btn-sm" href="/puppies/<%= puppy.id %>/edit">Ouvrir</a></td></tr><% }) %></tbody></table></div>
+      <% } %>
+    </article>
+
+    <article class="table-block profitability-table-card">
+      <div class="section-title compact"><span class="section-kicker">Historique</span><h2>Charges enregistrées</h2><p class="muted">Traçabilité opérationnelle des dépenses saisies.</p></div>
+      <% if (!expenses.length) { %>
+        <div class="empty-state"><strong>Aucune charge</strong><p>Ajoutez les charges liées à la portée ou à l’élevage pour calculer une marge réaliste.</p><a class="btn btn-primary" href="#profitability-expense-form">Ajouter une charge</a></div>
+      <% } else { %>
+        <div class="profit-table-scroll"><table><thead><tr><th>Date</th><th>Catégorie</th><th>Libellé</th><th>Rattachement</th><th>Montant</th><th>Action</th></tr></thead><tbody><% expenses.forEach((expense) => { %><tr><td><%= formatDate(expense.expense_date) %></td><td><span class="badge"><%= expense.category %></span></td><td><%= expense.label %><% if (expense.notes) { %><br><small class="muted"><%= expense.notes %></small><% } %></td><td><%= expense.puppy_name || expense.dog_name || (expense.litter_id ? 'Portée' : 'Élevage général') %></td><td><strong><%= money(expense.amount) %></strong></td><td><form method="POST" action="/profitability/expenses/<%= expense.id %>/delete" onsubmit="return confirm('Supprimer cette charge ?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn btn-secondary btn-sm">Supprimer</button></form></td></tr><% }) %></tbody></table></div>
+      <% } %>
+    </article>
   </section>
 </main>
 

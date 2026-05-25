@@ -1,7 +1,20 @@
 <%- include('../partials/head') %>
 
 <main class="auth-canine-shell auth-canine-register">
-  <section class="auth-canine-visual" aria-label="Élevage canin professionnel">
+  <section class="auth-canine-visual auth-canine-video-visual" aria-label="Chien d’arrêt au travail sur le terrain">
+    <video
+      class="auth-canine-video"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      poster="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1800&q=82"
+      aria-hidden="true"
+    >
+      <source src="/videos/auth-chien-arret.mp4" type="video/mp4">
+      <source src="/videos/auth-chien-arret.webm" type="video/webm">
+    </video>
     <div class="auth-canine-visual-overlay">
       <p class="auth-canine-kicker">Votre race, votre conduite, votre méthode</p>
       <h2>Paramétrez votre espace autour de votre élevage canin.</h2>

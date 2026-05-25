@@ -1,73 +1,212 @@
 <%- include('../partials/head') %>
 <%- include('../partials/nav') %>
-<main class="container">
-  <h1>Reproduction & Maternité</h1>
 
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
-      
-      <section class="card">
-          <h3 style="color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">Chaleurs en cours</h3>
-          <ul style="list-style: none; padding: 0;">
-              <% if (heats.length === 0) { %> <li>Aucune chaleur déclarée.</li> <% } %>
-              <% heats.forEach(h => { %>
-                  <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
-                      <strong><%= h.dog_name %></strong> <br>
-                      <small>Début : <%= new Date(h.start_date).toLocaleDateString('fr-FR') %> - <%= h.stage %></small>
-                  </li>
-              <% }) %>
-          </ul>
-      </section>
+<main class="container reproduction-page">
+  <section class="repro-header">
+    <div>
+      <h1>Reproduction Management</h1>
+      <p>Suivez les chaleurs, saillies, gestations et mises bas attendues de votre programme d’élevage.</p>
+    </div>
+    <a class="repro-main-action" href="#record-mating">
+      <span class="material-symbols-outlined">favorite</span>
+      Enregistrer un événement
+    </a>
+  </section>
 
-      <section class="card">
-          <h3 style="color: #f39c12; border-bottom: 2px solid #f39c12; padding-bottom: 0.5rem;">Saillies à confirmer</h3>
-          
-          <form action="/reproduction/matings/new" method="POST" style="background: #f9f9f9; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
-              <select name="female_id" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;">
-                  <option value="">Sélectionner Femelle</option>
-                  <% females.forEach(f => { %> <option value="<%= f.id %>"><%= f.name %></option> <% }) %>
-              </select>
-              <select name="male_id" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;">
-                  <option value="">Sélectionner Étalon</option>
-                  <% males.forEach(m => { %> <option value="<%= m.id %>"><%= m.name %></option> <% }) %>
-              </select>
-              <input type="date" name="mating_date" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;" title="Date de saillie">
-              <select name="method" required style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem;">
-                  <option value="naturelle">Naturelle</option>
-                  <option value="insémination">Insémination artificielle</option>
-              </select>
-              <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 0.85rem;">Enregistrer Saillie</button>
+  <section class="repro-kpi-grid">
+    <article class="repro-kpi repro-kpi-error">
+      <span>Chaleurs récentes</span>
+      <strong><%= heats.length %></strong>
+      <small>femelles suivies</small>
+      <i class="material-symbols-outlined">water_drop</i>
+    </article>
+    <article class="repro-kpi repro-kpi-secondary">
+      <span>Saillies à confirmer</span>
+      <strong><%= matings.length %></strong>
+      <small>échographie à planifier</small>
+      <i class="material-symbols-outlined">check_circle</i>
+    </article>
+    <article class="repro-kpi">
+      <span>Gestations en cours</span>
+      <strong><%= pregnancies.length %></strong>
+      <small>mises bas attendues</small>
+      <i class="material-symbols-outlined">child_friendly</i>
+    </article>
+  </section>
+
+  <section class="repro-board-section">
+    <div class="repro-section-title">
+      <span class="material-symbols-outlined">view_kanban</span>
+      <h2>Pipeline visuel reproduction</h2>
+    </div>
+
+    <div class="repro-board">
+      <article class="repro-column">
+        <header>
+          <h3>Phase 1 : Chaleur</h3>
+          <span><%= heats.length %></span>
+        </header>
+        <div class="repro-column-stack">
+          <% if (!heats.length) { %>
+            <div class="repro-empty-card">Aucune chaleur déclarée.</div>
+          <% } %>
+          <% heats.forEach((heat) => { %>
+            <div class="repro-stage-card">
+              <div class="repro-card-top">
+                <span class="repro-chip error"><%= heat.stage || 'Suivi chaleur' %></span>
+                <span class="material-symbols-outlined">more_horiz</span>
+              </div>
+              <div class="repro-dog-line">
+                <span class="repro-avatar">
+                  <% if (heat.photo_url) { %><img src="<%= heat.photo_url %>" alt="<%= heat.dog_name %>"><% } else { %><span class="material-symbols-outlined">pets</span><% } %>
+                </span>
+                <div>
+                  <strong><%= heat.dog_name %></strong>
+                  <small><%= heat.breed || 'Race non renseignée' %></small>
+                </div>
+              </div>
+              <div class="repro-card-meta">
+                <span class="material-symbols-outlined">calendar_today</span>
+                <small>Début : <%= formatDate(heat.start_date) %></small>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+
+      <article class="repro-column">
+        <header>
+          <h3>Phase 2 : Saillie</h3>
+          <span><%= matings.length %></span>
+        </header>
+        <div class="repro-column-stack">
+          <form id="record-mating" action="/reproduction/matings/new" method="POST" class="repro-mating-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <select name="female_id" required>
+              <option value="">Femelle</option>
+              <% females.forEach((female) => { %><option value="<%= female.id %>"><%= female.name %></option><% }) %>
+            </select>
+            <select name="male_id" required>
+              <option value="">Étalon</option>
+              <% males.forEach((male) => { %><option value="<%= male.id %>"><%= male.name %></option><% }) %>
+            </select>
+            <input type="date" name="mating_date" required>
+            <select name="method" required>
+              <option value="naturelle">Naturelle</option>
+              <option value="insémination">Insémination artificielle</option>
+            </select>
+            <button type="submit"><span class="material-symbols-outlined">add</span> Enregistrer</button>
           </form>
 
-          <ul style="list-style: none; padding: 0;">
-              <% if (matings.length === 0) { %> <li>Aucune saillie en attente.</li> <% } %>
-              <% matings.forEach(m => { %>
-                  <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
-                      <strong><%= m.female_name %> x <%= m.male_name %></strong><br>
-                      <small>Le <%= new Date(m.mating_date).toLocaleDateString('fr-FR') %> (<%= m.method %>)</small>
-                  </li>
-              <% }) %>
-          </ul>
-      </section>
+          <% if (!matings.length) { %>
+            <div class="repro-empty-card">Aucune saillie en attente.</div>
+          <% } %>
+          <% matings.forEach((mating) => { %>
+            <div class="repro-stage-card mating-card">
+              <div class="repro-card-top">
+                <span class="repro-chip secondary">À confirmer</span>
+                <span class="material-symbols-outlined">more_horiz</span>
+              </div>
+              <div class="repro-pairing">
+                <div>
+                  <span class="repro-avatar small">
+                    <% if (mating.female_photo_url) { %><img src="<%= mating.female_photo_url %>" alt="<%= mating.female_name %>"><% } else { %><span class="material-symbols-outlined">female</span><% } %>
+                  </span>
+                  <strong><%= mating.female_name %></strong>
+                </div>
+                <span class="repro-heart material-symbols-outlined">favorite</span>
+                <div>
+                  <span class="repro-avatar small">
+                    <% if (mating.male_photo_url) { %><img src="<%= mating.male_photo_url %>" alt="<%= mating.male_name %>"><% } else { %><span class="material-symbols-outlined">male</span><% } %>
+                  </span>
+                  <strong><%= mating.male_name %></strong>
+                </div>
+              </div>
+              <div class="repro-card-meta split">
+                <span><span class="material-symbols-outlined">event</span><small><%= formatDate(mating.mating_date) %></small></span>
+                <small><%= mating.method || 'méthode non renseignée' %></small>
+              </div>
+              <div class="repro-confirm-actions">
+                <form method="POST" action="/reproduction/matings/<%= mating.id %>/confirm">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="repro-confirm-btn"><span class="material-symbols-outlined">pregnant_woman</span> Confirmer gestation</button>
+                </form>
+                <form method="POST" action="/reproduction/matings/<%= mating.id %>/failed">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="repro-failed-btn"><span class="material-symbols-outlined">close</span> Non prise</button>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </article>
 
-      <section class="card">
-          <h3 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 0.5rem;">Gestations confirmées</h3>
-          <ul style="list-style: none; padding: 0;">
-              <% if (pregnancies.length === 0) { %> <li>Aucune gestation en cours.</li> <% } %>
-              <% pregnancies.forEach(p => { %>
-                  <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
-                      <strong><%= p.female_name %></strong><br>
-                      <% 
-                          const today = new Date();
-                          const delivery = new Date(p.expected_delivery_date);
-                          const diffTime = Math.abs(delivery - today);
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      %>
-                      <small>Terme prévu : <%= delivery.toLocaleDateString('fr-FR') %> (J-<%= diffDays %>)</small>
-                  </li>
-              <% }) %>
-          </ul>
-      </section>
+      <article class="repro-column">
+        <header>
+          <h3>Phase 3 : Gestation</h3>
+          <span><%= pregnancies.length %></span>
+        </header>
+        <div class="repro-column-stack">
+          <% if (!pregnancies.length) { %>
+            <div class="repro-empty-card">Aucune gestation en cours.</div>
+          <% } %>
+          <% pregnancies.forEach((pregnancy) => { %>
+            <% const delivery = pregnancy.expected_delivery_date ? new Date(pregnancy.expected_delivery_date) : null; const today = new Date(); const total = 63; const remaining = delivery ? Math.max(0, Math.ceil((delivery - today) / (1000 * 60 * 60 * 24))) : null; const currentDay = remaining === null ? null : Math.min(total, Math.max(1, total - remaining)); const progress = currentDay ? Math.round((currentDay / total) * 100) : 0; %>
+            <div class="repro-stage-card">
+              <div class="repro-card-top">
+                <span class="repro-chip secondary">Écho confirmée</span>
+                <span class="material-symbols-outlined">more_horiz</span>
+              </div>
+              <div class="repro-dog-line">
+                <span class="repro-avatar">
+                  <% if (pregnancy.photo_url) { %><img src="<%= pregnancy.photo_url %>" alt="<%= pregnancy.female_name %>"><% } else { %><span class="material-symbols-outlined">pets</span><% } %>
+                </span>
+                <div>
+                  <strong><%= pregnancy.female_name %></strong>
+                  <small><%= remaining !== null ? 'J-' + remaining + ' avant terme' : 'Terme non renseigné' %></small>
+                </div>
+              </div>
+              <div class="repro-progress">
+                <div><span>J<%= currentDay || '-' %></span><span>J63</span></div>
+                <div class="repro-progress-track"><span style="width:<%= progress %>%"></span></div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </article>
 
-  </div>
+      <article class="repro-column">
+        <header>
+          <h3>Phase 4 : Mise bas</h3>
+          <span><%= pregnancies.filter((p) => { if (!p.expected_delivery_date) return false; const diff = Math.ceil((new Date(p.expected_delivery_date) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 7; }).length %></span>
+        </header>
+        <div class="repro-column-stack">
+          <% const imminent = pregnancies.filter((p) => { if (!p.expected_delivery_date) return false; const diff = Math.ceil((new Date(p.expected_delivery_date) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 7; }); %>
+          <% if (!imminent.length) { %>
+            <div class="repro-empty-card">Aucune mise bas imminente.</div>
+          <% } %>
+          <% imminent.forEach((pregnancy) => { %>
+            <div class="repro-stage-card imminent-card">
+              <div class="repro-card-top">
+                <span class="repro-chip primary pulse">Imminent</span>
+                <span class="material-symbols-outlined">more_horiz</span>
+              </div>
+              <div class="repro-dog-line">
+                <span class="repro-avatar danger">
+                  <% if (pregnancy.photo_url) { %><img src="<%= pregnancy.photo_url %>" alt="<%= pregnancy.female_name %>"><% } else { %><span class="material-symbols-outlined">pets</span><% } %>
+                </span>
+                <div>
+                  <strong><%= pregnancy.female_name %></strong>
+                  <small>Terme : <%= formatDate(pregnancy.expected_delivery_date) %></small>
+                </div>
+              </div>
+              <a class="repro-card-action" href="/pregnancies"><span class="material-symbols-outlined">medical_services</span> Ouvrir le suivi</a>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+    </div>
+  </section>
 </main>
+
 <%- include('../partials/foot') %>
