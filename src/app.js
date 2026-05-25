@@ -26,7 +26,7 @@ const websiteRoutes = require('./routes/website.routes');
 const weightsRoutes = require('./routes/weights.routes');
 const profitabilityRoutes = require('./routes/profitability.routes');
 const strategyRoutes = require('./routes/strategy.routes');
-const structureRoutes = require('./routes/structure.routes');
+const cynognosticRoutes = require('./routes/cynognostic.routes');
 
 const app = express();
 const PgSession = connectPgSimple(session);
@@ -109,11 +109,11 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.user = req.session?.user || null;
   res.locals.flash = flash;
-  res.locals.formatDate = formatDateFr;
-  res.locals.dateInputValue = dateInputValue;
-
-  res.locals.setFlash = (type, message) => {
-    req.session.flash = { type, message };
+  res.locals.formatDate = (value) => {
+    if (!value) return '-';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR');
   };
 
   next();
@@ -150,7 +150,7 @@ app.use('/site', websiteRoutes);
 app.use('/weights', weightsRoutes);
 app.use('/profitability', profitabilityRoutes);
 app.use('/strategy', strategyRoutes);
-app.use('/structure', structureRoutes);
+app.use('/cynognostic', cynognosticRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
 app.use('/genetics', require('./routes/genetics.routes'));
 app.use('/settings', require('./routes/settings.routes'));

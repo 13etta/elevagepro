@@ -120,6 +120,15 @@ const modules = [
     accent: 'violet',
   },
   {
+    key: 'cynognostic',
+    labelKey: 'nav.cynognostic',
+    descriptionKey: 'modules.cynognostic.description',
+    href: '/cynognostic',
+    icon: 'psychology_alt',
+    group: 'selection',
+    accent: 'violet',
+  },
+  {
     key: 'strategy',
     labelKey: 'nav.strategy',
     descriptionKey: 'modules.strategy.description',
