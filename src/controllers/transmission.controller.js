@@ -2,6 +2,21 @@ const { searchSourceCandidates, fetchDogSheet, parseDescendantsText } = require(
 const { analyzeTransmission } = require('../services/cynognostic/transmissionAnalyzer');
 const { runAutoTransmissionPipeline } = require('../services/cynognostic/autoTransmissionPipeline');
 
+function buildPedigreeAroundUrl(url) {
+  const raw = String(url || '');
+  const match = raw.match(/[?&]id=(\d+)/i);
+  if (!match) return '';
+  return `https://pedigree.setter-anglais.fr/genealogie/arbre_autour.php?id=${match[1]}`;
+}
+
+function pickAutoDogUrl(sourceResult) {
+  const candidates = sourceResult?.candidates || [];
+  const pedigreeCandidate = candidates.find((candidate) => buildPedigreeAroundUrl(candidate.url));
+  if (pedigreeCandidate) return buildPedigreeAroundUrl(pedigreeCandidate.url);
+  const firstCandidate = candidates[0];
+  return firstCandidate ? firstCandidate.url : '';
+}
+
 exports.form = async (req, res) => {
   res.render('cynognostic/transmission', {
     title: 'Transmission Cynognostic',
@@ -45,10 +60,12 @@ exports.searchDog = async (req, res) => {
 
   try {
     const sourceResult = await searchSourceCandidates(dogName, req.body.source || 'all');
+    const dogUrl = pickAutoDogUrl(sourceResult);
+
     return res.render('cynognostic/transmission', {
       title: 'Transmission Cynognostic',
       dogName,
-      dogUrl: '',
+      dogUrl,
       descendantsText: '',
       sourceResult,
       sheetResult: null,
