@@ -1,6 +1,67 @@
 const { pool } = require('../db');
 const { analyzeCynognostic, buildSearchQueries } = require('../services/cynognostic/analyzer');
 
+async function ensureCynognosticSchema() {
+  await pool.query(`
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+    CREATE TABLE IF NOT EXISTS cynognostic_reports (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
+      title VARCHAR(255) NOT NULL,
+      breed VARCHAR(255),
+      objective VARCHAR(255),
+      discipline VARCHAR(255),
+      source_url TEXT,
+      pedigree_text TEXT,
+      announcement_text TEXT,
+      observations TEXT,
+      image_notes TEXT,
+      video_notes TEXT,
+      score_global INTEGER DEFAULT 0,
+      score_work INTEGER DEFAULT 0,
+      score_beauty INTEGER DEFAULT 0,
+      score_health INTEGER DEFAULT 0,
+      score_pedigree INTEGER DEFAULT 0,
+      score_strategic INTEGER DEFAULT 0,
+      confidence_score INTEGER DEFAULT 0,
+      verdict TEXT,
+      alerts JSONB DEFAULT '[]'::jsonb,
+      findings JSONB DEFAULT '{}'::jsonb,
+      raw_input JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cynognostic_reports_breeder_created
+      ON cynognostic_reports(breeder_id, created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_cynognostic_reports_breed
+      ON cynognostic_reports(breeder_id, breed);
+
+    CREATE TABLE IF NOT EXISTS cynognostic_watch_profiles (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      breed VARCHAR(255),
+      objective VARCHAR(255),
+      discipline VARCHAR(255),
+      zone VARCHAR(255),
+      sex_preference VARCHAR(100),
+      budget_max NUMERIC(10,2),
+      non_negotiables TEXT,
+      search_queries JSONB DEFAULT '[]'::jsonb,
+      is_active BOOLEAN DEFAULT TRUE,
+      last_run_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cynognostic_watch_breeder_active
+      ON cynognostic_watch_profiles(breeder_id, is_active);
+  `);
+}
+
 function parseJsonField(value, fallback = {}) {
   if (!value) return fallback;
   if (typeof value === 'object') return value;
@@ -31,6 +92,7 @@ function normalizeFormInput(body) {
 
 exports.index = async (req, res) => {
   try {
+    await ensureCynognosticSchema();
     const breederId = req.session.user.breeder_id;
 
     const analyses = await pool.query(
@@ -66,6 +128,7 @@ exports.index = async (req, res) => {
 
 exports.runAnalysis = async (req, res) => {
   try {
+    await ensureCynognosticSchema();
     const breederId = req.session.user.breeder_id;
     const userInput = normalizeFormInput(req.body);
     const analysis = analyzeCynognostic(userInput);
@@ -116,6 +179,7 @@ exports.runAnalysis = async (req, res) => {
 
 exports.showReport = async (req, res) => {
   try {
+    await ensureCynognosticSchema();
     const breederId = req.session.user.breeder_id;
     const report = await pool.query(
       `SELECT * FROM cynognostic_reports WHERE id = $1 AND breeder_id = $2`,
@@ -143,6 +207,7 @@ exports.showReport = async (req, res) => {
 
 exports.createWatch = async (req, res) => {
   try {
+    await ensureCynognosticSchema();
     const breederId = req.session.user.breeder_id;
     const criteria = {
       breed: req.body.breed || '',
