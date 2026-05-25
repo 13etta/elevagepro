@@ -1,5 +1,12 @@
 const DEFAULT_BASE_URL = 'https://statgescon.onrender.com';
 
+const STATGESCON_CSV_FILES = [
+  'statistiques_par_chien.csv',
+  'statistiques_par_affixe.csv',
+  'statistiques_par_discipline.csv',
+  'statistiques_chien_discipline.csv',
+];
+
 function cleanBaseUrl(baseUrl) {
   return String(baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, '');
 }
@@ -32,6 +39,51 @@ function stripHtml(html) {
     .trim();
 }
 
+function detectDelimiter(line) {
+  const candidates = [';', ',', '\t', '|'];
+  return candidates
+    .map((delimiter) => ({ delimiter, count: String(line || '').split(delimiter).length }))
+    .sort((a, b) => b.count - a.count)[0].delimiter;
+}
+
+function parseCsvLine(line, delimiter) {
+  const cells = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"' && next === '"') {
+      current += '"';
+      i += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === delimiter && !inQuotes) {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseCsv(text) {
+  const lines = String(text || '')
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
+
+  if (!lines.length) return [];
+
+  const delimiter = detectDelimiter(lines[0]);
+  return lines.map((line) => parseCsvLine(line, delimiter));
+}
+
 function extractRowsFromHtml(html) {
   const rows = [];
   const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
@@ -53,12 +105,14 @@ function extractRowsFromHtml(html) {
 
 function filterRows(rows, query) {
   const wanted = normalize(query);
-  if (!wanted) return rows.slice(0, 50);
-  return rows.filter((row) => normalize(row.join(' | ')).includes(wanted)).slice(0, 80);
+  if (!wanted) return rows.slice(0, 80);
+  return rows.filter((row) => normalize(row.join(' | ')).includes(wanted)).slice(0, 120);
 }
 
-function rowsToText(rows) {
-  return rows.map((row) => row.join(' | ')).join('\n');
+function rowsToText(rows, sourceName = '') {
+  return rows
+    .map((row) => `${sourceName ? `[${sourceName}] ` : ''}${row.join(' | ')}`)
+    .join('\n');
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
@@ -69,7 +123,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
       ...options,
       signal: controller.signal,
       headers: {
-        accept: 'text/html,application/json;q=0.9,*/*;q=0.8',
+        accept: 'text/csv,text/plain,text/html,application/json;q=0.9,*/*;q=0.8',
         'user-agent': 'ElevagePro-Cynognostic/1.0',
         ...(options.headers || {}),
       },
@@ -82,6 +136,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
 function buildCandidateUrls(baseUrl, query) {
   const q = encodeURIComponent(query || '');
   return [
+    ...STATGESCON_CSV_FILES.map((file) => `${baseUrl}/${file}`),
     `${baseUrl}/`,
     `${baseUrl}/?q=${q}`,
     `${baseUrl}/?search=${q}`,
@@ -90,17 +145,56 @@ function buildCandidateUrls(baseUrl, query) {
   ];
 }
 
-async function searchStatgesconTable(query, options = {}) {
-  const baseUrl = cleanBaseUrl(options.baseUrl || process.env.STATGESCON_BASE_URL);
-  const candidateUrls = buildCandidateUrls(baseUrl, query);
-  const attempts = [];
+async function searchCsvFiles(baseUrl, query, attempts) {
+  const allMatches = [];
+  let totalRowsDetected = 0;
+  let firstOkUrl = null;
 
-  for (const url of candidateUrls) {
+  for (const file of STATGESCON_CSV_FILES) {
+    const url = `${baseUrl}/${file}`;
     try {
       const response = await fetchWithTimeout(url);
       const contentType = response.headers.get('content-type') || '';
       const status = response.status;
-      const body = contentType.includes('application/json') ? JSON.stringify(await response.json()) : await response.text();
+      const body = await response.text();
+      attempts.push({ url, status, contentType });
+
+      if (!response.ok) continue;
+      if (!firstOkUrl) firstOkUrl = url;
+
+      const rows = parseCsv(body);
+      totalRowsDetected += rows.length;
+      const matchedRows = filterRows(rows, query);
+      matchedRows.forEach((row) => allMatches.push({ source: file, row }));
+    } catch (error) {
+      attempts.push({ url, status: 'ERROR', error: error.message });
+    }
+  }
+
+  if (allMatches.length) {
+    return {
+      ok: true,
+      url: firstOkUrl,
+      type: 'csv',
+      totalRowsDetected,
+      matchedRows: allMatches.map((item) => [item.source, ...item.row]),
+      text: allMatches.map((item) => rowsToText([item.row], item.source)).join('\n'),
+      rawPreview: '',
+    };
+  }
+
+  return { ok: false, totalRowsDetected, matchedRows: [], text: '', rawPreview: '', url: firstOkUrl, type: 'csv' };
+}
+
+async function searchHtmlFallback(baseUrl, query, attempts) {
+  const urls = [`${baseUrl}/`, `${baseUrl}/?q=${encodeURIComponent(query || '')}`];
+
+  for (const url of urls) {
+    try {
+      const response = await fetchWithTimeout(url);
+      const contentType = response.headers.get('content-type') || '';
+      const status = response.status;
+      const body = await response.text();
       attempts.push({ url, status, contentType });
 
       if (!response.ok) continue;
@@ -113,35 +207,53 @@ async function searchStatgesconTable(query, options = {}) {
         .filter((line) => normalize(line).includes(normalize(query)))
         .slice(0, 80);
 
-      if (matchedRows.length || fallbackMatches.length || pageText.length > 50) {
-        return {
-          ok: true,
-          baseUrl,
-          query,
-          url,
-          type: rows.length ? 'html-table' : 'html-text',
-          attempts,
-          totalRowsDetected: rows.length,
-          matchedRows,
-          text: matchedRows.length ? rowsToText(matchedRows) : fallbackMatches.join('\n'),
-          rawPreview: pageText.slice(0, 12000),
-        };
-      }
+      return {
+        ok: matchedRows.length > 0 || fallbackMatches.length > 0,
+        url,
+        type: rows.length ? 'html-table' : 'html-text',
+        totalRowsDetected: rows.length,
+        matchedRows,
+        text: matchedRows.length ? rowsToText(matchedRows) : fallbackMatches.join('\n'),
+        rawPreview: pageText.slice(0, 12000),
+      };
     } catch (error) {
       attempts.push({ url, status: 'ERROR', error: error.message });
     }
   }
 
+  return { ok: false, totalRowsDetected: 0, matchedRows: [], text: '', rawPreview: '' };
+}
+
+async function searchStatgesconTable(query, options = {}) {
+  const baseUrl = cleanBaseUrl(options.baseUrl || process.env.STATGESCON_BASE_URL);
+  const attempts = [];
+
+  const csvResult = await searchCsvFiles(baseUrl, query, attempts);
+  if (csvResult.ok) {
+    return {
+      ...csvResult,
+      ok: true,
+      baseUrl,
+      query,
+      attempts,
+    };
+  }
+
+  const htmlResult = await searchHtmlFallback(baseUrl, query, attempts);
+
   return {
-    ok: false,
+    ...htmlResult,
+    ok: htmlResult.ok || csvResult.totalRowsDetected > 0,
     baseUrl,
     query,
     attempts,
-    totalRowsDetected: 0,
-    matchedRows: [],
-    text: '',
-    rawPreview: '',
-    message: 'Aucun tableau StatGescon exploitable n a ete recupere. Si le site charge ses donnees par JavaScript, il faudra brancher la route JSON exacte ou exporter le CSV.'
+    totalRowsDetected: csvResult.totalRowsDetected + (htmlResult.totalRowsDetected || 0),
+    matchedRows: htmlResult.matchedRows || [],
+    text: htmlResult.text || '',
+    rawPreview: htmlResult.rawPreview || '',
+    message: htmlResult.ok
+      ? undefined
+      : 'Les CSV StatGescon ont ete recuperes mais aucune ligne ne correspond au terme recherche. Essaie un terme plus court : affixe, mot cle, conducteur ou nom partiel.',
   };
 }
 
