@@ -31,17 +31,42 @@
 
   <% if (result) { %>
     <% const matchedCount = result.matchedRows ? result.matchedRows.length : 0; %>
+    <% const records = result.matchedRecords || []; %>
     <% const hasUsefulMatch = matchedCount > 0 || !!result.text; %>
     <section class="card" style="margin-bottom:1.5rem; border-left:5px solid <%= hasUsefulMatch ? '#16a34a' : '#f59e0b' %>;">
       <h2>Résultat</h2>
       <p><strong>Statut :</strong> <%= hasUsefulMatch ? 'Correspondance trouvée ou contenu récupéré' : 'Page récupérée, mais aucune ligne correspondante détectée' %></p>
       <p><strong>Terme recherché :</strong> <%= result.query || result.dogName || dogName || '-' %></p>
       <p><strong>Base URL :</strong> <%= result.baseUrl %></p>
-      <p><strong>Lignes de tableau détectées :</strong> <%= result.totalRowsDetected || 0 %></p>
+      <p><strong>Lignes CSV détectées :</strong> <%= result.totalRowsDetected || 0 %></p>
       <p><strong>Lignes correspondantes :</strong> <%= matchedCount %></p>
-      <% if (result.url) { %><p><strong>URL retenue :</strong> <a href="<%= result.url %>" target="_blank" rel="noopener noreferrer"><%= result.url %></a></p><% } %>
+      <% if (result.url) { %><p><strong>Première source retenue :</strong> <a href="<%= result.url %>" target="_blank" rel="noopener noreferrer"><%= result.url %></a></p><% } %>
       <% if (result.message) { %><p><%= result.message %></p><% } %>
     </section>
+
+    <% if (records.length) { %>
+      <section class="card" style="margin-bottom:1.5rem;">
+        <h2>Résultats structurés</h2>
+        <p style="color:#64748b;">Lecture colonne par colonne des CSV StatGescon. Ces données sont prêtes à être recoupées avec LOF Select et le pedigree.</p>
+        <% records.forEach((record, index) => { %>
+          <article style="border:1px solid rgba(148,163,184,.35); border-radius:14px; padding:1rem; margin:1rem 0;">
+            <div style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:.75rem;">
+              <div>
+                <strong>#<%= index + 1 %> — <%= record.source %></strong>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:.75rem;">
+              <% record.pairs.forEach((pair) => { %>
+                <div style="background:rgba(148,163,184,.08); border-radius:10px; padding:.65rem;">
+                  <small style="display:block; color:#64748b; font-weight:700;"><%= pair.key %></small>
+                  <span><%= pair.value || '-' %></span>
+                </div>
+              <% }) %>
+            </div>
+          </article>
+        <% }) %>
+      </section>
+    <% } %>
 
     <section class="card" style="margin-bottom:1.5rem;">
       <h2>Tentatives effectuées</h2>
@@ -66,8 +91,8 @@
 
     <% if (result.text) { %>
       <section class="card" style="margin-bottom:1.5rem;">
-        <h2>Lignes correspondantes</h2>
-        <p style="color:#64748b;">Ces lignes peuvent être copiées dans une analyse CYNOGNOSTIC pour recoupement avec pedigree, LOF Select et observations.</p>
+        <h2>Export texte pour analyse</h2>
+        <p style="color:#64748b;">Copie ce bloc dans une analyse CYNOGNOSTIC pour enrichir le rapport pedigree / travail / transmission.</p>
         <pre style="white-space:pre-wrap; max-height:520px; overflow:auto;"><%= result.text %></pre>
       </section>
     <% } %>
@@ -75,7 +100,7 @@
     <% if (result.rawPreview && !result.text) { %>
       <section class="card">
         <h2>Aperçu brut de la page</h2>
-        <p style="color:#64748b;">La page répond, mais le tableau n'est probablement pas présent dans le HTML initial ou les données sont chargées par JavaScript. Il faudra alors récupérer l'URL JSON/CSV dans l'onglet Network du navigateur.</p>
+        <p style="color:#64748b;">La page répond, mais aucun résultat exploitable n'a été trouvé.</p>
         <pre style="white-space:pre-wrap; max-height:520px; overflow:auto;"><%= result.rawPreview %></pre>
       </section>
     <% } %>
