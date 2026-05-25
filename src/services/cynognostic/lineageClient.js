@@ -79,6 +79,20 @@ function extractCandidateDogLinks(html, baseUrl, dogName) {
     .slice(0, 30);
 }
 
+function extractLofDogLinks(html, baseUrl, dogName = '') {
+  const wanted = normalize(dogName);
+  const slug = slugifyDogName(dogName);
+  return extractLinks(html, baseUrl)
+    .filter((link) => /centrale-canine\.fr\/lofselect\/chien\//i.test(link.url))
+    .filter((link) => {
+      if (!wanted) return true;
+      const haystack = normalize(`${link.label} ${link.url}`);
+      return haystack.includes(wanted) || haystack.includes(slug);
+    })
+    .map((link) => ({ ...link, url: normalizeLofDogBaseUrl(link.url) }))
+    .slice(0, 20);
+}
+
 function extractPossibleDogNames(text) {
   const source = String(text || '').replace(/\s+/g, ' ');
   const matches = source.match(/\b[A-ZÀ-ÖØ-Ý][A-ZÀ-ÖØ-Ý' -]{4,}\b/g) || [];
@@ -117,6 +131,19 @@ function buildLofSelectCandidateUrls(dogName) {
   ];
 }
 
+function buildLofSelectIdentifierUrls(identifier, dogName = '') {
+  const id = encodeURIComponent(identifier || '');
+  const q = encodeURIComponent(dogName || '');
+  return [
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?identifiant=${id}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?numero_identification=${id}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?id=${id}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?q=${id}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?search=${id}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?search=${q}`,
+  ];
+}
+
 function buildPedigreeSetterCandidateUrls(dogName) {
   const q = encodeURIComponent(dogName || '');
   return [
@@ -148,6 +175,66 @@ function buildDogSheetUrls(url) {
   return [clean];
 }
 
+function extractIdentifiersFromRecords(records = []) {
+  const identifiers = new Set();
+  records.forEach((record) => {
+    const values = Object.values(record.object || {}).concat(record.row || []);
+    values.forEach((value) => {
+      const raw = String(value || '').trim();
+      if (/^[0-9A-Z]{6,20}$/i.test(raw) && /\d/.test(raw)) identifiers.add(raw);
+    });
+  });
+  return Array.from(identifiers).slice(0, 12);
+}
+
+async function resolveLofSelectDog(dogName, identifiers = []) {
+  const attempts = [];
+  const candidates = [];
+  const urls = [
+    ...buildLofSelectCandidateUrls(dogName),
+    ...identifiers.flatMap((identifier) => buildLofSelectIdentifierUrls(identifier, dogName)),
+  ];
+
+  for (const url of urls) {
+    try {
+      const response = await fetchWithTimeout(url);
+      attempts.push({ source: 'LOF Select', url, status: response.status, contentType: response.contentType });
+      if (!response.ok) continue;
+
+      if (isLofSelectDogUrl(response.url)) {
+        candidates.push({ source: 'LOF Select', label: dogName || response.url, url: normalizeLofDogBaseUrl(response.url) });
+      }
+
+      const links = extractLofDogLinks(response.body, url, dogName);
+      links.forEach((link) => candidates.push({ source: 'LOF Select', ...link }));
+
+      const text = stripHtml(response.body);
+      if (isLofSelectDogUrl(url) && normalize(text).includes(normalize(dogName))) {
+        candidates.push({ source: 'LOF Select', label: `Fiche probable ${dogName}`, url: normalizeLofDogBaseUrl(url) });
+      }
+    } catch (error) {
+      attempts.push({ source: 'LOF Select', url, status: 'ERROR', error: error.message });
+    }
+  }
+
+  const unique = [];
+  const seen = new Set();
+  candidates.forEach((candidate) => {
+    if (!seen.has(candidate.url)) {
+      seen.add(candidate.url);
+      unique.push(candidate);
+    }
+  });
+
+  return {
+    dogName,
+    identifiers,
+    attempts,
+    candidates: unique.slice(0, 20),
+    bestCandidate: unique[0] || null,
+  };
+}
+
 async function searchSourceCandidates(dogName, source = 'all') {
   const sources = [];
   if (source === 'all' || source === 'lofselect') {
@@ -166,7 +253,9 @@ async function searchSourceCandidates(dogName, source = 'all') {
       attempts.push({ source: item.source, url: item.url, status: response.status, contentType: response.contentType });
       if (!response.ok) continue;
 
-      const links = extractCandidateDogLinks(response.body, item.url, dogName);
+      const links = item.source === 'LOF Select'
+        ? extractLofDogLinks(response.body, item.url, dogName)
+        : extractCandidateDogLinks(response.body, item.url, dogName);
       links.forEach((link) => candidates.push({ source: item.source, ...link }));
 
       const text = stripHtml(response.body);
@@ -240,7 +329,10 @@ module.exports = {
   fetchDogSheet,
   parseDescendantsText,
   extractPossibleDogNames,
+  extractIdentifiersFromRecords,
+  resolveLofSelectDog,
   buildLofSelectCandidateUrls,
+  buildLofSelectIdentifierUrls,
   buildPedigreeSetterCandidateUrls,
   buildDogSheetUrls,
 };
