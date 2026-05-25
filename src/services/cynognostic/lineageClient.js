@@ -44,7 +44,7 @@ async function fetchWithTimeout(url, timeoutMs = 12000) {
       ? JSON.stringify(await response.json())
       : await response.text();
 
-    return { ok: response.ok, status: response.status, contentType, body, url };
+    return { ok: response.ok, status: response.status, contentType, body, url: response.url || url };
   } finally {
     clearTimeout(timeout);
   }
@@ -132,9 +132,20 @@ function buildLofSelectCandidateUrls(dogName) {
 }
 
 function buildLofSelectIdentifierUrls(identifier, dogName = '') {
-  const id = encodeURIComponent(identifier || '');
+  const rawId = String(identifier || '').trim();
+  const id = encodeURIComponent(rawId);
   const q = encodeURIComponent(dogName || '');
+  const slug = slugifyDogName(dogName);
+  const directUrls = /^\d{5,10}$/.test(rawId) && slug
+    ? [
+        `https://www.centrale-canine.fr/lofselect/chien/${slug}-${rawId}`,
+        `https://www.centrale-canine.fr/lofselect/chien/${slug}-${rawId}/descendance`,
+        `https://www.centrale-canine.fr/lofselect/chien/${slug}-${rawId}/utilisations`,
+      ]
+    : [];
+
   return [
+    ...directUrls,
     `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?identifiant=${id}`,
     `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?numero_identification=${id}`,
     `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?id=${id}`,
@@ -182,6 +193,8 @@ function extractIdentifiersFromRecords(records = []) {
     values.forEach((value) => {
       const raw = String(value || '').trim();
       if (/^[0-9A-Z]{6,20}$/i.test(raw) && /\d/.test(raw)) identifiers.add(raw);
+      const numericMatches = raw.match(/\b\d{6,9}\b/g) || [];
+      numericMatches.forEach((match) => identifiers.add(match));
     });
   });
   return Array.from(identifiers).slice(0, 12);
