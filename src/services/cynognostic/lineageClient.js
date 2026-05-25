@@ -76,7 +76,7 @@ function extractCandidateDogLinks(html, baseUrl, dogName) {
       const haystack = normalize(`${link.label} ${link.url}`);
       return haystack.includes(wanted) || haystack.includes(slugifyDogName(dogName));
     })
-    .slice(0, 20);
+    .slice(0, 30);
 }
 
 function extractPossibleDogNames(text) {
@@ -84,26 +84,30 @@ function extractPossibleDogNames(text) {
   const matches = source.match(/\b[A-ZÀ-ÖØ-Ý][A-ZÀ-ÖØ-Ý' -]{4,}\b/g) || [];
   const blacklist = new Set([
     'CENTRALE CANINE', 'LOF SELECT', 'STATGESCON', 'SETTER ANGLAIS', 'FIELD TRIAL',
-    'CHAMPIONNAT', 'RESULTATS', 'DESCENDANTS', 'PRODUCTION', 'UTILISATIONS', 'PEDIGREE'
+    'CHAMPIONNAT', 'RESULTATS', 'DESCENDANTS', 'PRODUCTION', 'UTILISATIONS', 'PEDIGREE',
+    'RECHERCHE CHIEN', 'IDENTIFIANT', 'ACCUEIL', 'CONTACT', 'MENTIONS LEGALES'
   ]);
 
   const counts = new Map();
   matches
     .map((item) => item.replace(/\s+/g, ' ').trim())
-    .filter((item) => item.length >= 5 && item.length <= 60)
+    .filter((item) => item.length >= 5 && item.length <= 70)
     .filter((item) => !blacklist.has(item))
     .forEach((item) => counts.set(item, (counts.get(item) || 0) + 1));
 
   return Array.from(counts.entries())
     .sort((a, b) => b[1] - a[1])
     .map(([name]) => name)
-    .slice(0, 60);
+    .slice(0, 80);
 }
 
 function buildLofSelectCandidateUrls(dogName) {
   const q = encodeURIComponent(dogName || '');
   const slug = slugifyDogName(dogName);
   return [
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?search=${q}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?nom=${q}`,
+    `https://www.centrale-canine.fr/lofselect/recherche-chien/identifiant?q=${q}`,
     `https://www.centrale-canine.fr/lofselect/recherche-chien?search=${q}`,
     `https://www.centrale-canine.fr/lofselect/recherche-chien?nom=${q}`,
     `https://www.centrale-canine.fr/lofselect/recherche-chien?q=${q}`,
@@ -121,6 +125,27 @@ function buildPedigreeSetterCandidateUrls(dogName) {
     `https://pedigree.setter-anglais.fr/genealogie/index.php?search=${q}`,
     `https://pedigree.setter-anglais.fr/genealogie/liste_portee.php?search=${q}`,
   ];
+}
+
+function isLofSelectDogUrl(url) {
+  return /centrale-canine\.fr\/lofselect\/chien\//i.test(String(url || ''));
+}
+
+function normalizeLofDogBaseUrl(url) {
+  const clean = String(url || '').split('#')[0].split('?')[0].replace(/\/+$/, '');
+  return clean.replace(/\/(descendance|utilisations|pedigree|sante)$/i, '');
+}
+
+function buildDogSheetUrls(url) {
+  const clean = String(url || '').trim();
+  if (!clean) return [];
+
+  if (isLofSelectDogUrl(clean)) {
+    const base = normalizeLofDogBaseUrl(clean);
+    return [base, `${base}/descendance`, `${base}/utilisations`];
+  }
+
+  return [clean];
 }
 
 async function searchSourceCandidates(dogName, source = 'all') {
@@ -166,18 +191,37 @@ async function searchSourceCandidates(dogName, source = 'all') {
 }
 
 async function fetchDogSheet(url) {
-  const response = await fetchWithTimeout(url);
-  const text = stripHtml(response.body);
-  const links = extractLinks(response.body, url);
-  const possibleNames = extractPossibleDogNames(text);
+  const urls = buildDogSheetUrls(url);
+  const attempts = [];
+  const texts = [];
+  const links = [];
+
+  for (const targetUrl of urls) {
+    try {
+      const response = await fetchWithTimeout(targetUrl);
+      attempts.push({ url: targetUrl, status: response.status, contentType: response.contentType });
+      if (!response.ok) continue;
+
+      const text = stripHtml(response.body);
+      texts.push(`SOURCE: ${targetUrl}\n${text}`);
+      links.push(...extractLinks(response.body, targetUrl));
+    } catch (error) {
+      attempts.push({ url: targetUrl, status: 'ERROR', error: error.message });
+    }
+  }
+
+  const fullText = texts.join('\n\n');
+  const possibleNames = extractPossibleDogNames(fullText);
 
   return {
-    ok: response.ok,
-    status: response.status,
+    ok: texts.length > 0,
+    status: attempts.find((attempt) => attempt.status === 200)?.status || attempts[0]?.status || 'ERROR',
     url,
-    contentType: response.contentType,
-    text: text.slice(0, 20000),
-    links: links.slice(0, 80),
+    urls,
+    attempts,
+    contentType: attempts.find((attempt) => attempt.contentType)?.contentType || '',
+    text: fullText.slice(0, 30000),
+    links: links.slice(0, 120),
     possibleNames,
   };
 }
@@ -188,7 +232,7 @@ function parseDescendantsText(text) {
     .map((item) => item.trim())
     .filter(Boolean)
     .filter((item, index, arr) => arr.findIndex((v) => normalize(v) === normalize(item)) === index)
-    .slice(0, 40);
+    .slice(0, 60);
 }
 
 module.exports = {
@@ -198,4 +242,5 @@ module.exports = {
   extractPossibleDogNames,
   buildLofSelectCandidateUrls,
   buildPedigreeSetterCandidateUrls,
+  buildDogSheetUrls,
 };
