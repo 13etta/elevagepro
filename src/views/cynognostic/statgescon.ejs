@@ -1,0 +1,73 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="header-actions" style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:1rem;">
+    <div>
+      <p style="text-transform:uppercase; letter-spacing:.12em; color:#7c3aed; font-weight:800; margin:0 0 .35rem;">Source externe</p>
+      <h1 style="margin:0;">Recherche StatGescon</h1>
+      <p style="color:#64748b; max-width:900px; line-height:1.6;">Recherche d'un chien dans StatGescon. Le connecteur teste plusieurs routes API ou HTML possibles et affiche la première réponse exploitable.</p>
+    </div>
+    <a href="/cynognostic" class="btn btn-secondary">Retour CYNOGNOSTIC</a>
+  </div>
+
+  <section class="card" style="margin-bottom:1.5rem;">
+    <h2>Rechercher un chien</h2>
+    <form action="/cynognostic/statgescon/search" method="POST" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-field">
+        <label>Nom du chien</label>
+        <input type="text" name="dog_name" value="<%= dogName || '' %>" placeholder="ONDINE DES FORETS CORREZIENNES" required>
+      </div>
+      <div class="form-field">
+        <label>URL StatGescon</label>
+        <input type="url" name="base_url" value="<%= baseUrl || 'https://statgescon.onrender.com' %>" required>
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button type="submit" class="btn btn-primary">Interroger StatGescon</button>
+      </div>
+    </form>
+  </section>
+
+  <% if (result) { %>
+    <section class="card" style="margin-bottom:1.5rem; border-left:5px solid <%= result.ok ? '#16a34a' : '#dc2626' %>;">
+      <h2>Résultat</h2>
+      <p><strong>Statut :</strong> <%= result.ok ? 'Réponse exploitable' : 'Aucune réponse exploitable' %></p>
+      <p><strong>Nom recherché :</strong> <%= result.dogName %></p>
+      <p><strong>Base URL :</strong> <%= result.baseUrl %></p>
+      <% if (result.url) { %><p><strong>URL retenue :</strong> <a href="<%= result.url %>" target="_blank" rel="noopener noreferrer"><%= result.url %></a></p><% } %>
+      <% if (result.message) { %><p><%= result.message %></p><% } %>
+    </section>
+
+    <section class="card" style="margin-bottom:1.5rem;">
+      <h2>Tentatives effectuées</h2>
+      <% if (result.attempts && result.attempts.length) { %>
+        <div class="table-responsive">
+          <table class="table" style="width:100%;">
+            <thead><tr><th>URL</th><th>Statut</th><th>Type</th><th>Erreur</th></tr></thead>
+            <tbody>
+              <% result.attempts.forEach((attempt) => { %>
+                <tr>
+                  <td><code><%= attempt.url %></code></td>
+                  <td><%= attempt.status %></td>
+                  <td><%= attempt.contentType || '-' %></td>
+                  <td><%= attempt.error || '-' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %><p>Aucune tentative enregistrée.</p><% } %>
+    </section>
+
+    <% if (result.text) { %>
+      <section class="card">
+        <h2>Contenu récupéré</h2>
+        <p style="color:#64748b;">Copie ce contenu dans une analyse CYNOGNOSTIC pour le recouper avec le pedigree, les observations et LOF Select.</p>
+        <pre style="white-space:pre-wrap; max-height:520px; overflow:auto;"><%= result.text %></pre>
+      </section>
+    <% } %>
+  <% } %>
+</main>
+
+<%- include('../partials/foot') %>
