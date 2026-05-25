@@ -15,6 +15,7 @@ router.post('/watch-profiles', verifyCsrf, cynognosticController.createWatch);
 router.get('/statgescon', statgesconController.form);
 router.post('/statgescon/search', verifyCsrf, statgesconController.search);
 router.get('/transmission', transmissionController.form);
+router.post('/transmission/auto', verifyCsrf, transmissionController.auto);
 router.post('/transmission/search-dog', verifyCsrf, transmissionController.searchDog);
 router.post('/transmission/fetch-sheet', verifyCsrf, transmissionController.fetchSheet);
 router.post('/transmission/analyze', verifyCsrf, transmissionController.analyze);
