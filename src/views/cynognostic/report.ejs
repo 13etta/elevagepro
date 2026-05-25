@@ -1,0 +1,122 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="header-actions" style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:1rem;">
+    <div>
+      <p style="text-transform: uppercase; letter-spacing:.12em; color:#7c3aed; font-weight:800; margin:0 0 .35rem;">Rapport CYNOGNOSTIC CORE</p>
+      <h1 style="margin:0;"><%= report.title %></h1>
+      <p style="color:#64748b;"><%= report.breed || 'Race non précisée' %> · <%= report.objective || 'Objectif non précisé' %> · <%= report.discipline || 'Discipline non précisée' %></p>
+    </div>
+    <a href="/cynognostic" class="btn btn-secondary">Retour</a>
+  </div>
+
+  <section style="display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:1rem; margin-bottom:1.5rem;">
+    <div class="card"><small>Score global</small><div style="font-size:2rem; font-weight:900;"><%= report.score_global %>/100</div></div>
+    <div class="card"><small>Travail</small><div style="font-size:2rem; font-weight:900;"><%= report.score_work %>/100</div></div>
+    <div class="card"><small>Beauté</small><div style="font-size:2rem; font-weight:900;"><%= report.score_beauty %>/100</div></div>
+    <div class="card"><small>Santé</small><div style="font-size:2rem; font-weight:900;"><%= report.score_health %>/100</div></div>
+  </section>
+
+  <section class="card" style="margin-bottom:1.5rem; border-left:5px solid #7c3aed;">
+    <h2>Verdict stratégique</h2>
+    <p style="font-size:1.1rem; line-height:1.65;"><%= report.verdict %></p>
+    <p style="color:#64748b;">Confiance de lecture : <strong><%= report.confidence_score %>/100</strong>. Une analyse visuelle reste indicative et doit être confirmée par examen réel, juge, vétérinaire ou résultat officiel.</p>
+  </section>
+
+  <section style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap:1.5rem; margin-bottom:1.5rem;">
+    <div class="card">
+      <h2>Signaux positifs détectés</h2>
+      <% const signals = report.findings.signals || []; %>
+      <% if (signals.length) { %>
+        <% signals.forEach((signal) => { %>
+          <div style="padding:.75rem 0; border-bottom:1px solid rgba(148,163,184,.25);">
+            <strong><%= signal.label %></strong><br>
+            <small>Indices : <%= (signal.evidence || []).join(', ') %></small>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>Aucun signal fort détecté dans les données fournies.</p>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <h2>Alertes cynotechniques</h2>
+      <% if (report.alerts.length) { %>
+        <% report.alerts.forEach((alert) => { %>
+          <div style="padding:.75rem 0; border-bottom:1px solid rgba(148,163,184,.25);">
+            <strong><%= alert.severity %> — <%= alert.label %></strong><br>
+            <small>Indices : <%= (alert.evidence || []).join(', ') %></small>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>Aucune alerte majeure détectée dans les données fournies.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap:1.5rem; margin-bottom:1.5rem;">
+    <div class="card">
+      <h2>Lecture beauté / travail</h2>
+      <p><strong>Beauté :</strong> <%= report.findings.beautyReading || '-' %></p>
+      <p><strong>Travail :</strong> <%= report.findings.workReading || '-' %></p>
+      <p><strong>Transmission :</strong> <%= report.findings.transmissionReading || '-' %></p>
+    </div>
+
+    <div class="card">
+      <h2>Affixes et résultats détectés</h2>
+      <% const affixes = report.findings.affixes || []; %>
+      <% if (affixes.length) { %>
+        <h3>Affixes dominants</h3>
+        <ul>
+          <% affixes.forEach((affix) => { %><li><%= affix.name %> — <%= affix.count %></li><% }) %>
+        </ul>
+      <% } else { %>
+        <p>Aucun affixe dominant isolé.</p>
+      <% } %>
+      <h3>Signaux de résultats</h3>
+      <% const resultSignals = report.findings.resultSignals || {}; %>
+      <p><%= Object.entries(resultSignals).map(([key, value]) => key + ': ' + value).join(' · ') %></p>
+    </div>
+  </section>
+
+  <section style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap:1.5rem; margin-bottom:1.5rem;">
+    <div class="card">
+      <h2>Données manquantes</h2>
+      <% const missing = report.findings.missingData || []; %>
+      <% if (missing.length) { %>
+        <ul><% missing.forEach((item) => { %><li><%= item %></li><% }) %></ul>
+      <% } else { %>
+        <p>Dossier suffisamment alimenté pour une première lecture.</p>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <h2>Requêtes de recherche proposées</h2>
+      <% const queries = report.findings.searchQueries || []; %>
+      <% if (queries.length) { %>
+        <ul><% queries.forEach((query) => { %><li><code><%= query %></code></li><% }) %></ul>
+      <% } else { %>
+        <p>Aucune requête générée.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <% if (report.source_url) { %>
+    <section class="card" style="margin-bottom:1.5rem;">
+      <h2>Source</h2>
+      <p><a href="<%= report.source_url %>" target="_blank" rel="noopener noreferrer"><%= report.source_url %></a></p>
+    </section>
+  <% } %>
+
+  <section class="card">
+    <h2>Données analysées</h2>
+    <details><summary>Pedigree</summary><pre style="white-space:pre-wrap;"><%= report.pedigree_text || '-' %></pre></details>
+    <details><summary>Annonce</summary><pre style="white-space:pre-wrap;"><%= report.announcement_text || '-' %></pre></details>
+    <details><summary>Observations terrain</summary><pre style="white-space:pre-wrap;"><%= report.observations || '-' %></pre></details>
+    <details><summary>Notes image</summary><pre style="white-space:pre-wrap;"><%= report.image_notes || '-' %></pre></details>
+    <details><summary>Notes vidéo</summary><pre style="white-space:pre-wrap;"><%= report.video_notes || '-' %></pre></details>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
