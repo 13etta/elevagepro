@@ -1,0 +1,73 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <section class="card" style="margin-bottom: 1.5rem; border-left: 5px solid #7c3aed;">
+    <p style="text-transform: uppercase; letter-spacing: .12em; color: #7c3aed; font-weight: 800; margin: 0 0 .35rem;">Agent de sélection</p>
+    <h1 style="margin: 0 0 .5rem;">CYNOGNOSTIC CORE</h1>
+    <p style="max-width: 980px; color: #64748b; line-height: 1.65;">Analyse de pedigree, annonce, retour terrain, lecture standard beauté/travail et alertes cynotechniques. Le moteur sépare les faits, les signaux probables et les zones à vérifier avant achat ou reproduction.</p>
+  </section>
+
+  <section class="card" style="margin-bottom: 2rem;">
+    <h2>Nouvelle analyse</h2>
+    <form action="/cynognostic/analyze" method="POST" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-field"><label>Titre</label><input type="text" name="title" placeholder="Portée Ondine x Valentino" required></div>
+      <div class="form-field"><label>Race</label><input type="text" name="breed" placeholder="Setter Anglais, Pointer..."></div>
+      <div class="form-field"><label>Objectif</label><select name="objective"><option value="mixte">Mixte chasse / field / élevage</option><option value="chasse">Chasse pratique</option><option value="field">Field-trial</option><option value="beaute">Beauté</option><option value="reproduction">Reproduction</option></select></div>
+      <div class="form-field"><label>Discipline</label><input type="text" name="discipline" placeholder="Bécasse, bécassine, printemps..."></div>
+      <div class="form-field"><label>Zone</label><input type="text" name="zone" placeholder="France, Auvergne, Italie..."></div>
+      <div class="form-field"><label>Sexe recherché</label><input type="text" name="sex_preference" placeholder="Femelle, mâle..."></div>
+      <div class="form-field"><label>Budget maximum</label><input type="number" name="budget_max" min="0" step="50" placeholder="1200"></div>
+      <div class="form-field"><label>Lien source</label><input type="url" name="source_url" placeholder="https://..."></div>
+
+      <div class="form-field" style="grid-column: 1 / -1;"><label>Pedigree / ascendance</label><textarea name="pedigree_text" rows="7" placeholder="Colle ici le pedigree, les parents, grands-parents, affixes, titres connus..."></textarea></div>
+      <div class="form-field" style="grid-column: 1 / -1;"><label>Annonce ou description vendeur</label><textarea name="announcement_text" rows="5" placeholder="Texte d'annonce, prix, tests, socialisation, arguments de l'éleveur..."></textarea></div>
+      <div class="form-field" style="grid-column: 1 / -1;"><label>Retour terrain utilisateur</label><textarea name="observations" rows="5" placeholder="Quête, style, nez, mental, port de fouet, arrêt, sagesse, contact conducteur..."></textarea></div>
+      <div class="form-field" style="grid-column: 1 / -1;"><label>Lecture image</label><textarea name="image_notes" rows="4" placeholder="Construction, ligne de dos, aplombs, fouet, type racial..."></textarea></div>
+      <div class="form-field" style="grid-column: 1 / -1;"><label>Lecture vidéo</label><textarea name="video_notes" rows="4" placeholder="Galop, quête, amplitude, style, arrêt, coulé..."></textarea></div>
+
+      <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end;"><button type="submit" class="btn btn-primary">Lancer l'analyse</button></div>
+    </form>
+  </section>
+
+  <section class="card" style="margin-bottom: 2rem;">
+    <h2>Profil de veille annonces</h2>
+    <p style="color: #64748b;">Le profil prépare les requêtes de recherche. La connexion automatique aux sites d'annonces pourra être branchée ensuite sur ces critères.</p>
+    <form action="/cynognostic/watch-profiles" method="POST" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-field"><label>Nom</label><input type="text" name="name" placeholder="Femelle Setter field 2026"></div>
+      <div class="form-field"><label>Race</label><input type="text" name="breed" placeholder="Setter Anglais"></div>
+      <div class="form-field"><label>Objectif</label><input type="text" name="objective" placeholder="Field bécasse / élevage"></div>
+      <div class="form-field"><label>Discipline</label><input type="text" name="discipline" placeholder="Bécasse"></div>
+      <div class="form-field"><label>Zone</label><input type="text" name="zone" placeholder="France"></div>
+      <div class="form-field"><label>Sexe</label><input type="text" name="sex_preference" placeholder="Femelle"></div>
+      <div class="form-field"><label>Budget</label><input type="number" name="budget_max" min="0" step="50"></div>
+      <div class="form-field" style="grid-column: 1 / -1;"><label>Critères non négociables</label><textarea name="non_negotiables" rows="3" placeholder="LOF, parents testés, pas de fouet haut, résultats vérifiables..."></textarea></div>
+      <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end;"><button type="submit" class="btn btn-secondary">Créer la veille</button></div>
+    </form>
+  </section>
+
+  <section style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 1.5rem;">
+    <div class="card">
+      <h2>Dernières analyses</h2>
+      <% if (analyses.length) { %>
+        <div class="table-responsive"><table class="table" style="width: 100%;"><thead><tr><th>Titre</th><th>Race</th><th>Global</th><th>Travail</th><th>Santé</th><th>Verdict</th></tr></thead><tbody>
+          <% analyses.forEach((item) => { %>
+            <tr><td><a href="/cynognostic/reports/<%= item.id %>"><strong><%= item.title %></strong></a></td><td><%= item.breed || '-' %></td><td><%= item.score_global %>/100</td><td><%= item.score_work %>/100</td><td><%= item.score_health %>/100</td><td><%= item.verdict %></td></tr>
+          <% }) %>
+        </tbody></table></div>
+      <% } else { %><p>Aucune analyse enregistrée.</p><% } %>
+    </div>
+
+    <div class="card">
+      <h2>Veilles actives</h2>
+      <% if (watches.length) { %>
+        <% watches.forEach((watch) => { %><div style="padding: .85rem 0; border-bottom: 1px solid rgba(148,163,184,.25);"><strong><%= watch.name %></strong><br><small><%= watch.breed || '-' %> · <%= watch.discipline || '-' %> · <%= watch.zone || '-' %></small><br><small>Budget : <%= watch.budget_max || '-' %></small></div><% }) %>
+      <% } else { %><p>Aucun profil de veille.</p><% } %>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
