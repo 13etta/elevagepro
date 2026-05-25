@@ -25,6 +25,7 @@ const websiteRoutes = require('./routes/website.routes');
 const weightsRoutes = require('./routes/weights.routes');
 const profitabilityRoutes = require('./routes/profitability.routes');
 const strategyRoutes = require('./routes/strategy.routes');
+const cynognosticRoutes = require('./routes/cynognostic.routes');
 
 const app = express();
 const PgSession = connectPgSimple(session);
@@ -96,6 +97,9 @@ app.use((req, res, next) => {
 
   req.session.preferences.theme = theme;
 
+  const flash = req.session.flash || null;
+  delete req.session.flash;
+
   res.locals.__ = res.__.bind(req);
   res.locals.currentLang = currentLang;
   res.locals.theme = theme;
@@ -103,6 +107,7 @@ app.use((req, res, next) => {
   res.locals.moduleGroups = moduleGroups;
   res.locals.currentPath = req.path;
   res.locals.user = req.session?.user || null;
+  res.locals.flash = flash;
   res.locals.formatDate = (value) => {
     if (!value) return '-';
     const date = value instanceof Date ? value : new Date(value);
@@ -144,6 +149,7 @@ app.use('/site', websiteRoutes);
 app.use('/weights', weightsRoutes);
 app.use('/profitability', profitabilityRoutes);
 app.use('/strategy', strategyRoutes);
+app.use('/cynognostic', cynognosticRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
 app.use('/genetics', require('./routes/genetics.routes'));
 app.use('/settings', require('./routes/settings.routes'));
