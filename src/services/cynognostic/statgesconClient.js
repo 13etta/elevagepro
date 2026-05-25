@@ -115,6 +115,29 @@ function rowsToText(rows, sourceName = '') {
     .join('\n');
 }
 
+function recordToText(record) {
+  const body = record.pairs.map((pair) => `${pair.key}: ${pair.value}`).join(' | ');
+  return `[${record.source}] ${body}`;
+}
+
+function buildRecord(source, headers, row) {
+  const safeHeaders = headers && headers.length ? headers : row.map((_, index) => `col_${index + 1}`);
+  const pairs = row.map((value, index) => ({
+    key: safeHeaders[index] || `col_${index + 1}`,
+    value,
+  }));
+  return {
+    source,
+    headers: safeHeaders,
+    row,
+    pairs,
+    object: pairs.reduce((acc, pair) => {
+      acc[pair.key] = pair.value;
+      return acc;
+    }, {}),
+  };
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -146,7 +169,7 @@ function buildCandidateUrls(baseUrl, query) {
 }
 
 async function searchCsvFiles(baseUrl, query, attempts) {
-  const allMatches = [];
+  const records = [];
   let totalRowsDetected = 0;
   let firstOkUrl = null;
 
@@ -163,27 +186,32 @@ async function searchCsvFiles(baseUrl, query, attempts) {
       if (!firstOkUrl) firstOkUrl = url;
 
       const rows = parseCsv(body);
-      totalRowsDetected += rows.length;
-      const matchedRows = filterRows(rows, query);
-      matchedRows.forEach((row) => allMatches.push({ source: file, row }));
+      if (!rows.length) continue;
+
+      const headers = rows[0];
+      const dataRows = rows.slice(1);
+      totalRowsDetected += dataRows.length;
+      const matchedRows = filterRows(dataRows, query);
+      matchedRows.forEach((row) => records.push(buildRecord(file, headers, row)));
     } catch (error) {
       attempts.push({ url, status: 'ERROR', error: error.message });
     }
   }
 
-  if (allMatches.length) {
+  if (records.length) {
     return {
       ok: true,
       url: firstOkUrl,
       type: 'csv',
       totalRowsDetected,
-      matchedRows: allMatches.map((item) => [item.source, ...item.row]),
-      text: allMatches.map((item) => rowsToText([item.row], item.source)).join('\n'),
+      matchedRows: records.map((record) => [record.source, ...record.row]),
+      matchedRecords: records,
+      text: records.map(recordToText).join('\n'),
       rawPreview: '',
     };
   }
 
-  return { ok: false, totalRowsDetected, matchedRows: [], text: '', rawPreview: '', url: firstOkUrl, type: 'csv' };
+  return { ok: false, totalRowsDetected, matchedRows: [], matchedRecords: [], text: '', rawPreview: '', url: firstOkUrl, type: 'csv' };
 }
 
 async function searchHtmlFallback(baseUrl, query, attempts) {
@@ -213,6 +241,7 @@ async function searchHtmlFallback(baseUrl, query, attempts) {
         type: rows.length ? 'html-table' : 'html-text',
         totalRowsDetected: rows.length,
         matchedRows,
+        matchedRecords: [],
         text: matchedRows.length ? rowsToText(matchedRows) : fallbackMatches.join('\n'),
         rawPreview: pageText.slice(0, 12000),
       };
@@ -221,7 +250,7 @@ async function searchHtmlFallback(baseUrl, query, attempts) {
     }
   }
 
-  return { ok: false, totalRowsDetected: 0, matchedRows: [], text: '', rawPreview: '' };
+  return { ok: false, totalRowsDetected: 0, matchedRows: [], matchedRecords: [], text: '', rawPreview: '' };
 }
 
 async function searchStatgesconTable(query, options = {}) {
@@ -249,6 +278,7 @@ async function searchStatgesconTable(query, options = {}) {
     attempts,
     totalRowsDetected: csvResult.totalRowsDetected + (htmlResult.totalRowsDetected || 0),
     matchedRows: htmlResult.matchedRows || [],
+    matchedRecords: htmlResult.matchedRecords || [],
     text: htmlResult.text || '',
     rawPreview: htmlResult.rawPreview || '',
     message: htmlResult.ok
