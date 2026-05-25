@@ -27,6 +27,7 @@ const weightsRoutes = require('./routes/weights.routes');
 const profitabilityRoutes = require('./routes/profitability.routes');
 const strategyRoutes = require('./routes/strategy.routes');
 const cynognosticRoutes = require('./routes/cynognostic.routes');
+const structureRoutes = require('./routes/structure.routes');
 
 const app = express();
 const PgSession = connectPgSimple(session);
@@ -151,6 +152,7 @@ app.use('/weights', weightsRoutes);
 app.use('/profitability', profitabilityRoutes);
 app.use('/strategy', strategyRoutes);
 app.use('/cynognostic', cynognosticRoutes);
+app.use('/structure', structureRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
 app.use('/genetics', require('./routes/genetics.routes'));
 app.use('/settings', require('./routes/settings.routes'));
