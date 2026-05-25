@@ -1,0 +1,107 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="header-actions" style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:1rem;">
+    <div>
+      <p style="text-transform:uppercase; letter-spacing:.12em; color:#7c3aed; font-weight:800; margin:0 0 .35rem;">Sélection / transmission</p>
+      <h1 style="margin:0;">Analyse de transmission</h1>
+      <p style="color:#64748b; max-width:960px; line-height:1.6;">Objectif : trouver la fiche d’un chien sur LOF Select ou Pedigree Setter, récupérer ou coller ses descendants, puis interroger StatGescon pour mesurer la production réelle.</p>
+    </div>
+    <a href="/cynognostic" class="btn btn-secondary">Retour CYNOGNOSTIC</a>
+  </div>
+
+  <section class="card" style="margin-bottom:1.5rem;">
+    <h2>1. Chercher la fiche du chien</h2>
+    <form action="/cynognostic/transmission/search-dog" method="POST" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-field"><label>Nom du chien</label><input type="text" name="dog_name" value="<%= dogName || '' %>" placeholder="NOX DE CAZAOUS" required></div>
+      <div class="form-field"><label>Source</label><select name="source"><option value="all">LOF Select + Pedigree Setter</option><option value="lofselect">LOF Select</option><option value="pedigree">Pedigree Setter</option></select></div>
+      <div style="display:flex; align-items:flex-end;"><button class="btn btn-primary" type="submit">Chercher la fiche</button></div>
+    </form>
+  </section>
+
+  <% if (sourceResult) { %>
+    <section class="card" style="margin-bottom:1.5rem;">
+      <h2>Fiches candidates</h2>
+      <% if (sourceResult.candidates && sourceResult.candidates.length) { %>
+        <% sourceResult.candidates.forEach((candidate) => { %>
+          <form action="/cynognostic/transmission/fetch-sheet" method="POST" style="border:1px solid rgba(148,163,184,.35); border-radius:14px; padding:1rem; margin:.75rem 0;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="dog_name" value="<%= dogName %>">
+            <input type="hidden" name="dog_url" value="<%= candidate.url %>">
+            <strong><%= candidate.source %></strong><br>
+            <span><%= candidate.label || candidate.url %></span><br>
+            <a href="<%= candidate.url %>" target="_blank" rel="noopener noreferrer"><%= candidate.url %></a><br><br>
+            <button class="btn btn-secondary" type="submit">Lire cette fiche</button>
+          </form>
+        <% }) %>
+      <% } else { %>
+        <p>Aucune fiche candidate détectée automatiquement.</p>
+      <% } %>
+      <details style="margin-top:1rem;"><summary>Tentatives techniques</summary><pre style="white-space:pre-wrap;"><%= JSON.stringify(sourceResult.attempts, null, 2) %></pre></details>
+    </section>
+  <% } %>
+
+  <section class="card" style="margin-bottom:1.5rem;">
+    <h2>2. Lire une fiche connue</h2>
+    <form action="/cynognostic/transmission/fetch-sheet" method="POST" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-field"><label>Nom du chien</label><input type="text" name="dog_name" value="<%= dogName || '' %>" placeholder="Nom du reproducteur"></div>
+      <div class="form-field" style="grid-column:span 2;"><label>URL fiche LOF Select ou Pedigree</label><input type="url" name="dog_url" value="<%= dogUrl || '' %>" placeholder="https://www.centrale-canine.fr/lofselect/chien/.../descendance"></div>
+      <div style="display:flex; align-items:flex-end;"><button class="btn btn-secondary" type="submit">Extraire les noms probables</button></div>
+    </form>
+  </section>
+
+  <% if (sheetResult) { %>
+    <section class="card" style="margin-bottom:1.5rem;">
+      <h2>Fiche récupérée</h2>
+      <p><strong>URL :</strong> <a href="<%= sheetResult.url %>" target="_blank" rel="noopener noreferrer"><%= sheetResult.url %></a></p>
+      <p><strong>Statut :</strong> <%= sheetResult.status %> · <%= sheetResult.contentType %></p>
+      <p><strong>Noms probables détectés :</strong> <%= sheetResult.possibleNames.length %></p>
+      <details><summary>Aperçu texte</summary><pre style="white-space:pre-wrap; max-height:360px; overflow:auto;"><%= sheetResult.text %></pre></details>
+    </section>
+  <% } %>
+
+  <section class="card" style="margin-bottom:1.5rem;">
+    <h2>3. Analyser les descendants dans StatGescon</h2>
+    <p style="color:#64748b;">Colle ici les descendants, un par ligne. L’outil cherchera chaque nom dans les CSV StatGescon et calculera un premier indice de production.</p>
+    <form action="/cynognostic/transmission/analyze" method="POST" class="form-grid">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-field"><label>Nom du reproducteur</label><input type="text" name="dog_name" value="<%= dogName || '' %>"></div>
+      <div class="form-field"><label>URL fiche</label><input type="url" name="dog_url" value="<%= dogUrl || '' %>"></div>
+      <div class="form-field"><label>URL StatGescon</label><input type="url" name="statgescon_base_url" value="https://statgescon.onrender.com"></div>
+      <div class="form-field" style="grid-column:1 / -1;"><label>Descendants</label><textarea name="descendants_text" rows="12" placeholder="Un descendant par ligne"><%= descendantsText || '' %></textarea></div>
+      <div style="grid-column:1 / -1; display:flex; justify-content:flex-end;"><button class="btn btn-primary" type="submit">Analyser la transmission</button></div>
+    </form>
+  </section>
+
+  <% if (transmissionResult) { %>
+    <section class="card" style="margin-bottom:1.5rem; border-left:5px solid #7c3aed;">
+      <h2>Verdict transmission</h2>
+      <p style="font-size:1.1rem;"><%= transmissionResult.verdict %></p>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:1rem; margin-top:1rem;">
+        <div><small>Descendants testés</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.descendantCount %></strong></div>
+        <div><small>Retrouvés StatGescon</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.foundCount %></strong></div>
+        <div><small>Taux résultat</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.resultRate %>%</strong></div>
+        <div><small>Taux EXC</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.excellentRate %>%</strong></div>
+        <div><small>CACT/CACIT</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.cactCount + transmissionResult.metrics.cacitCount %></strong></div>
+        <div><small>Score moyen</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.avgScore %>/100</strong></div>
+        <div><small>Fiabilité</small><strong style="display:block; font-size:1.6rem;"><%= transmissionResult.metrics.reliability %>/100</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Détail descendants</h2>
+      <% transmissionResult.descendants.forEach((desc) => { %>
+        <article style="border:1px solid rgba(148,163,184,.35); border-radius:14px; padding:1rem; margin:1rem 0;">
+          <strong><%= desc.name %></strong> — <%= desc.found ? 'retrouvé' : 'non retrouvé' %> · score <%= desc.score %>/100<br>
+          <small>Records : <%= desc.recordCount %> · EXC : <%= desc.hasExcellent ? 'oui' : 'non' %> · CACT : <%= desc.hasCact ? 'oui' : 'non' %> · CACIT : <%= desc.hasCacit ? 'oui' : 'non' %></small>
+          <% if (desc.text) { %><details style="margin-top:.75rem;"><summary>Données StatGescon</summary><pre style="white-space:pre-wrap;"><%= desc.text %></pre></details><% } %>
+        </article>
+      <% }) %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('../partials/foot') %>
