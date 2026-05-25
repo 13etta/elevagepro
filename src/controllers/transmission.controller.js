@@ -1,5 +1,6 @@
 const { searchSourceCandidates, fetchDogSheet, parseDescendantsText } = require('../services/cynognostic/lineageClient');
 const { analyzeTransmission } = require('../services/cynognostic/transmissionAnalyzer');
+const { runAutoTransmissionPipeline } = require('../services/cynognostic/autoTransmissionPipeline');
 
 exports.form = async (req, res) => {
   res.render('cynognostic/transmission', {
@@ -10,7 +11,33 @@ exports.form = async (req, res) => {
     sourceResult: null,
     sheetResult: null,
     transmissionResult: null,
+    autoResult: null,
   });
+};
+
+exports.auto = async (req, res) => {
+  const dogName = req.body.dog_name || '';
+
+  try {
+    const autoResult = await runAutoTransmissionPipeline(dogName, {
+      statgesconBaseUrl: req.body.statgescon_base_url || process.env.STATGESCON_BASE_URL || 'https://statgescon.onrender.com',
+    });
+
+    return res.render('cynognostic/transmission', {
+      title: 'Transmission Cynognostic',
+      dogName,
+      dogUrl: autoResult.dogUrl || '',
+      descendantsText: (autoResult.descendants || []).join('\n'),
+      sourceResult: null,
+      sheetResult: autoResult.sheetResult,
+      transmissionResult: autoResult.transmissionResult,
+      autoResult,
+    });
+  } catch (error) {
+    console.error('Erreur pipeline transmission autonome:', error);
+    req.session.flash = { type: 'error', message: 'Pipeline autonome impossible.' };
+    return res.redirect('/cynognostic/transmission');
+  }
 };
 
 exports.searchDog = async (req, res) => {
@@ -26,6 +53,7 @@ exports.searchDog = async (req, res) => {
       sourceResult,
       sheetResult: null,
       transmissionResult: null,
+      autoResult: null,
     });
   } catch (error) {
     console.error('Erreur recherche fiche chien:', error);
@@ -48,6 +76,7 @@ exports.fetchSheet = async (req, res) => {
       sourceResult: null,
       sheetResult,
       transmissionResult: null,
+      autoResult: null,
     });
   } catch (error) {
     console.error('Erreur lecture fiche chien:', error);
@@ -75,6 +104,7 @@ exports.analyze = async (req, res) => {
       sourceResult: null,
       sheetResult: null,
       transmissionResult,
+      autoResult: null,
     });
   } catch (error) {
     console.error('Erreur analyse transmission:', error);
