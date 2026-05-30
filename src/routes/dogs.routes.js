@@ -30,7 +30,8 @@ router.post('/new', upload.single('photo'), dogsController.saveDog);
 router.get('/:id/edit', dogsController.getForm);
 router.post('/:id/edit', upload.single('photo'), dogsController.saveDog);
 
-// Processus de suppression
+// Sortie administrative du cheptel : aucune suppression physique en base
+router.get('/:id/delete', dogsController.getDeleteForm);
 router.post('/:id/delete', dogsController.deleteDog);
 
 // Fiche détaillée d'un chien
