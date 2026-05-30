@@ -7,41 +7,46 @@
       <h1>Gestion des Chiens</h1>
       <p>Gérez vos reproducteurs, portées et suivi médical.</p>
     </div>
-    <a href="/dogs/new" class="btn btn-primary"><span class="material-symbols-outlined">add</span> Add Dog</a>
+    <a href="/dogs/new" class="btn btn-primary"><span class="material-symbols-outlined">add</span> Ajouter un chien</a>
   </section>
 
+  <% if (typeof query !== 'undefined' && query.sortie === 'ok') { %>
+    <div class="alert alert-success">Chien sorti du cheptel et inscrit au registre entrées/sorties.</div>
+  <% } %>
+
   <section class="dogs-filter-panel" aria-label="Filtres chiens">
-    <div class="form-group">
-      <label>Recherche rapide</label>
-      <input type="search" placeholder="Puce, LOF, Nom..." aria-label="Recherche rapide">
-    </div>
-    <div class="form-group">
-      <label>Sexe</label>
-      <select aria-label="Filtrer par sexe">
-        <option>Tous les sexes</option>
-        <option>Mâle</option>
-        <option>Femelle</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Race</label>
-      <select aria-label="Filtrer par race">
-        <option>Toutes les races</option>
-        <% [...new Set(dogs.map((dog) => dog.breed).filter(Boolean))].forEach((breed) => { %>
-          <option><%= breed %></option>
-        <% }) %>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Statut</label>
-      <select aria-label="Filtrer par statut">
-        <option>Tous les statuts</option>
-        <% [...new Set(dogs.map((dog) => dog.status).filter(Boolean))].forEach((status) => { %>
-          <option><%= status %></option>
-        <% }) %>
-      </select>
-    </div>
-    <button class="btn btn-secondary" type="button"><span class="material-symbols-outlined">filter_list</span> Filtrer</button>
+    <form method="get" action="/dogs" class="dogs-filter-panel" style="box-shadow:none;padding:0;margin:0;width:100%;">
+      <div class="form-group">
+        <label>Recherche rapide</label>
+        <input type="search" name="q" placeholder="Puce, LOF, Nom..." aria-label="Recherche rapide" value="<%= filters?.q || '' %>">
+      </div>
+      <div class="form-group">
+        <label>Sexe</label>
+        <select name="sex" aria-label="Filtrer par sexe">
+          <option value="">Tous les sexes</option>
+          <option value="M" <%= filters?.sex === 'M' ? 'selected' : '' %>>Mâle</option>
+          <option value="F" <%= filters?.sex === 'F' ? 'selected' : '' %>>Femelle</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Race</label>
+        <select name="breed" aria-label="Filtrer par race">
+          <option value="">Toutes les races</option>
+          <% [...new Set(dogs.map((dog) => dog.breed).filter(Boolean))].forEach((breed) => { %>
+            <option value="<%= breed %>" <%= filters?.breed === breed ? 'selected' : '' %>><%= breed %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Statut</label>
+        <select name="status" aria-label="Filtrer par statut">
+          <option value="active" <%= !filters?.status || filters?.status === 'active' ? 'selected' : '' %>>Chiens actifs</option>
+          <option value="sorti" <%= filters?.status === 'sorti' ? 'selected' : '' %>>Chiens sortis</option>
+          <option value="all" <%= filters?.status === 'all' ? 'selected' : '' %>>Tous les statuts</option>
+        </select>
+      </div>
+      <button class="btn btn-secondary" type="submit"><span class="material-symbols-outlined">filter_list</span> Filtrer</button>
+    </form>
   </section>
 
   <section class="table-block dogs-table-card">
@@ -61,6 +66,7 @@
           <tr><td colspan="6">Aucun chien enregistré pour le moment.</td></tr>
         <% } %>
         <% dogs.forEach((dog) => { %>
+          <% const dogStatus = String(dog.status || 'actif').toLowerCase(); %>
           <tr>
             <td>
               <a class="dog-row-link" href="/dogs/<%= dog.id %>">
@@ -82,7 +88,7 @@
               <span><%= dog.sex === 'M' ? '♂' : '♀' %></span>
               <%= dog.birth_date ? formatDate(dog.birth_date) : 'Âge non renseigné' %>
             </td>
-            <td><span class="badge <%= dog.status %>"><%= dog.status || 'actif' %></span></td>
+            <td><span class="badge <%= dogStatus %>"><%= dogStatus === 'sorti' ? 'sorti' : (dog.status || 'actif') %></span></td>
             <td>
               <span class="muted">Suivi médical</span><br>
               <small>Voir fiche</small>
@@ -90,6 +96,12 @@
             <td class="table-actions">
               <a href="/dogs/<%= dog.id %>" class="btn btn-secondary btn-sm">Voir fiche</a>
               <a href="/dogs/<%= dog.id %>/edit" class="btn btn-primary btn-sm">Modifier</a>
+              <% if (dogStatus !== 'sorti') { %>
+                <form method="post" action="/dogs/<%= dog.id %>/delete" onsubmit="return confirm('Confirmer la sortie administrative de ce chien ?');" style="display:inline;">
+                  <input type="hidden" name="reason" value="Sortie administrative">
+                  <button type="submit" class="btn btn-danger btn-sm">Sortir</button>
+                </form>
+              <% } %>
             </td>
           </tr>
         <% }) %>
