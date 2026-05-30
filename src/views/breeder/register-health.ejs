@@ -84,6 +84,13 @@
                     <input type="text" name="done_by" required placeholder="Nom de l'intervenant">
                 </div>
             </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Description / Observations par structure</label>
+                <textarea name="notes" rows="3" placeholder="Ex : Chenil 1 nettoyé intégralement. Déjections importantes côté gauche. Abreuvoir rincé. Désinfection complémentaire réalisée sur la dalle."></textarea>
+                <small>Tracez ici l'état constaté, les anomalies, les actions correctives ou les précisions utiles pour cette zone.</small>
+            </div>
+
             <button type="submit" class="btn btn-secondary" style="margin-top: 1rem;" <%= infrastructures.length === 0 ? 'disabled' : '' %>>Ajouter au journal de nettoyage</button>
         </form>
 
@@ -95,11 +102,12 @@
                         <th style="padding: 1rem;">Zone</th>
                         <th style="padding: 1rem;">Protocole</th>
                         <th style="padding: 1rem;">Intervenant</th>
+                        <th style="padding: 1rem;">Description / Observations</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% if (cleaningLogs.length === 0) { %>
-                        <tr><td colspan="4" style="padding: 1rem; text-align: center;">Aucun nettoyage tracé.</td></tr>
+                        <tr><td colspan="5" style="padding: 1rem; text-align: center;">Aucun nettoyage tracé.</td></tr>
                     <% } else { %>
                         <% cleaningLogs.forEach(log => { %>
                             <tr style="border-bottom: 1px solid #eee;">
@@ -107,6 +115,7 @@
                                 <td style="padding: 1rem;"><%= log.zone_type %></td>
                                 <td style="padding: 1rem;"><%= log.protocol_used %></td>
                                 <td style="padding: 1rem;"><%= log.done_by %></td>
+                                <td style="padding: 1rem; max-width: 360px;"><%= log.notes || '-' %></td>
                             </tr>
                         <% }) %>
                     <% } %>
