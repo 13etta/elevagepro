@@ -1,0 +1,69 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container dogs-stitch">
+  <section class="page-hero dogs-titlebar">
+    <div>
+      <h1>Sortir un chien du cheptel</h1>
+      <p>Cette action retire le chien de la liste active sans suppression physique de la base.</p>
+    </div>
+    <a href="/dogs" class="btn btn-secondary">Retour aux chiens</a>
+  </section>
+
+  <% if (errors && errors.length) { %>
+    <div class="alert alert-danger">
+      <ul style="margin:0; padding-left:1.2rem;">
+        <% errors.forEach((error) => { %>
+          <li><%= error %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <section class="table-block dogs-table-card" style="padding:2rem;">
+    <div style="margin-bottom:1.5rem;">
+      <h2 style="margin-bottom:.5rem;"><%= dog.name %></h2>
+      <p class="muted" style="margin:0;">
+        <%= dog.breed || 'Race non renseignée' %>
+        <% if (dog.chip_number || dog.id_scc || dog.lof) { %>
+          — Identification : <%= dog.chip_number || dog.id_scc || dog.lof %>
+        <% } %>
+      </p>
+    </div>
+
+    <div class="alert alert-warning">
+      Le chien sera marqué comme <strong>sorti</strong>, mais restera conservé en base pour l’historique, les soins, les portées, les documents et le registre.
+    </div>
+
+    <form method="post" action="/dogs/<%= dog.id %>/delete" class="dog-exit-form">
+      <div class="form-group">
+        <label for="movement_date">Date de sortie *</label>
+        <input id="movement_date" type="date" name="movement_date" value="<%= formData.movement_date %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="reason">Motif de sortie *</label>
+        <select id="reason" name="reason" required>
+          <option value="">Sélectionner un motif</option>
+          <% ['Vente', 'Cession gratuite', 'Décès', 'Réforme reproduction', 'Export', 'Perdu/volé', 'Erreur de saisie', 'Autre'].forEach((reason) => { %>
+            <option value="<%= reason %>" <%= formData.reason === reason ? 'selected' : '' %>><%= reason %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Commentaire</label>
+        <textarea id="notes" name="notes" rows="5" placeholder="Acquéreur, circonstances, référence de document, précision utile..."><%= formData.notes || '' %></textarea>
+      </div>
+
+      <div style="display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary" onclick="return confirm('Confirmer la sortie administrative de ce chien ?');">
+          Confirmer la sortie
+        </button>
+        <a href="/dogs" class="btn btn-secondary">Annuler</a>
+      </div>
+    </form>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
