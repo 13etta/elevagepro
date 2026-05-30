@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const dogsController = require('../controllers/dogs.controller');
+const dogExitsController = require('../controllers/dog-exits.controller');
 const { requireAuth } = require('../middleware/auth');
 
 const upload = multer({
@@ -31,8 +32,8 @@ router.get('/:id/edit', dogsController.getForm);
 router.post('/:id/edit', upload.single('photo'), dogsController.saveDog);
 
 // Sortie administrative du cheptel : aucune suppression physique en base
-router.get('/:id/delete', dogsController.getDeleteForm);
-router.post('/:id/delete', dogsController.deleteDog);
+router.get('/:id/delete', dogExitsController.getDeleteForm);
+router.post('/:id/delete', dogExitsController.deleteDog);
 
 // Fiche détaillée d'un chien
 router.get('/:id', dogsController.showDog);
