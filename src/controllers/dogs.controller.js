@@ -12,6 +12,46 @@ const SUPPORTED_DOG_PHOTO_TYPES = {
 
 async function ensureDogsSchema() {
     await pool.query('ALTER TABLE dogs ADD COLUMN IF NOT EXISTS photo_url TEXT').catch(() => {});
+    await pool.query("ALTER TABLE dogs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'actif'").catch(() => {});
+}
+
+async function ensureDogMovementsSchema(dbClient = pool) {
+    await dbClient.query(`
+        CREATE TABLE IF NOT EXISTS dog_movements (
+            id BIGSERIAL PRIMARY KEY,
+            breeder_id BIGINT NULL,
+            dog_id BIGINT NOT NULL,
+            movement_type TEXT NOT NULL CHECK (movement_type IN ('ENTREE', 'SORTIE')),
+            movement_date DATE NOT NULL,
+            reason VARCHAR(255) NOT NULL,
+            notes TEXT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+    `);
+
+    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS breeder_id BIGINT NULL');
+    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS dog_id BIGINT');
+    await dbClient.query("ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS movement_type TEXT");
+    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS movement_date DATE');
+    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS reason VARCHAR(255)');
+    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS notes TEXT NULL');
+    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
+
+    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_breeder_id ON dog_movements (breeder_id)');
+    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_dog_id ON dog_movements (dog_id)');
+    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_type ON dog_movements (movement_type)');
+    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_date ON dog_movements (movement_date)');
+}
+
+async function logDogMovement({ dbClient, breederId, dogId, movementType, movementDate, reason, notes }) {
+    await ensureDogMovementsSchema(dbClient);
+    await dbClient.query(
+        `
+            INSERT INTO dog_movements (breeder_id, dog_id, movement_type, movement_date, reason, notes)
+            VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [breederId, dogId, movementType, movementDate, reason, notes || null],
+    );
 }
 
 function normalizeOptional(value) {
@@ -134,12 +174,72 @@ async function getLitterCountExpression() {
     return 'NULL';
 }
 
+function normalizeMovementDate(value) {
+    return normalizeOptional(value) || new Date().toISOString().slice(0, 10);
+}
+
 exports.listDogs = async (req, res) => {
     try {
         await ensureDogsSchema();
         const breederId = req.session.user.breeder_id;
-        const result = await pool.query('SELECT * FROM dogs WHERE breeder_id = $1 ORDER BY name ASC', [breederId]);
-        res.render('dogs/index', { dogs: result.rows, dogInitials });
+        const optionalColumns = await getDogOptionalColumns();
+
+        const filters = {
+            q: normalizeOptional(req.query.q) || '',
+            sex: normalizeOptional(req.query.sex) || '',
+            breed: normalizeOptional(req.query.breed) || '',
+            status: normalizeOptional(req.query.status) || 'active',
+        };
+
+        const where = ['breeder_id = $1'];
+        const values = [breederId];
+
+        if (filters.status === 'sorti') {
+            where.push("LOWER(COALESCE(status, 'actif')) = 'sorti'");
+        } else if (filters.status !== 'all') {
+            where.push("LOWER(COALESCE(status, 'actif')) <> 'sorti'");
+        }
+
+        if (filters.q) {
+            const searchableColumns = ['name', 'chip_number', 'id_scc', 'pedigree_number'];
+            if (optionalColumns.hasLof) searchableColumns.push('lof');
+            const clauses = searchableColumns.map((column) => `COALESCE(${column}::TEXT, '') ILIKE $${values.length + 1}`);
+            where.push(`(${clauses.join(' OR ')})`);
+            values.push(`%${filters.q}%`);
+        }
+
+        if (filters.sex) {
+            values.push(filters.sex);
+            where.push(`sex = $${values.length}`);
+        }
+
+        if (filters.breed) {
+            values.push(filters.breed);
+            where.push(`breed = $${values.length}`);
+        }
+
+        const [result, breedsResult] = await Promise.all([
+            pool.query(`SELECT * FROM dogs WHERE ${where.join(' AND ')} ORDER BY name ASC`, values),
+            pool.query(
+                `
+                    SELECT DISTINCT breed
+                    FROM dogs
+                    WHERE breeder_id = $1
+                      AND breed IS NOT NULL
+                      AND breed <> ''
+                    ORDER BY breed ASC
+                `,
+                [breederId],
+            ),
+        ]);
+
+        res.render('dogs/index', {
+            dogs: result.rows,
+            dogInitials,
+            filters,
+            query: req.query,
+            breedOptions: breedsResult.rows.map((row) => row.breed),
+        });
     } catch (error) {
         console.error('Erreur chargement chiens:', error);
         res.status(500).send('Erreur chargement.');
@@ -370,8 +470,8 @@ exports.saveDog = async (req, res) => {
             const placeholders = entries.map((_, index) => `$${index + 1}`).join(', ');
             const values = entries.map(([, value]) => value);
 
-            await pool.query(
-                `INSERT INTO dogs (${columns}) VALUES (${placeholders})`,
+            const insertResult = await pool.query(
+                `INSERT INTO dogs (${columns}) VALUES (${placeholders}) RETURNING id, name, chip_number, breed, created_at`,
                 values,
             );
 
@@ -384,6 +484,8 @@ exports.saveDog = async (req, res) => {
                     type: 'ENTREE',
                     reason: 'Acquisition',
                     date: new Date(),
+                    sourceType: 'dog_creation',
+                    sourceId: insertResult.rows[0]?.id,
                 });
             } catch (registerError) {
                 console.warn('Registre légal non mis à jour après création du chien:', registerError.message);
@@ -397,12 +499,119 @@ exports.saveDog = async (req, res) => {
     }
 };
 
-exports.deleteDog = async (req, res) => {
+exports.getDeleteForm = async (req, res) => {
     try {
-        await pool.query('DELETE FROM dogs WHERE id = $1 AND breeder_id = $2', [req.params.id, req.session.user.breeder_id]);
-        res.redirect('/dogs');
+        const breederId = req.session.user.breeder_id;
+        const dogId = req.params.id;
+        await ensureDogsSchema();
+
+        const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
+        if (dogRes.rows.length === 0) {
+            return res.status(404).render('errors/404', {
+                title: res.__ ? res.__('errors.notFound') : 'Page introuvable',
+                user: req.session?.user || null,
+            });
+        }
+
+        return res.render('dogs/delete', {
+            dog: dogRes.rows[0],
+            errors: [],
+            formData: {
+                movement_date: new Date().toISOString().slice(0, 10),
+                reason: '',
+                notes: '',
+            },
+        });
     } catch (error) {
-        console.error('Erreur suppression chien:', error);
-        res.status(500).send('Erreur suppression.');
+        console.error('Erreur formulaire sortie chien:', error);
+        return res.status(500).send('Erreur lors du chargement du formulaire de sortie.');
+    }
+};
+
+exports.deleteDog = async (req, res) => {
+    const breederId = req.session.user.breeder_id;
+    const dogId = req.params.id;
+    const reason = normalizeOptional(req.body.reason);
+    const notes = normalizeOptional(req.body.notes);
+    const movementDate = normalizeMovementDate(req.body.movement_date);
+
+    let dog = null;
+
+    try {
+        await ensureDogsSchema();
+        const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
+
+        if (dogRes.rows.length === 0) {
+            return res.status(404).render('errors/404', {
+                title: res.__ ? res.__('errors.notFound') : 'Page introuvable',
+                user: req.session?.user || null,
+            });
+        }
+
+        dog = dogRes.rows[0];
+
+        if (!reason) {
+            return res.status(400).render('dogs/delete', {
+                dog,
+                errors: ['Le motif de sortie est obligatoire.'],
+                formData: { movement_date: movementDate, reason: reason || '', notes: notes || '' },
+            });
+        }
+    } catch (error) {
+        console.error('Erreur verification sortie chien:', error);
+        return res.status(500).send('Erreur lors de la préparation de la sortie.');
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        await client.query(
+            `
+                UPDATE dogs
+                SET status = 'sorti', updated_at = CURRENT_TIMESTAMP
+                WHERE id = $1
+                  AND breeder_id = $2
+            `,
+            [dogId, breederId],
+        );
+
+        await logDogMovement({
+            dbClient: client,
+            breederId,
+            dogId,
+            movementType: 'SORTIE',
+            movementDate,
+            reason,
+            notes,
+        });
+
+        await registerService.logMovement({
+            breederId,
+            animalName: dog.name,
+            identification: dog.chip_number || dog.id_scc || dog.lof,
+            breed: dog.breed || 'Chien adulte',
+            animalType: 'adulte',
+            type: 'SORTIE',
+            reason,
+            date: movementDate,
+            sourceType: 'dog_exit',
+            sourceId: dogId,
+            notes: notes || `Sortie administrative du chien ${dog.name}.`,
+        }, client);
+
+        await client.query('COMMIT');
+        return res.redirect('/dogs?sortie=ok');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Erreur sortie chien:', error);
+        return res.status(500).render('dogs/delete', {
+            dog,
+            errors: ['Erreur lors de la sortie du chien. Aucune suppression physique n’a été réalisée.'],
+            formData: { movement_date: movementDate, reason: reason || '', notes: notes || '' },
+        });
+    } finally {
+        client.release();
     }
 };
