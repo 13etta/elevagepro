@@ -32,7 +32,7 @@
         <label>Race</label>
         <select name="breed" aria-label="Filtrer par race">
           <option value="">Toutes les races</option>
-          <% [...new Set(dogs.map((dog) => dog.breed).filter(Boolean))].forEach((breed) => { %>
+          <% (typeof breedOptions !== 'undefined' ? breedOptions : [...new Set(dogs.map((dog) => dog.breed).filter(Boolean))]).forEach((breed) => { %>
             <option value="<%= breed %>" <%= filters?.breed === breed ? 'selected' : '' %>><%= breed %></option>
           <% }) %>
         </select>
@@ -97,10 +97,7 @@
               <a href="/dogs/<%= dog.id %>" class="btn btn-secondary btn-sm">Voir fiche</a>
               <a href="/dogs/<%= dog.id %>/edit" class="btn btn-primary btn-sm">Modifier</a>
               <% if (dogStatus !== 'sorti') { %>
-                <form method="post" action="/dogs/<%= dog.id %>/delete" onsubmit="return confirm('Confirmer la sortie administrative de ce chien ?');" style="display:inline;">
-                  <input type="hidden" name="reason" value="Sortie administrative">
-                  <button type="submit" class="btn btn-danger btn-sm">Sortir</button>
-                </form>
+                <a href="/dogs/<%= dog.id %>/delete" class="btn btn-danger btn-sm">Sortir</a>
               <% } %>
             </td>
           </tr>
