@@ -1,0 +1,189 @@
+<%- include('../../partials/head') %>
+<%- include('../../partials/nav') %>
+
+<main class="container dog-profile-page">
+  <div class="dog-profile-toolbar">
+    <a class="dog-profile-back" href="/dogs/archives"><span class="material-symbols-outlined">arrow_back</span> Archives chiens</a>
+    <div class="dog-profile-actions">
+      <a class="btn btn-secondary" href="/dogs/archives"><span class="material-symbols-outlined">inventory_2</span> Toutes les archives</a>
+      <a class="btn btn-primary" href="/dogs/<%= dog.id %>"><span class="material-symbols-outlined">description</span> Fiche complète</a>
+    </div>
+  </div>
+
+  <% if (typeof query !== 'undefined' && query.sortie === 'ok') { %>
+    <div class="alert alert-success">Le chien a été sorti du cheptel. Son dossier et toutes ses données sont conservés dans cette archive.</div>
+  <% } %>
+
+  <section class="dog-profile-hero <%= dog.photo_url ? 'has-photo' : 'no-photo' %>">
+    <% if (dog.photo_url) { %>
+      <img class="dog-profile-hero-img" src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
+    <% } %>
+    <div class="dog-profile-hero-overlay"></div>
+    <div class="dog-profile-hero-content">
+      <div>
+        <span class="eyebrow">Dossier archivé</span>
+        <h1><%= dog.name %></h1>
+        <p><%= dog.breed || 'Race non renseignée' %> — <%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %></p>
+      </div>
+      <dl class="dog-profile-identity">
+        <div><dt>Sortie</dt><dd><%= exitMovement?.movement_date ? formatDate(exitMovement.movement_date) : '-' %></dd></div>
+        <div><dt>Motif</dt><dd><%= exitMovement?.reason || '-' %></dd></div>
+        <div><dt>Identification</dt><dd><%= dog.chip_number || dog.id_scc || '-' %></dd></div>
+      </dl>
+      <span class="dog-profile-status">Archivé</span>
+    </div>
+    <% if (!dog.photo_url) { %>
+      <div class="dog-profile-placeholder"><span class="material-symbols-outlined">inventory_2</span></div>
+    <% } %>
+  </section>
+
+  <section class="dog-profile-grid dog-profile-grid-secondary">
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head"><span>Identité</span><h2>Informations conservées</h2></div>
+      <dl class="dog-profile-info-list">
+        <div><dt>Nom</dt><dd><%= dog.name %></dd></div>
+        <div><dt>Date de naissance</dt><dd><%= dog.birth_date ? formatDate(dog.birth_date) : '-' %></dd></div>
+        <div><dt>Race</dt><dd><%= dog.breed || '-' %></dd></div>
+        <div><dt>Sexe</dt><dd><%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : '-' %></dd></div>
+        <div><dt>N° puce</dt><dd><%= dog.chip_number || '-' %></dd></div>
+        <div><dt>ID SCC</dt><dd><%= dog.id_scc || '-' %></dd></div>
+        <div><dt>LOF</dt><dd><%= dog.lof || dog.pedigree_number || '-' %></dd></div>
+        <div><dt>Père</dt><dd><%= dog.father_name || dog.father_name_external || '-' %></dd></div>
+        <div><dt>Mère</dt><dd><%= dog.mother_name || dog.mother_name_external || '-' %></dd></div>
+      </dl>
+    </article>
+
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head"><span>Sortie du cheptel</span><h2>Traçabilité administrative</h2></div>
+      <% if (!movements.length) { %>
+        <p class="dog-profile-empty">Aucun mouvement administratif disponible.</p>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Date et mouvement</span><span>Motif</span></div>
+          <% movements.forEach((movement) => { %>
+            <div class="dog-profile-mini-row">
+              <span><%= formatDate(movement.movement_date) %><small><%= movement.movement_type %></small></span>
+              <span><%= movement.reason || '-' %><small><%= movement.notes || '' %></small></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+      <% if (dog.notes) { %><p><strong>Observations :</strong> <%= dog.notes %></p><% } %>
+    </article>
+  </section>
+
+  <section class="dog-profile-grid dog-profile-grid-main">
+    <article class="dog-profile-card dog-profile-health-card">
+      <div class="dog-profile-card-head"><span>Historique sanitaire</span><h2>Soins et traitements</h2></div>
+      <% if (!soins.length) { %>
+        <p class="dog-profile-empty">Aucun soin ou traitement enregistré.</p>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Date</span><span>Acte</span></div>
+          <% soins.forEach((soin) => { %>
+            <div class="dog-profile-mini-row">
+              <span><%= soin.event_date ? formatDate(soin.event_date) : '-' %><small><%= soin.type || '' %></small></span>
+              <span><%= soin.label || '-' %><small><%= soin.next_due ? 'Échéance : ' + formatDate(soin.next_due) : (soin.notes || '') %></small></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head"><span>Examens officiels</span><h2>Tests de santé</h2></div>
+      <% if (!tests.length) { %>
+        <p class="dog-profile-empty">Aucun test de santé enregistré.</p>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Test</span><span>Résultat</span></div>
+          <% tests.forEach((test) => { %>
+            <div class="dog-profile-mini-row">
+              <span><%= test.test_name %><small><%= test.test_type %> · <%= test.test_date ? formatDate(test.test_date) : '-' %></small></span>
+              <span><%= test.result || '-' %><small><%= test.laboratory || '' %></small></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
+    <article class="dog-profile-card">
+      <div class="dog-profile-card-head"><span>Échéances conservées</span><h2>Rappels</h2></div>
+      <% if (!reminders.length) { %>
+        <p class="dog-profile-empty">Aucun rappel enregistré.</p>
+      <% } else { %>
+        <div class="dog-profile-mini-table">
+          <div class="dog-profile-mini-row dog-profile-mini-head"><span>Échéance</span><span>Rappel</span></div>
+          <% reminders.forEach((reminder) => { %>
+            <div class="dog-profile-mini-row">
+              <span><%= reminder.due_date ? formatDate(reminder.due_date) : '-' %><small><%= reminder.is_completed ? 'Clôturé' : 'Historique archivé' %></small></span>
+              <span><%= reminder.title %><small><%= reminder.type || '' %></small></span>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+  </section>
+
+  <section class="table-block dogs-table-card">
+    <h2>Historique de reproduction</h2>
+    <table>
+      <thead><tr><th>Type</th><th>Date</th><th>Partenaire / résultat</th><th>Observations</th></tr></thead>
+      <tbody>
+        <% if (!heats.length && !matings.length && !pregnancies.length && !litters.length) { %>
+          <tr><td colspan="4">Aucun historique de reproduction enregistré.</td></tr>
+        <% } %>
+        <% heats.forEach((heat) => { %>
+          <tr><td>Chaleurs</td><td><%= heat.start_date ? formatDate(heat.start_date) : '-' %></td><td><%= heat.stage || '-' %></td><td><%= heat.notes || '-' %></td></tr>
+        <% }) %>
+        <% matings.forEach((mating) => { %>
+          <tr><td>Saillie</td><td><%= mating.mating_date ? formatDate(mating.mating_date) : '-' %></td><td><%= mating.male_name %> × <%= mating.female_name %></td><td><%= mating.method || '-' %> · <%= mating.notes || '' %></td></tr>
+        <% }) %>
+        <% pregnancies.forEach((pregnancy) => { %>
+          <tr><td>Gestation</td><td><%= pregnancy.start_date ? formatDate(pregnancy.start_date) : '-' %></td><td><%= pregnancy.result || '-' %><%= pregnancy.father_name ? ' · Père : ' + pregnancy.father_name : '' %></td><td><%= pregnancy.notes || '-' %></td></tr>
+        <% }) %>
+        <% litters.forEach((litter) => { %>
+          <tr><td>Portée</td><td><%= litter.birth_date ? formatDate(litter.birth_date) : '-' %></td><td><%= litter.puppies_count_total || litter.puppies_count || litter.nb_puppies || 0 %> chiot(s)<%= litter.father_name ? ' · Père : ' + litter.father_name : '' %></td><td><%= litter.notes || '-' %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="table-block dogs-table-card">
+    <h2>Descendance enregistrée</h2>
+    <table>
+      <thead><tr><th>Chiot</th><th>Sexe</th><th>Date de naissance</th><th>Statut</th></tr></thead>
+      <tbody>
+        <% if (!puppies.length) { %><tr><td colspan="4">Aucune descendance enregistrée.</td></tr><% } %>
+        <% puppies.forEach((puppy) => { %>
+          <tr>
+            <td><a href="/puppies/<%= puppy.id %>"><strong><%= puppy.name || 'Chiot sans nom' %></strong></a></td>
+            <td><%= puppy.sex || '-' %></td>
+            <td><%= puppy.birth_date ? formatDate(puppy.birth_date) : '-' %></td>
+            <td><%= puppy.status || '-' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="table-block dogs-table-card">
+    <h2>Historique d’hébergement</h2>
+    <table>
+      <thead><tr><th>Date</th><th>Ancien emplacement</th><th>Nouvel emplacement</th><th>Motif</th></tr></thead>
+      <tbody>
+        <% if (!assignments.length) { %><tr><td colspan="4">Aucun historique d’affectation enregistré.</td></tr><% } %>
+        <% assignments.forEach((assignment) => { %>
+          <tr>
+            <td><%= assignment.assigned_at ? formatDate(assignment.assigned_at) : '-' %></td>
+            <td><%= assignment.previous_infrastructure_name || 'Non assigné' %></td>
+            <td><%= assignment.infrastructure_name || 'Non assigné' %></td>
+            <td><%= assignment.reason || assignment.sanitary_context || '-' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<%- include('../../partials/foot') %>
