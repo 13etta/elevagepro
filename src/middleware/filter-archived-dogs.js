@@ -1,11 +1,27 @@
 const { pool } = require('../db');
 
 const SELECTION_COLLECTIONS = ['dogs', 'males', 'females', 'assignableDogs'];
-const ARCHIVE_VIEWS = new Set(['dogs/index', 'dogs/show', 'dogs/archives/index', 'dogs/archives/show']);
+const UNFILTERED_VIEWS = new Set([
+  'dogs/index',
+  'dogs/show',
+  'dogs/form',
+  'dogs/archives/index',
+  'dogs/archives/show',
+]);
+const MATING_SELECTION_VIEWS = new Set(['pregnancies/form', 'litters/new', 'litters/edit']);
 
-function filterCollection(items, archivedIds) {
+function filterDogCollection(items, archivedIds) {
   if (!Array.isArray(items)) return items;
   return items.filter((item) => !item?.id || !archivedIds.has(String(item.id)));
+}
+
+function filterMatingCollection(items, archivedIds) {
+  if (!Array.isArray(items)) return items;
+  return items.filter((item) => {
+    const maleArchived = item?.male_id && archivedIds.has(String(item.male_id));
+    const femaleArchived = item?.female_id && archivedIds.has(String(item.female_id));
+    return !maleArchived && !femaleArchived;
+  });
 }
 
 module.exports = async function filterArchivedDogs(req, res, next) {
@@ -26,12 +42,16 @@ module.exports = async function filterArchivedDogs(req, res, next) {
 
     const originalRender = res.render.bind(res);
     res.render = (view, options = {}, callback) => {
-      if (!ARCHIVE_VIEWS.has(view) && options && typeof options === 'object') {
+      if (!UNFILTERED_VIEWS.has(view) && options && typeof options === 'object') {
         SELECTION_COLLECTIONS.forEach((key) => {
           if (Object.prototype.hasOwnProperty.call(options, key)) {
-            options[key] = filterCollection(options[key], archivedIds);
+            options[key] = filterDogCollection(options[key], archivedIds);
           }
         });
+
+        if (MATING_SELECTION_VIEWS.has(view) && Object.prototype.hasOwnProperty.call(options, 'matings')) {
+          options.matings = filterMatingCollection(options.matings, archivedIds);
+        }
       }
       return originalRender(view, options, callback);
     };
