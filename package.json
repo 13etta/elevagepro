@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "db:migrate": "node sql/migrate.js"
+    "db:migrate": "node sql/migrate.js && node sql/apply-dog-exit-archive.js"
   },
   "engines": {
     "node": ">=20"
