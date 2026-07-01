@@ -16,6 +16,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "dogs": "Chiens",
+    "dogArchives": "Archives chiens",
     "soins": "Soins",
     "healthTests": "Tests santé",
     "reminders": "Rappels",
@@ -77,6 +78,7 @@
   "modules": {
     "dashboard": { "description": "Vue de synthèse des indicateurs, alertes et actions prioritaires." },
     "dogs": { "description": "Gérez les fiches chiens, statuts, informations administratives et suivi individuel." },
+    "dogArchives": { "description": "Consultez les chiens sortis et l’intégralité de leur historique conservé." },
     "soins": { "description": "Centralisez les soins, traitements, vaccins et actes sanitaires." },
     "healthTests": { "description": "Centralisez les tests ADN, radios, examens officiels et justificatifs des reproducteurs." },
     "reminders": { "description": "Pilotez les échéances critiques : vaccins, antiparasitaires, documents et contrôles." },
