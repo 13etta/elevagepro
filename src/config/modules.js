@@ -75,6 +75,15 @@ const modules = [
     accent: 'gold',
   },
   {
+    key: 'heats',
+    labelKey: 'nav.heats',
+    descriptionKey: 'modules.heats.description',
+    href: '/heats',
+    icon: 'water_drop',
+    group: 'reproduction',
+    accent: 'rose',
+  },
+  {
     key: 'reproductionDashboard',
     labelKey: 'nav.reproduction',
     descriptionKey: 'modules.reproduction.description',
