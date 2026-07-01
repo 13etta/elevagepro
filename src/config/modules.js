@@ -30,6 +30,15 @@ const modules = [
     accent: 'blue',
   },
   {
+    key: 'dogArchives',
+    labelKey: 'nav.dogArchives',
+    descriptionKey: 'modules.dogArchives.description',
+    href: '/dogs/archives',
+    icon: 'inventory_2',
+    group: 'cheptel',
+    accent: 'slate',
+  },
+  {
     key: 'soins',
     labelKey: 'nav.soins',
     descriptionKey: 'modules.soins.description',
