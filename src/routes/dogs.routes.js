@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const dogsController = require('../controllers/dogs.controller');
 const dogExitsController = require('../controllers/dog-exits.controller');
+const dogArchivesController = require('../controllers/dog-archives.controller');
 const { requireAuth } = require('../middleware/auth');
 
 const upload = multer({
@@ -22,6 +23,10 @@ router.use(requireAuth);
 
 // Affichage du registre (Liste globale)
 router.get('/', dogsController.listDogs);
+
+// Archives logiques des chiens sortis et de leurs données liées
+router.get('/archives', dogArchivesController.listArchives);
+router.get('/archives/:id', dogArchivesController.showArchive);
 
 // Processus de création d'un nouveau chien
 router.get('/new', dogsController.getForm);
