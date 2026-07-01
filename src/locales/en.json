@@ -16,6 +16,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "dogs": "Dogs",
+    "dogArchives": "Dog archives",
     "soins": "Care",
     "reminders": "Reminders",
     "weights": "Puppy weights",
@@ -74,6 +75,7 @@
   "modules": {
     "dashboard": { "description": "Overview of key indicators, alerts and priority actions." },
     "dogs": { "description": "Manage dog records, statuses, administrative data and individual tracking." },
+    "dogArchives": { "description": "Consult exited dogs and their complete retained history." },
     "soins": { "description": "Centralize care, treatments, vaccines and health events." },
     "reminders": { "description": "Track critical deadlines: vaccines, parasite control, documents and checks." },
     "weights": { "description": "Track puppy growth with weight history and stagnation alerts." },
