@@ -1,0 +1,67 @@
+<%- include('../../partials/head') %>
+<%- include('../../partials/nav') %>
+
+<main class="container dogs-stitch">
+  <section class="page-hero dogs-titlebar">
+    <div>
+      <span class="eyebrow">Mémoire du cheptel</span>
+      <h1>Archives chiens</h1>
+      <p>Consultez les chiens sortis du cheptel et l’ensemble de leur historique conservé.</p>
+    </div>
+    <a href="/dogs" class="btn btn-secondary"><span class="material-symbols-outlined">pets</span> Cheptel actif</a>
+  </section>
+
+  <section class="dogs-filter-panel" aria-label="Recherche dans les archives">
+    <form method="get" action="/dogs/archives" class="dogs-filter-panel" style="box-shadow:none;padding:0;margin:0;width:100%;">
+      <div class="form-group" style="flex:1;">
+        <label for="archive-search">Recherche</label>
+        <input id="archive-search" type="search" name="q" value="<%= q %>" placeholder="Nom, race, puce ou identifiant SCC">
+      </div>
+      <button class="btn btn-secondary" type="submit"><span class="material-symbols-outlined">search</span> Rechercher</button>
+    </form>
+  </section>
+
+  <section class="table-block dogs-table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Chien archivé</th>
+          <th>Sortie du cheptel</th>
+          <th>Motif</th>
+          <th>Éléments conservés</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!archives.length) { %>
+          <tr><td colspan="5">Aucun chien archivé ne correspond à la recherche.</td></tr>
+        <% } %>
+        <% archives.forEach((dog) => { %>
+          <tr>
+            <td>
+              <a class="dog-row-link" href="/dogs/archives/<%= dog.id %>">
+                <span class="dog-avatar small">
+                  <% if (dog.photo_url) { %>
+                    <img src="<%= dog.photo_url %>" alt="Photo de <%= dog.name %>">
+                  <% } else { %>
+                    <span class="material-symbols-outlined">inventory_2</span>
+                  <% } %>
+                </span>
+                <span>
+                  <strong><%= dog.name %></strong>
+                  <small><%= dog.breed || 'Race non renseignée' %> · <%= dog.chip_number || dog.id_scc || 'Sans identification' %></small>
+                </span>
+              </a>
+            </td>
+            <td><%= dog.exit?.movement_date ? formatDate(dog.exit.movement_date) : '-' %></td>
+            <td><%= dog.exit?.reason || 'Motif non renseigné' %></td>
+            <td><span class="badge sorti"><%= dog.archive_count %> élément(s)</span></td>
+            <td><a href="/dogs/archives/<%= dog.id %>" class="btn btn-primary btn-sm">Ouvrir l’archive</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<%- include('../../partials/foot') %>
