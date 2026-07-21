@@ -158,11 +158,11 @@ async function loadRegisterData(breederId, query) {
                    WHEN s.dog_id IS NOT NULL THEN 'Chien adulte'
                    ELSE 'Général'
               END AS animal_category,
-              COALESCE(d.breed, p.breed) AS breed,
+              d.breed AS breed,
               COALESCE(d.sex, p.sex) AS sex,
               COALESCE(d.birth_date, p.birth_date) AS birth_date,
               COALESCE(d.chip_number, p.chip_number) AS chip_number,
-              COALESCE(d.lof_number, p.lof_number) AS lof_number,
+              d.lof AS lof_number,
               COALESCE(d.status, p.status) AS status
        FROM soins s
        LEFT JOIN dogs d ON s.dog_id = d.id AND d.breeder_id = s.breeder_id
@@ -180,7 +180,7 @@ exports.exportHealthRegister = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const { breeder, soins } = await loadRegisterData(breederId, req.query || {});
-    const breederName = breeder.name || breeder.kennel_name || breeder.company_name || 'Élevage';
+    const breederName = breeder.name || 'Élevage';
     const filename = `registre_sanitaire_${filenamePart(breederName)}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -207,12 +207,8 @@ exports.exportHealthRegister = async (req, res) => {
     doc.font('Helvetica').fontSize(9).fillColor('#3D4A57');
 
     const breederDetails = [
-      breeder.address,
-      [breeder.postal_code, breeder.city].filter(Boolean).join(' '),
       breeder.siret ? `SIRET : ${breeder.siret}` : null,
-      breeder.breeder_number ? `N° éleveur : ${breeder.breeder_number}` : null,
-      breeder.phone,
-      breeder.email,
+      breeder.producer_number ? `N° producteur : ${breeder.producer_number}` : null,
     ].filter(Boolean).join(' — ');
     if (breederDetails) doc.text(breederDetails, { align: 'center' });
     doc.moveDown(0.7);
