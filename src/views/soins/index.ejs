@@ -29,7 +29,13 @@
         <h3 style="margin-top:.25rem;">Générer le registre sanitaire PDF</h3>
         <p class="muted" style="max-width:760px;">Le document reprend les vaccinations, vermifuges, antiparasitaires, visites vétérinaires et autres actes. Les observations sont imprimées intégralement sur plusieurs lignes et plusieurs pages si nécessaire.</p>
       </div>
+      <a href="/soins/registre-sanitaire.pdf?scope=dogs" target="_blank" class="btn btn-primary">
+        <span class="material-symbols-outlined" aria-hidden="true">print</span>
+        Imprimer le récapitulatif de tous les chiens
+      </a>
     </div>
+
+    <p class="muted" style="margin:.75rem 0 0;">Ce bouton génère en une seule fois un PDF regroupant tous les chiens actifs, avec une section distincte par chien. Les chiots et les soins généraux ne sont pas inclus dans ce récapitulatif.</p>
 
     <form action="/soins/registre-sanitaire.pdf" method="GET" target="_blank">
       <div class="form-grid" style="align-items:end; margin-top:1rem;">
