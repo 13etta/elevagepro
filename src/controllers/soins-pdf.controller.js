@@ -126,6 +126,9 @@ async function loadRegisterData(breederId, query) {
   const values = [breederId];
   const where = ['s.breeder_id = $1'];
 
+  if (query.scope === 'dogs') {
+    where.push('s.dog_id IS NOT NULL');
+  }
   if (query.type) {
     values.push(query.type);
     where.push(`LOWER(s.type) = LOWER($${values.length})`);
@@ -179,9 +182,12 @@ async function loadRegisterData(breederId, query) {
 exports.exportHealthRegister = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
-    const { breeder, soins } = await loadRegisterData(breederId, req.query || {});
+    const query = req.query || {};
+    const { breeder, soins } = await loadRegisterData(breederId, query);
     const breederName = breeder.name || 'Élevage';
-    const filename = `registre_sanitaire_${filenamePart(breederName)}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const documentLabel = query.scope === 'dogs' ? 'Récapitulatif sanitaire de tous les chiens' : 'Registre sanitaire';
+    const prefix = query.scope === 'dogs' ? 'recapitulatif_soins_tous_les_chiens' : 'registre_sanitaire';
+    const filename = `${prefix}_${filenamePart(breederName)}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -191,7 +197,7 @@ exports.exportHealthRegister = async (req, res) => {
       margins: { top: 45, right: 45, bottom: 55, left: 45 },
       bufferPages: true,
       info: {
-        Title: `Registre sanitaire - ${breederName}`,
+        Title: `${documentLabel} - ${breederName}`,
         Author: breederName,
         Subject: 'Soins, vaccinations, vermifuges, antiparasitaires et visites vétérinaires',
       },
@@ -199,7 +205,7 @@ exports.exportHealthRegister = async (req, res) => {
     doc.pipe(res);
 
     doc.font('Helvetica-Bold').fontSize(22).fillColor('#17212B')
-      .text('REGISTRE SANITAIRE', { align: 'center' });
+      .text(query.scope === 'dogs' ? 'RÉCAPITULATIF SANITAIRE DES CHIENS' : 'REGISTRE SANITAIRE', { align: 'center' });
     doc.moveDown(0.25);
     doc.font('Helvetica-Bold').fontSize(14).fillColor('#234B6B')
       .text(breederName, { align: 'center' });
