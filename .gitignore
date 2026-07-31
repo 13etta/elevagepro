@@ -1,0 +1,50 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Runtime uploads and generated files
+/uploads/
+/upload/
+src/public/uploads/
+public/uploads/
+
+# Archives, backups and database dumps
+/archive/
+/archives/
+/backup/
+/backups/
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.sql.gz
+*.dump
+
+# Signing keys and certificates
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.cer
+*.crt
+*.der
+AuthKey_*
+
+# Logs, tests and editor files
+*.log
+coverage/
+.nyc_output/
+.DS_Store
+.idea/
+.vscode/

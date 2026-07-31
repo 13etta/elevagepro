@@ -83,7 +83,7 @@ async function uploadDogPhoto(breederId, file) {
 
     const fileName = buildDogPhotoName(breederId, file);
 
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    if (process.env.SUPABASE_URL && (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY)) {
         const supabase = require('../utils/supabase');
         const { error } = await supabase.storage
             .from(DOG_PHOTO_BUCKET)
