@@ -15,6 +15,7 @@
   },
   "nav": {
     "dashboard": "Tableau de bord",
+    "calendar": "Calendrier",
     "dogs": "Chiens",
     "dogArchives": "Archives chiens",
     "soins": "Soins",
@@ -77,6 +78,7 @@
   },
   "modules": {
     "dashboard": { "description": "Vue de synthèse des indicateurs, alertes et actions prioritaires." },
+    "calendar": { "description": "Planifiez les TAN, concours, expositions, entraînements, rendez-vous et échéances d’engagement." },
     "dogs": { "description": "Gérez les fiches chiens, statuts, informations administratives et suivi individuel." },
     "dogArchives": { "description": "Consultez les chiens sortis et l’intégralité de leur historique conservé." },
     "soins": { "description": "Centralisez les soins, traitements, vaccins et actes sanitaires." },

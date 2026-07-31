@@ -21,6 +21,15 @@ const modules = [
     accent: 'gold',
   },
   {
+    key: 'calendar',
+    labelKey: 'nav.calendar',
+    descriptionKey: 'modules.calendar.description',
+    href: '/calendar',
+    icon: 'calendar_month',
+    group: 'pilotage',
+    accent: 'gold',
+  },
+  {
     key: 'dogs',
     labelKey: 'nav.dogs',
     descriptionKey: 'modules.dogs.description',

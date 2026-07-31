@@ -44,6 +44,8 @@ async function runMigrations() {
     '013_registry_backfill_existing_dogs.sql',
     '014_registry_litter_events.sql',
     '019_cynognostic_core.sql',
+    '020_calendar_events.sql',
+    '021_calendar_fk_indexes.sql',
   ];
 
   console.log('Démarrage des migrations...');

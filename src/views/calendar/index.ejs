@@ -1,0 +1,168 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container calendar-page">
+  <section class="page-hero calendar-hero">
+    <div>
+      <p class="eyebrow">Pilotage cynophile</p>
+      <h1>Calendrier d’élevage et de compétition</h1>
+      <p>Centralisez TAN, fields, expositions, confirmations, entraînements, rendez-vous et dates limites d’engagement.</p>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/calendar/new">
+        <span class="material-symbols-outlined">add</span>
+        Nouvel événement
+      </a>
+    </div>
+  </section>
+
+  <section class="kpi-grid calendar-kpis">
+    <article class="kpi-card">
+      <span>À venir sous 30 jours</span>
+      <strong><%= Number(summary.upcoming_count || 0) %></strong>
+    </article>
+    <article class="kpi-card <%= Number(summary.deadline_count || 0) ? 'kpi-warning' : '' %>">
+      <span>Engagements à 7 jours</span>
+      <strong><%= Number(summary.deadline_count || 0) %></strong>
+    </article>
+    <article class="kpi-card">
+      <span>Budget du mois</span>
+      <strong><%= Number(summary.monthly_cost || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }) %></strong>
+    </article>
+  </section>
+
+  <section class="card calendar-filter-card">
+    <form action="/calendar" method="GET" class="calendar-filters">
+      <input type="hidden" name="month" value="<%= currentMonth %>">
+      <div class="form-group">
+        <label for="category">Catégorie</label>
+        <select id="category" name="category">
+          <option value="">Toutes</option>
+          <% Object.entries(categoryLabels).forEach(([value, label]) => { %>
+            <option value="<%= value %>" <%= filters.category === value ? 'selected' : '' %>><%= label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="dog_id">Chien</label>
+        <select id="dog_id" name="dog_id">
+          <option value="">Tous les chiens actifs</option>
+          <% dogs.forEach((dog) => { %>
+            <option value="<%= dog.id %>" <%= filters.dogId === String(dog.id) ? 'selected' : '' %>><%= dog.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="status">Statut</label>
+        <select id="status" name="status">
+          <option value="">Tous</option>
+          <% Object.entries(statusLabels).forEach(([value, label]) => { %>
+            <option value="<%= value %>" <%= filters.status === value ? 'selected' : '' %>><%= label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-secondary">Filtrer</button>
+      <a class="btn btn-ghost" href="/calendar?month=<%= currentMonth %>">Réinitialiser</a>
+    </form>
+  </section>
+
+  <section class="calendar-shell">
+    <header class="calendar-toolbar">
+      <a class="calendar-nav-button" href="/calendar?month=<%= previousMonth %>&category=<%= filters.category %>&dog_id=<%= filters.dogId %>&status=<%= filters.status %>" aria-label="Mois précédent">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </a>
+      <div>
+        <span class="section-kicker">Vue mensuelle</span>
+        <h2><%= monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1) %></h2>
+      </div>
+      <a class="calendar-nav-button" href="/calendar?month=<%= nextMonth %>&category=<%= filters.category %>&dog_id=<%= filters.dogId %>&status=<%= filters.status %>" aria-label="Mois suivant">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </a>
+    </header>
+
+    <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+      <% ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].forEach((day) => { %>
+        <div><%= day %></div>
+      <% }) %>
+    </div>
+
+    <div class="calendar-month">
+      <% weeks.forEach((week) => { %>
+        <div class="calendar-grid calendar-week">
+          <% week.forEach((day) => { %>
+            <% if (!day) { %>
+              <div class="calendar-day calendar-day-empty"></div>
+            <% } else { %>
+              <article class="calendar-day <%= day.date === new Date().toISOString().slice(0, 10) ? 'calendar-today' : '' %>">
+                <header>
+                  <span><%= day.day %></span>
+                  <a href="/calendar/new?date=<%= day.date %>" aria-label="Ajouter un événement le <%= day.date %>">+</a>
+                </header>
+                <div class="calendar-day-events">
+                  <% day.events.slice(0, 3).forEach((event) => { %>
+                    <a class="calendar-event category-<%= event.category %> status-<%= event.status %>" href="/calendar/<%= event.id %>/edit">
+                      <span><%= event.all_day ? '' : normalizeTime(event.start_time) %></span>
+                      <strong><%= event.title %></strong>
+                      <% if (event.dog_names) { %><small><%= event.dog_names %></small><% } %>
+                    </a>
+                  <% }) %>
+                  <% if (day.events.length > 3) { %>
+                    <small class="calendar-more">+ <%= day.events.length - 3 %> autre(s)</small>
+                  <% } %>
+                </div>
+              </article>
+            <% } %>
+          <% }) %>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact calendar-list-title">
+      <div>
+        <span class="section-kicker">Prochaines dates</span>
+        <h2>Échéances à préparer</h2>
+      </div>
+      <a class="btn btn-secondary" href="/calendar/new">Ajouter</a>
+    </div>
+
+    <% if (!upcomingEvents.length) { %>
+      <p class="muted table-empty">Aucun événement à venir.</p>
+    <% } else { %>
+      <div class="responsive-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Événement</th>
+              <th>Chien(s)</th>
+              <th>Engagement</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% upcomingEvents.forEach((event) => { %>
+              <tr>
+                <td><strong><%= formatDate(event.event_date) %></strong><% if (!event.all_day && event.start_time) { %><br><small><%= normalizeTime(event.start_time) %></small><% } %></td>
+                <td><span class="event-category"><%= categoryLabels[event.category] %></span><br><strong><%= event.title %></strong><% if (event.location) { %><br><small><%= event.location %></small><% } %></td>
+                <td><%= event.dog_names || 'Élevage' %></td>
+                <td><%= event.registration_deadline ? formatDate(event.registration_deadline) : '-' %></td>
+                <td><span class="status-pill status-<%= event.status %>"><%= statusLabels[event.status] %></span></td>
+                <td class="table-actions">
+                  <% if (event.document_url) { %>
+                    <a class="btn btn-secondary" href="<%= event.document_url %>" target="_blank" rel="noopener noreferrer">Document</a>
+                  <% } %>
+                  <a class="btn btn-secondary" href="/calendar/<%= event.id %>/edit">Ouvrir</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>

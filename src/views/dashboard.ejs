@@ -8,6 +8,7 @@
       <p><span class="material-symbols-outlined">verified</span> Cockpit professionnel de l'élevage</p>
     </div>
     <div class="hero-actions">
+      <a class="btn btn-secondary" href="/calendar/new"><span class="material-symbols-outlined">event</span> Ajouter une échéance</a>
       <a class="btn btn-secondary" href="/soins"><span class="material-symbols-outlined">add_circle</span> Ajouter un soin</a>
       <a class="btn btn-primary" href="/dogs/new"><span class="material-symbols-outlined">pets</span> Nouveau chien</a>
     </div>
@@ -151,6 +152,34 @@
         </table>
       <% } %>
     </article>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact calendar-list-title">
+      <div>
+        <span class="section-kicker">Calendrier</span>
+        <h2>Prochaines échéances cynophiles</h2>
+      </div>
+      <a class="btn btn-secondary" href="/calendar">Ouvrir le calendrier</a>
+    </div>
+    <% if (!calendarEvents || !calendarEvents.length) { %>
+      <p class="muted table-empty">Aucun concours, rendez-vous ou engagement à venir.</p>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Date</th><th>Événement</th><th>Chien(s)</th><th>Lieu</th><th>Action</th></tr></thead>
+        <tbody>
+          <% calendarEvents.forEach((event) => { %>
+            <tr>
+              <td><strong><%= formatDate(event.event_date) %></strong></td>
+              <td><span class="event-category"><%= String(event.category || '').replace('_', ' ') %></span><br><strong><%= event.title %></strong></td>
+              <td><%= event.dog_names || 'Élevage' %></td>
+              <td><%= event.location || '-' %></td>
+              <td><a class="btn btn-secondary" href="/calendar/<%= event.id %>/edit">Préparer</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
   </section>
 
   <section class="module-cockpit">

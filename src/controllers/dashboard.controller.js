@@ -230,6 +230,52 @@ exports.getDashboard = async (req, res) => {
       [],
     );
 
+    const calendarEventsRes = await safeQuery(
+      `
+        SELECT
+          e.id,
+          e.title,
+          e.category,
+          e.event_date,
+          e.start_time,
+          e.all_day,
+          e.location,
+          e.registration_deadline,
+          e.status,
+          COALESCE(dogs.names, '') AS dog_names
+        FROM calendar_events e
+        LEFT JOIN LATERAL (
+          SELECT STRING_AGG(d.name, ', ' ORDER BY d.name) AS names
+          FROM calendar_event_dogs ced
+          JOIN dogs d
+            ON d.id = ced.dog_id
+           AND d.breeder_id = ced.breeder_id
+          WHERE ced.event_id = e.id
+            AND ced.breeder_id = e.breeder_id
+        ) dogs ON TRUE
+        WHERE e.breeder_id = $1
+          AND e.event_date >= CURRENT_DATE
+          AND e.status <> 'annule'
+        ORDER BY e.event_date ASC, e.start_time ASC NULLS FIRST
+        LIMIT 5
+      `,
+      [breederId],
+      [],
+    );
+
+    const calendarDeadlinesRes = await safeQuery(
+      `
+        SELECT count(*)::int AS count
+        FROM calendar_events
+        WHERE breeder_id = $1
+          AND registration_deadline >= CURRENT_DATE
+          AND registration_deadline <= CURRENT_DATE + INTERVAL '7 days'
+          AND status IN ('prevu', 'inscrit')
+      `,
+      [breederId],
+      countFallback,
+    );
+
     const soinsRes = await safeQuery(
       `
         SELECT s.event_date, s.type, s.label, COALESCE(d.name, p.name) AS dog_name
@@ -302,6 +348,13 @@ exports.getDashboard = async (req, res) => {
 
     const alerts = [];
     if (lateReminders.length) alerts.push({ level: 'danger', title: `${lateReminders.length} rappel(s) en retard`, href: '/reminders' });
+    if (toNumber(calendarDeadlinesRes.rows[0]?.count)) {
+      alerts.push({
+        level: 'warning',
+        title: `${toNumber(calendarDeadlinesRes.rows[0]?.count)} engagement(s) à finaliser sous 7 jours`,
+        href: '/calendar',
+      });
+    }
     if (salesToFinalize.rows.length) alerts.push({ level: 'warning', title: `${salesToFinalize.rows.length} réservation(s) à finaliser`, href: '/sales' });
     if (littersWithoutPuppies.rows.length) alerts.push({ level: 'warning', title: `${littersWithoutPuppies.rows.length} portée(s) sans chiots enregistrés`, href: '/litters' });
     if (Number(kpis.puppiesWithoutChip) > 0) alerts.push({ level: 'info', title: `${kpis.puppiesWithoutChip} chiot(s) sans identification`, href: '/puppies' });
@@ -322,6 +375,7 @@ exports.getDashboard = async (req, res) => {
       kpis,
       alerts,
       reminders: remindersRes.rows,
+      calendarEvents: calendarEventsRes.rows,
       soins: soinsRes.rows,
       sales: salesRes.rows,
       salesToFinalize: salesToFinalize.rows,

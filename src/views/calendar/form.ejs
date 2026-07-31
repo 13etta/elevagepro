@@ -1,0 +1,176 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container calendar-page">
+  <section class="page-hero">
+    <div>
+      <p class="eyebrow">Calendrier professionnel</p>
+      <h1><%= event.id ? 'Modifier l’événement' : 'Nouvel événement' %></h1>
+      <p>Préparez l’engagement, les chiens concernés, les documents et le résultat dans une seule fiche.</p>
+    </div>
+    <a class="btn btn-secondary" href="/calendar">Retour au calendrier</a>
+  </section>
+
+  <form action="<%= event.id ? '/calendar/' + event.id + '/edit' : '/calendar/new' %>" method="POST" class="calendar-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <section class="card calendar-form-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Événement</span>
+        <h2>Informations principales</h2>
+      </div>
+      <div class="form-grid calendar-form-grid">
+        <div class="form-group calendar-span-2">
+          <label for="title">Titre *</label>
+          <input type="text" id="title" name="title" value="<%= event.title || '' %>" required maxlength="255" placeholder="Ex : TAN du Cantal, Field de printemps, Nationale d’élevage">
+        </div>
+        <div class="form-group">
+          <label for="category">Catégorie *</label>
+          <select id="category" name="category" required>
+            <% Object.entries(categoryLabels).forEach(([value, label]) => { %>
+              <option value="<%= value %>" <%= event.category === value ? 'selected' : '' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="status">Statut *</label>
+          <select id="status" name="status" required>
+            <% Object.entries(statusLabels).forEach(([value, label]) => { %>
+              <option value="<%= value %>" <%= event.status === value ? 'selected' : '' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="event_date">Date de début *</label>
+          <input type="date" id="event_date" name="event_date" value="<%= normalizeDate(event.event_date) %>" required>
+        </div>
+        <div class="form-group">
+          <label for="end_date">Date de fin</label>
+          <input type="date" id="end_date" name="end_date" value="<%= normalizeDate(event.end_date) %>">
+        </div>
+        <div class="form-group checkbox-group calendar-span-2">
+          <label>
+            <input type="checkbox" name="all_day" <%= event.all_day !== false ? 'checked' : '' %>>
+            Journée entière
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="start_time">Heure de début</label>
+          <input type="time" id="start_time" name="start_time" value="<%= normalizeTime(event.start_time) %>">
+        </div>
+        <div class="form-group">
+          <label for="end_time">Heure de fin</label>
+          <input type="time" id="end_time" name="end_time" value="<%= normalizeTime(event.end_time) %>">
+        </div>
+        <div class="form-group calendar-span-2">
+          <label for="location">Lieu</label>
+          <input type="text" id="location" name="location" value="<%= event.location || '' %>" maxlength="255" placeholder="Commune, département, terrain ou adresse">
+        </div>
+      </div>
+    </section>
+
+    <section class="card calendar-form-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Engagement</span>
+        <h2>Organisation et chiens</h2>
+      </div>
+      <div class="form-grid calendar-form-grid">
+        <div class="form-group">
+          <label for="organizer">Organisateur / club</label>
+          <input type="text" id="organizer" name="organizer" value="<%= event.organizer || '' %>" maxlength="255">
+        </div>
+        <div class="form-group">
+          <label for="judge_name">Juge</label>
+          <input type="text" id="judge_name" name="judge_name" value="<%= event.judge_name || '' %>" maxlength="255">
+        </div>
+        <div class="form-group">
+          <label for="registration_deadline">Date limite d’inscription</label>
+          <input type="date" id="registration_deadline" name="registration_deadline" value="<%= normalizeDate(event.registration_deadline) %>">
+        </div>
+        <div class="form-group">
+          <label for="cost">Coût estimé (€)</label>
+          <input type="number" id="cost" name="cost" value="<%= event.cost ?? '' %>" min="0" step="0.01">
+        </div>
+        <fieldset class="form-group calendar-span-2 dog-selector">
+          <legend>Chien(s) concerné(s)</legend>
+          <% if (!dogs.length) { %>
+            <p class="muted">Aucun chien actif disponible.</p>
+          <% } else { %>
+            <div class="dog-checkbox-grid">
+              <% dogs.forEach((dog) => { %>
+                <% const selected = (event.dog_ids || []).map(String).includes(String(dog.id)); %>
+                <label class="dog-checkbox <%= String(dog.status || '').toLowerCase() === 'sorti' ? 'dog-archived' : '' %>">
+                  <input type="checkbox" name="dog_ids" value="<%= dog.id %>" <%= selected ? 'checked' : '' %>>
+                  <span>
+                    <strong><%= dog.name %></strong>
+                    <small><%= dog.status || 'actif' %></small>
+                  </span>
+                </label>
+              <% }) %>
+            </div>
+          <% } %>
+          <small>Les chiens sortis ne sont plus proposés pour un nouvel événement. Ils restent conservés dans l’historique.</small>
+        </fieldset>
+        <div class="form-group calendar-span-2">
+          <label for="document_url">Convocation, règlement ou justificatif</label>
+          <input type="url" id="document_url" name="document_url" value="<%= event.document_url || '' %>" placeholder="https://...">
+          <small>Ajoutez le lien sécurisé vers le document.</small>
+        </div>
+        <fieldset class="form-group calendar-span-2 reminder-selector">
+          <legend>Rappels souhaités</legend>
+          <% [30, 15, 7, 1, 0].forEach((day) => { %>
+            <label>
+              <input type="checkbox" name="reminder_days" value="<%= day %>" <%= (event.reminder_days || []).map(Number).includes(day) ? 'checked' : '' %>>
+              <%= day === 0 ? 'Le jour même' : day + ' jour' + (day > 1 ? 's' : '') + ' avant' %>
+            </label>
+          <% }) %>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="card calendar-form-section">
+      <div class="section-title compact">
+        <span class="section-kicker">Bilan</span>
+        <h2>Résultat et observations</h2>
+      </div>
+      <div class="form-grid calendar-form-grid">
+        <div class="form-group">
+          <label for="ranking">Classement</label>
+          <input type="text" id="ranking" name="ranking" value="<%= event.ranking || '' %>" maxlength="100" placeholder="Ex : 1er, 2e Excellent">
+        </div>
+        <div class="form-group">
+          <label for="qualification">Qualificatif / brevet</label>
+          <input type="text" id="qualification" name="qualification" value="<%= event.qualification || '' %>" maxlength="160" placeholder="Ex : Excellent, TAN obtenu">
+        </div>
+        <div class="form-group calendar-span-2">
+          <label for="award">Récompense</label>
+          <input type="text" id="award" name="award" value="<%= event.award || '' %>" maxlength="160" placeholder="Ex : CACS, RCACS, Meilleur jeune">
+        </div>
+        <div class="form-group calendar-span-2">
+          <label for="notes">Préparation / notes</label>
+          <textarea id="notes" name="notes" rows="4" placeholder="Matériel, documents, objectifs, trajet, hébergement..."><%= event.notes || '' %></textarea>
+        </div>
+        <div class="form-group calendar-span-2">
+          <label for="result_notes">Compte rendu</label>
+          <textarea id="result_notes" name="result_notes" rows="4" placeholder="Appréciation du juge, comportement du chien, axes de travail..."><%= event.result_notes || '' %></textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions calendar-form-actions">
+      <button type="submit" class="btn btn-primary">Enregistrer l’événement</button>
+      <a class="btn btn-secondary" href="/calendar">Annuler</a>
+    </div>
+  </form>
+
+  <% if (event.id) { %>
+    <section class="calendar-danger-zone">
+      <form action="/calendar/<%= event.id %>/delete" method="POST" onsubmit="return confirm('Supprimer définitivement cet événement ?');">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-danger">Supprimer l’événement</button>
+      </form>
+    </section>
+  <% } %>
+</main>
+
+<%- include('../partials/foot') %>
