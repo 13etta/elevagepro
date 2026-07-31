@@ -112,6 +112,29 @@ test('bcrypt 6 conserve le parcours mot de passe utilisé par ElevagePro', async
   assert.equal(await bcrypt.compare('mauvais-mot-de-passe', hash), false);
 });
 
+test('le client Supabase dispose d’un transport WebSocket sous Node.js', () => {
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+
+  process.env.SUPABASE_URL = 'https://example.supabase.co';
+  process.env.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test';
+
+  const modulePath = require.resolve('../src/utils/supabase');
+  delete require.cache[modulePath];
+
+  try {
+    assert.doesNotThrow(() => require('../src/utils/supabase'));
+  } finally {
+    delete require.cache[modulePath];
+
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = previousUrl;
+
+    if (previousKey === undefined) delete process.env.SUPABASE_PUBLISHABLE_KEY;
+    else process.env.SUPABASE_PUBLISHABLE_KEY = previousKey;
+  }
+});
+
 test('la mise à niveau EJS compile tous les modèles existants', () => {
   const viewsDir = path.join(projectRoot, 'src', 'views');
   const templates = [];
