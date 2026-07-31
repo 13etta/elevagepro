@@ -1,51 +1,8 @@
 const { pool } = require('../db');
 
-async function columnExists(tableName, columnName) {
-    const result = await pool.query(
-        `
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = $1
-                  AND column_name = $2
-            ) AS exists
-        `,
-        [tableName, columnName],
-    );
-
-    return Boolean(result.rows[0]?.exists);
-}
-
-async function ensurePregnanciesSchema(clientOrPool = pool) {
-    await clientOrPool.query('ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS female_id UUID REFERENCES dogs(id) ON DELETE CASCADE').catch(() => {});
-    await clientOrPool.query('ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS start_date DATE').catch(() => {});
-    await clientOrPool.query('ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS expected_date DATE').catch(() => {});
-    await clientOrPool.query('ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS due_date DATE').catch(() => {});
-    await clientOrPool.query("ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS result VARCHAR(50) DEFAULT 'En cours'").catch(() => {});
-    await clientOrPool.query('ALTER TABLE pregnancies ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP').catch(() => {});
-
-    if (await columnExists('pregnancies', 'dog_id')) {
-        await clientOrPool.query('UPDATE pregnancies SET female_id = dog_id WHERE female_id IS NULL AND dog_id IS NOT NULL').catch(() => {});
-    }
-
-    if (await columnExists('pregnancies', 'confirmation_date')) {
-        await clientOrPool.query('UPDATE pregnancies SET start_date = confirmation_date WHERE start_date IS NULL AND confirmation_date IS NOT NULL').catch(() => {});
-    }
-
-    if (await columnExists('pregnancies', 'expected_delivery_date')) {
-        await clientOrPool.query('UPDATE pregnancies SET expected_date = expected_delivery_date WHERE expected_date IS NULL AND expected_delivery_date IS NOT NULL').catch(() => {});
-    }
-
-    if (await columnExists('pregnancies', 'status')) {
-        await clientOrPool.query("UPDATE pregnancies SET result = CASE WHEN status IN ('en_cours', 'active') THEN 'En cours' WHEN status IN ('terminee', 'réussie', 'reussie') THEN 'Réussie' WHEN status IN ('echec', 'échec') THEN 'Échec' ELSE COALESCE(status, result) END WHERE result IS NULL OR result = 'En cours'").catch(() => {});
-    }
-}
-
 exports.listPregnancies = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        await ensurePregnanciesSchema();
         const { q, female, status } = req.query;
 
         // Jointures en cascade pour récupérer le père (via matings)
@@ -99,7 +56,6 @@ exports.listPregnancies = async (req, res) => {
 exports.getForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        await ensurePregnanciesSchema();
         const pregId = req.params.id;
         let pregnancy = { result: 'En cours' };
 
@@ -137,7 +93,6 @@ exports.getForm = async (req, res) => {
 exports.savePregnancy = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
-        await ensurePregnanciesSchema();
         const pregId = req.params.id;
         let { mating_id, female_id, start_date, expected_date, due_date, result, notes } = req.body;
 

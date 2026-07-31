@@ -47,7 +47,10 @@
 
   <div class="sidebar-footer">
     <a class="settings-chip" href="/settings"><span class="material-symbols-outlined">settings</span><%= __('nav.settings') %></a>
-    <a class="logout-link" href="/auth/logout"><span class="material-symbols-outlined">logout</span><%= __('auth.logout') %></a>
+    <form method="POST" action="/auth/logout">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="logout-link" type="submit"><span class="material-symbols-outlined">logout</span><%= __('auth.logout') %></button>
+    </form>
   </div>
 </aside>
 

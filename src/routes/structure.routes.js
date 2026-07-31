@@ -1,10 +1,12 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 const structureController = require('../controllers/structure.controller');
 
 const router = express.Router();
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 router.get('/', structureController.index);
 router.post('/infrastructures', structureController.storeInfrastructure);
 router.post('/assign', structureController.assignInfrastructure);

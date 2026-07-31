@@ -103,7 +103,10 @@
     <p id="deletePuppyText">Cette action est définitive. Elle supprimera la fiche du chiot sélectionné.</p>
     <div class="confirm-modal-actions">
       <button type="button" class="btn btn-secondary" data-modal-close>Annuler</button>
-      <a id="confirmDeletePuppy" class="btn btn-primary btn-danger" href="#">Supprimer définitivement</a>
+      <form id="confirmDeletePuppy" method="POST" action="#">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-primary btn-danger" type="submit">Supprimer définitivement</button>
+      </form>
     </div>
   </div>
 </div>
@@ -139,7 +142,7 @@
     document.querySelectorAll('.js-delete-puppy').forEach((button) => {
       button.addEventListener('click', () => {
         const puppyName = button.dataset.puppyName || 'ce chiot';
-        confirmDelete.href = button.dataset.deleteUrl;
+        confirmDelete.action = button.dataset.deleteUrl;
         modalText.textContent = `Vous allez supprimer ${puppyName}. Cette action est définitive.`;
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
@@ -151,7 +154,7 @@
   function closeModal() {
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
-    confirmDelete.href = '#';
+    confirmDelete.action = '#';
   }
 
   async function refreshPuppies() {

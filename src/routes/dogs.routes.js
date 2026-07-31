@@ -5,6 +5,7 @@ const dogsController = require('../controllers/dogs.controller');
 const dogExitsController = require('../controllers/dog-exits.controller');
 const dogArchivesController = require('../controllers/dog-archives.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -30,15 +31,15 @@ router.get('/archives/:id', dogArchivesController.showArchive);
 
 // Processus de création d'un nouveau chien
 router.get('/new', dogsController.getForm);
-router.post('/new', upload.single('photo'), dogsController.saveDog);
+router.post('/new', upload.single('photo'), verifyCsrf, dogsController.saveDog);
 
 // Processus de modification d'un chien existant
 router.get('/:id/edit', dogsController.getForm);
-router.post('/:id/edit', upload.single('photo'), dogsController.saveDog);
+router.post('/:id/edit', upload.single('photo'), verifyCsrf, dogsController.saveDog);
 
 // Sortie administrative du cheptel : aucune suppression physique en base
 router.get('/:id/delete', dogExitsController.getDeleteForm);
-router.post('/:id/delete', dogExitsController.deleteDog);
+router.post('/:id/delete', verifyCsrf, dogExitsController.deleteDog);
 
 // Fiche détaillée d'un chien
 router.get('/:id', dogsController.showDog);

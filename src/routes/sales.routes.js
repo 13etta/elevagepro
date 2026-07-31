@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const salesController = require('../controllers/sales.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 router.get('/', salesController.listSales);
 router.get('/new', salesController.getSaleForm);

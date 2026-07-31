@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 const soinsController = require('../controllers/soins.controller');
 const soinsPdfController = require('../controllers/soins-pdf.controller');
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 router.get('/', soinsController.listSoins);
 router.get('/registre-sanitaire.pdf', soinsPdfController.exportHealthRegister);

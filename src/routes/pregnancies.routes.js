@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pregnanciesController = require('../controllers/pregnancies.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 router.get('/', pregnanciesController.listPregnancies);
 router.get('/new', pregnanciesController.getForm);
