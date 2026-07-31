@@ -15,6 +15,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "calendar": "Calendar",
     "dogs": "Dogs",
     "dogArchives": "Dog archives",
     "soins": "Care",
@@ -74,6 +75,7 @@
   },
   "modules": {
     "dashboard": { "description": "Overview of key indicators, alerts and priority actions." },
+    "calendar": { "description": "Plan temperament tests, field trials, shows, training sessions, appointments and entry deadlines." },
     "dogs": { "description": "Manage dog records, statuses, administrative data and individual tracking." },
     "dogArchives": { "description": "Consult exited dogs and their complete retained history." },
     "soins": { "description": "Centralize care, treatments, vaccines and health events." },
