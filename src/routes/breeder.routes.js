@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const breederController = require('../controllers/breeder.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 // Ancien tableau de bord structure : redirection vers la nouvelle interface premium.
 router.get('/', (req, res) => res.redirect('/structure'));

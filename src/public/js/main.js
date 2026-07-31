@@ -1,5 +1,6 @@
 (() => {
   const body = document.body;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
   const navToggle = document.querySelector('[data-nav-toggle]');
   const navClose = document.querySelector('[data-nav-close]');
   const collapseToggle = document.querySelector('[data-sidebar-collapse]');
@@ -37,7 +38,24 @@
     window.localStorage?.setItem('elevagepro-sidebar', state);
   });
 
+  const addCsrfToken = (form) => {
+    if (!(form instanceof HTMLFormElement)) return;
+
+    const method = (form.getAttribute('method') || 'GET').toUpperCase();
+    if (method === 'GET' || !csrfToken) return;
+
+    let input = form.querySelector('input[name="_csrf"]');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = '_csrf';
+      form.prepend(input);
+    }
+    input.value = csrfToken;
+  };
+
   document.querySelectorAll('form').forEach((form) => {
+    addCsrfToken(form);
     form.addEventListener('submit', () => {
       if (form.dataset.submitting === 'true') return;
       form.dataset.submitting = 'true';
@@ -50,4 +68,6 @@
       });
     });
   });
+
+  document.addEventListener('submit', (event) => addCsrfToken(event.target), true);
 })();

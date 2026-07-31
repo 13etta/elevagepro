@@ -35,7 +35,10 @@
                 <td><strong><%= reminder.title %></strong><br><small><%= reminder.type || 'general' %></small></td>
                 <td><%= reminder.dog_name || 'Général' %></td>
                 <td class="table-actions">
-                  <a class="btn btn-primary" href="/reminders/<%= reminder.id %>/complete">Fait</a>
+                  <form method="POST" action="/reminders/<%= reminder.id %>/complete">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-primary" type="submit">Fait</button>
+                  </form>
                   <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/edit">Modifier</a>
                 </td>
               </tr>
@@ -62,7 +65,10 @@
                 <td><strong><%= reminder.title %></strong><br><small><%= reminder.type || 'general' %></small></td>
                 <td><%= reminder.dog_name || 'Général' %></td>
                 <td class="table-actions">
-                  <a class="btn btn-primary" href="/reminders/<%= reminder.id %>/complete">Fait</a>
+                  <form method="POST" action="/reminders/<%= reminder.id %>/complete">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-primary" type="submit">Fait</button>
+                  </form>
                   <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/edit">Modifier</a>
                 </td>
               </tr>
@@ -90,8 +96,14 @@
               <td><%= reminder.title %></td>
               <td><%= reminder.dog_name || 'Général' %></td>
               <td class="table-actions">
-                <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/reopen">Réouvrir</a>
-                <a class="btn btn-secondary" href="/reminders/<%= reminder.id %>/delete" onclick="return confirm('Supprimer ce rappel ?')">Supprimer</a>
+                <form method="POST" action="/reminders/<%= reminder.id %>/reopen">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-secondary" type="submit">Réouvrir</button>
+                </form>
+                <form method="POST" action="/reminders/<%= reminder.id %>/delete" onsubmit="return confirm('Supprimer ce rappel ?')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-secondary" type="submit">Supprimer</button>
+                </form>
               </td>
             </tr>
           <% }) %>

@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const heatsController = require('../controllers/heats.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 // Protection globale du module
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 // Lecture
 router.get('/', heatsController.listHeats);

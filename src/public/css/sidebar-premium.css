@@ -204,6 +204,19 @@
   text-overflow: ellipsis !important;
 }
 
+.sidebar-footer form {
+  margin: 0;
+}
+
+.sidebar-footer button.logout-link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .settings-chip .material-symbols-outlined,
 .logout-link .material-symbols-outlined {
   flex: 0 0 22px !important;

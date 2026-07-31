@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const { verifyCsrf } = require('../middleware/csrf');
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 router.get('/', puppiesController.listPuppies);
 router.get('/fragment', puppiesController.listPuppiesFragment);
@@ -15,13 +16,11 @@ router.post('/save', puppiesController.savePuppy);
 
 router.get('/edit/:id', puppiesController.getForm);
 router.post('/save/:id', puppiesController.savePuppy);
-router.get('/delete/:id', puppiesController.deletePuppy);
 
-router.post('/:id/generate-ad', verifyCsrf, puppiesController.generatePuppyAd);
+router.post('/:id/generate-ad', puppiesController.generatePuppyAd);
 
 router.get('/:id/edit', puppiesController.getForm);
 router.post('/:id/edit', puppiesController.savePuppy);
-router.get('/:id/delete', puppiesController.deletePuppy);
 router.post('/:id/delete', puppiesController.deletePuppy);
 
 router.get('/:id', puppiesController.showPuppy);

@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const littersController = require('../controllers/litters.controller');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 
 router.use(requireAuth);
+router.use(verifyCsrf);
 
 // Liste
 router.get('/', littersController.listLitters);

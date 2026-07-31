@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { requireAuth } = require('../middleware/auth');
+const { verifyCsrf } = require('../middleware/csrf');
 const healthTestsController = require('../controllers/health-tests.controller');
 
 const router = express.Router();
@@ -20,7 +21,7 @@ const upload = multer({
 router.use(requireAuth);
 
 router.get('/', healthTestsController.listHealthTests);
-router.post('/', upload.single('certificate'), healthTestsController.createHealthTest);
-router.post('/:id/delete', healthTestsController.deleteHealthTest);
+router.post('/', upload.single('certificate'), verifyCsrf, healthTestsController.createHealthTest);
+router.post('/:id/delete', verifyCsrf, healthTestsController.deleteHealthTest);
 
 module.exports = router;
