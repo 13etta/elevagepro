@@ -71,7 +71,7 @@ exports.getDashboard = async (req, res) => {
         SELECT count(*)
         FROM dogs
         WHERE breeder_id = $1
-          AND COALESCE(lower(status), 'actif') NOT IN ('archivé', 'archive', 'archived', 'inactif')
+          AND LOWER(TRIM(COALESCE(status, 'actif'))) <> 'sorti'
       `,
       [breederId],
       countFallback,
