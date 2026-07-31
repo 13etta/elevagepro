@@ -81,3 +81,5 @@ git clone https://github.com/13etta/elevagepro.git
 ```
 
 Avant la réécriture, chaque contributeur doit sauvegarder ses modifications non publiées sous forme de patch. Il ne faut pas fusionner une branche créée avant la purge dans le nouvel historique.
+
+Consulter également l'[inventaire des secrets](SECRET_INVENTORY.md) et la [procédure coordonnée de réécriture](HISTORY_REWRITE_RUNBOOK.md).
