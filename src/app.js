@@ -31,6 +31,11 @@ const structureRoutes = require('./routes/structure.routes');
 const calendarRoutes = require('./routes/calendar.routes');
 
 const app = express();
+
+const sessionSecret = process.env.SESSION_SECRET;
+if (process.env.NODE_ENV === 'production' && (!sessionSecret || sessionSecret.length < 32)) {
+  throw new Error('SESSION_SECRET doit contenir au moins 32 caractères en production.');
+}
 const PgSession = connectPgSimple(session);
 
 app.set('trust proxy', 1);
@@ -62,7 +67,7 @@ app.use(
       tableName: 'session',
       createTableIfMissing: true,
     }),
-    secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
+    secret: sessionSecret || 'dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
     proxy: true,

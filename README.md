@@ -4,10 +4,10 @@ Socle ERP d'élevage canin professionnel.
 
 ## Démarrage local
 
-1. Copier `.env.example` vers `.env` et renseigner `DATABASE_URL`.
+1. Copier `.env.example` vers `.env`, renseigner `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` et générer un `SESSION_SECRET`.
 2. Installer les dépendances :
    ```bash
-   npm install
+   npm ci
    ```
 3. Appliquer le schéma SQL :
    ```bash
@@ -15,7 +15,7 @@ Socle ERP d'élevage canin professionnel.
    ```
 4. Lancer le serveur :
    ```bash
-   npm run dev
+   npm start
    ```
 
 ## Modules disponibles (lot 1)
@@ -50,5 +50,8 @@ SESSION_SECRET=<secret-long-et-aleatoire>
 
 Notes :
 - Encoder les caracteres speciaux du mot de passe dans l'URL (`@`, `#`, `/`, espaces...).
-- Garder `SUPABASE_URL` et `SUPABASE_ANON_KEY` seulement pour Storage/API.
+- Utiliser `SUPABASE_URL` et `SUPABASE_PUBLISHABLE_KEY` seulement pour Storage/API.
+- Ne jamais utiliser une clé Supabase `service_role` dans l'application cliente ou dans le dépôt.
 - Pour une base PostgreSQL Render native, conserver l'URL fournie par Render.
+
+Le guide complet de démarrage, de rotation et de réinitialisation des clones est disponible dans [`docs/SECURITY_AND_SETUP.md`](docs/SECURITY_AND_SETUP.md).
