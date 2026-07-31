@@ -292,13 +292,14 @@ exports.listEvents = async (req, res) => {
               AND status IN ('prevu', 'inscrit')
           )::int AS deadline_count,
           COALESCE(SUM(cost) FILTER (
-            WHERE DATE_TRUNC('month', event_date) = DATE_TRUNC('month', CURRENT_DATE)
+            WHERE event_date >= $2::date
+              AND event_date < $3::date
               AND status <> 'annule'
           ), 0)::numeric AS monthly_cost
         FROM calendar_events
         WHERE breeder_id = $1
       `,
-      [breederId],
+      [breederId, `${currentMonth}-01`, `${shiftMonth(year, month, 1)}-01`],
     );
 
     const dogs = await getDogs(breederId);
