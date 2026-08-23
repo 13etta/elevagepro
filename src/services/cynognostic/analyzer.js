@@ -1,6 +1,7 @@
 const WORK_TERMS = ['cact', 'cacit', 'rcact', 'rcacit', 'excellent', 'exc', 'trialer', 'field', 'becasse', 'becassine', 'quete', 'arret', 'coule', 'nez', 'style', 'rasant', 'fluide', 'passion', 'initiative', 'contact'];
 const BEAUTY_TERMS = ['cacs', 'cacib', 'rcacs', 'rcacib', 'champion beaute', 'confirmation', 'confirme', 'standard', 'construction', 'aplombs', 'angulations', 'ligne de dos', 'type racial'];
 const HEALTH_TERMS = ['adn', 'identification genetique', 'dysplasie a', 'dys a', 'dysplasie b', 'dys b', 'apr sain', 'ncl sain', 'teste', 'testee'];
+const RESULT_TERMS = ['CACIT', 'RCACIT', 'CACT', 'RCACT', 'EXC', 'EXCELLENT', 'TB', 'TAN', 'CACS', 'CACIB'];
 
 const RISK_RULES = [
   { key: 'fouet_haut', label: 'Port de fouet haut ou enroule', severity: 'Serieuse', terms: ['fouet haut', 'queue haute', 'port de queue haut', 'enroule', 'sacrum'] },
@@ -44,12 +45,80 @@ function extractAffixes(text) {
 
 function extractResultSignals(text) {
   const clean = normalize(text).toUpperCase();
-  const terms = ['CACIT', 'RCACIT', 'CACT', 'RCACT', 'EXC', 'EXCELLENT', 'TB', 'TAN', 'CACS', 'CACIB'];
-  return terms.reduce((acc, term) => {
+  return RESULT_TERMS.reduce((acc, term) => {
     const re = new RegExp('\\b' + term + '\\b', 'g');
     acc[term] = (clean.match(re) || []).length;
     return acc;
   }, {});
+}
+
+function hasResultSignals(signals) {
+  return Object.values(signals).some((count) => count > 0);
+}
+
+function mergeResultSignals(signalGroups) {
+  return RESULT_TERMS.reduce((totals, term) => {
+    totals[term] = signalGroups.reduce((sum, signals) => sum + (signals[term] || 0), 0);
+    return totals;
+  }, {});
+}
+
+function buildEvidenceAssessment(input) {
+  const sources = [
+    {
+      key: 'pedigree',
+      label: 'Pedigree ou ascendance fournie',
+      value: input.pedigreeText,
+      evidenceType: 'Document transmis',
+      verification: 'À confronter au pedigree officiel',
+    },
+    {
+      key: 'announcement',
+      label: 'Annonce ou présentation publique',
+      value: input.announcementText,
+      evidenceType: 'Déclaration tierce ou commerciale',
+      verification: 'Non vérifiée',
+    },
+    {
+      key: 'observations',
+      label: 'Observations de terrain',
+      value: input.observations,
+      evidenceType: 'Observation du sélectionneur',
+      verification: 'Contextualisée, non officielle',
+    },
+    {
+      key: 'imageNotes',
+      label: 'Lecture photographique',
+      value: input.imageNotes,
+      evidenceType: 'Observation visuelle indicative',
+      verification: 'À confirmer par examen réel',
+    },
+    {
+      key: 'videoNotes',
+      label: 'Lecture vidéo',
+      value: input.videoNotes,
+      evidenceType: 'Observation fonctionnelle indicative',
+      verification: 'À confirmer sur le terrain',
+    },
+    {
+      key: 'sourceUrl',
+      label: 'Lien source',
+      value: input.sourceUrl,
+      evidenceType: 'Référence externe',
+      verification: 'Source à consulter et à dater',
+    },
+  ];
+
+  const available = sources
+    .filter((source) => String(source.value || '').trim())
+    .map(({ value, ...source }) => source);
+
+  return {
+    status: 'À vérifier',
+    officialFacts: [],
+    available,
+    caution: 'Aucun titre, résultat, pedigree ou test sanitaire n’est considéré comme officiel sur la seule base d’un texte ou d’un lien fourni.',
+  };
 }
 
 function buildAlerts(text) {
@@ -70,11 +139,11 @@ function buildSignals(text) {
 
 function confidenceFromInput(input) {
   let confidence = 15;
-  if (input.pedigreeText && input.pedigreeText.length > 80) confidence += 25;
+  if (input.pedigreeText && input.pedigreeText.length > 80) confidence += 20;
   if (input.observations && input.observations.length > 80) confidence += 20;
   if (input.imageNotes && input.imageNotes.length > 40) confidence += 10;
   if (input.videoNotes && input.videoNotes.length > 40) confidence += 15;
-  if (input.announcementText && input.announcementText.length > 80) confidence += 15;
+  if (input.announcementText && input.announcementText.length > 80) confidence += 5;
   if (input.sourceUrl && input.sourceUrl.length > 10) confidence += 5;
   return bounded(confidence);
 }
@@ -111,7 +180,15 @@ function analyzeCynognostic(input = {}) {
   const alerts = buildAlerts(allText);
   const signals = buildSignals(allText);
   const affixes = extractAffixes(input.pedigreeText || '');
-  const resultSignals = extractResultSignals(allText);
+  const resultSignalsBySource = {
+    pedigree: extractResultSignals(input.pedigreeText),
+    announcement: extractResultSignals(input.announcementText),
+    observations: extractResultSignals(input.observations),
+    imageNotes: extractResultSignals(input.imageNotes),
+    videoNotes: extractResultSignals(input.videoNotes),
+  };
+  const resultSignals = mergeResultSignals(Object.values(resultSignalsBySource));
+  const evidenceAssessment = buildEvidenceAssessment(input);
   const seriousPenalty = alerts.filter((alert) => alert.severity === 'Serieuse').length * 8;
   const criticalPenalty = alerts.filter((alert) => alert.severity === 'Critique').length * 18;
   const moderatePenalty = alerts.filter((alert) => alert.severity === 'Moderee').length * 4;
@@ -124,11 +201,12 @@ function analyzeCynognostic(input = {}) {
   const global = bounded((strategic * 0.78) + (confidence * 0.22));
   const scores = { global, work, beauty, health, pedigree, strategic, confidence };
   const missingData = [];
-  if (!input.pedigreeText || input.pedigreeText.length < 80) missingData.push('Pedigree complet sur 4 ou 5 generations');
-  if (!input.sourceUrl) missingData.push('Lien source officiel ou annonce publique');
-  if (!input.observations || input.observations.length < 80) missingData.push('Retour terrain structure');
-  if (!input.imageNotes) missingData.push('Photos exploitables pour lecture morphologique indicative');
-  if (!input.videoNotes) missingData.push('Video pour confirmer allure, quete, port de fouet et style');
+  if (!input.pedigreeText || input.pedigreeText.length < 80) missingData.push('[À COMPLÉTER] Pedigree complet sur 4 ou 5 générations');
+  if (!input.sourceUrl) missingData.push('[À COMPLÉTER] Lien vers la source officielle ou la publication consultée');
+  if (!input.observations || input.observations.length < 80) missingData.push('[À COMPLÉTER] Retour de terrain structuré et daté');
+  if (!input.imageNotes) missingData.push('[À COMPLÉTER] Photos exploitables pour une lecture morphologique indicative');
+  if (!input.videoNotes) missingData.push('[À COMPLÉTER] Vidéo pour apprécier allure, quête, port de fouet et style');
+  if (hasResultSignals(resultSignals)) missingData.push('[À VÉRIFIER] Justificatifs officiels des titres, qualificatifs et résultats mentionnés');
   return {
     scores,
     alerts,
@@ -136,6 +214,8 @@ function analyzeCynognostic(input = {}) {
       signals,
       affixes,
       resultSignals,
+      resultSignalsBySource,
+      evidenceAssessment,
       missingData,
       searchQueries: buildSearchQueries(input),
       beautyReading: beauty >= 70 ? 'Conformite beaute estimee bonne a tres bonne, a confirmer par examen reel.' : beauty >= 50 ? 'Conformite beaute possible mais non securisee.' : 'Conformite beaute insuffisamment documentee ou douteuse.',
