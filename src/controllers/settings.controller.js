@@ -1,71 +1,14 @@
 const { pool } = require('../db');
 const supabase = require('../utils/supabase');
+const {
+  allowedWebsiteTemplates,
+  mergeWebsiteSettings,
+  normalizeBoxCapacity,
+  buildWebsiteSettings,
+} = require('../services/website-settings.service');
 
 const allowedThemes = ['prestige', 'clinical', 'nature'];
 const allowedLangs = ['fr', 'en'];
-const allowedWebsiteTemplates = ['heritage', 'field', 'luxury', 'minimal', 'breeder'];
-
-const websiteTemplatePalettes = {
-  heritage: { primaryColor: '#29422c', secondaryColor: '#bda66f', accentColor: '#f4efe2', backgroundColor: '#f6f1e8', textColor: '#24301f' },
-  field: { primaryColor: '#41552b', secondaryColor: '#9a7444', accentColor: '#1f2a1d', backgroundColor: '#eef1e8', textColor: '#1f2a1d' },
-  luxury: { primaryColor: '#c79a45', secondaryColor: '#7a4b28', accentColor: '#0f0b08', backgroundColor: '#17120d', textColor: '#fff4df' },
-  minimal: { primaryColor: '#111827', secondaryColor: '#d1d5db', accentColor: '#111827', backgroundColor: '#f8fafc', textColor: '#111827' },
-  breeder: { primaryColor: '#9a3412', secondaryColor: '#fed7aa', accentColor: '#431407', backgroundColor: '#fff7ed', textColor: '#431407' },
-};
-
-function defaultWebsiteSettings() {
-  return {
-    template: 'heritage', kennelBoxCapacity: 12,
-    primaryColor: '#29422c', secondaryColor: '#bda66f', accentColor: '#f4efe2', backgroundColor: '#f6f1e8', textColor: '#24301f',
-    heroTitle: 'Élevage et Dressage de prestige',
-    heroSubtitle: 'Excellence canine au cœur de la nature.',
-    heroImageUrl: '',
-    siteSlogan: 'Élevage canin familial, sélection et accompagnement.',
-    contactStripTitle: 'La saison est ouverte : contactez l’élevage pour les disponibilités.',
-    contactStripText: 'Portées, pension, dressage, conseils et accompagnement.',
-    primaryCtaLabel: 'Nos services', secondaryCtaLabel: 'Contactez-nous',
-    serviceSectionTitle: 'Nos services', serviceSectionKicker: 'Savoir-faire',
-    strengthsTitle: 'Pourquoi nous choisir', strengthsKicker: 'Engagements',
-    contactPanelTitle: 'Contact direct', contactPanelText: 'Un élevage sérieux transmet une lignée, une méthode et un suivi.',
-    footerText: 'Élevage canin familial.', openingHours: '',
-    introTitle: 'Une sélection lisible, suivie et assumée',
-    introText: 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.',
-    showIntro: true, showPuppies: true, showLitters: true, showDogs: true, showServices: true, showGallery: true, showContact: true, showStrengths: true,
-    servicesEnabled: true, newsEnabled: true, strengthsEnabled: true, galleryEnabled: true, contactEnabled: true,
-    servicePensionEnabled: true,
-    serviceTrainingEnabled: true,
-    serviceBreedingEnabled: true,
-    servicePensionTitle: 'Pension Canine',
-    servicePensionText: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
-    servicePensionButton: 'Découvrir la pension',
-    servicePensionImageUrl: '',
-    serviceTrainingTitle: 'Dressage et Éducation',
-    serviceTrainingText: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
-    serviceTrainingButton: 'Programmes de dressage',
-    serviceTrainingImageUrl: '',
-    serviceBreedingTitle: 'Élevage de Sélection',
-    serviceBreedingText: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
-    serviceBreedingButton: 'Nos portées actuelles',
-    serviceBreedingImageUrl: '',
-    service1Title: 'Pension Canine', service1Text: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
-    service2Title: 'Dressage et Éducation', service2Text: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
-    service3Title: 'Élevage de Sélection', service3Text: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
-    newsTitle: 'Actualités de l’élevage', newsText: 'Retrouvez nos disponibilités, projets de portées et nouvelles de l’élevage.',
-    strengths: 'Expérience & Expertise\nQualité & Bien-être\nNutrition & Santé',
-    gallery: [], litterGallery: {},
-  };
-}
-
-function mergeWebsiteSettings(settings) {
-  return { ...defaultWebsiteSettings(), ...(settings || {}) };
-}
-
-function normalizeBoxCapacity(value, fallback = 12) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.max(1, Math.min(parsed, 500));
-}
-
 async function columnExists(tableName, columnName) {
   const result = await pool.query(
     `
@@ -244,42 +187,7 @@ exports.updateWebsiteSettings = async (req, res) => {
     const result = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
     const current = mergeWebsiteSettings(result.rows[0]?.website_settings);
     const files = groupedFiles(req.files);
-    const requestedTemplate = allowedWebsiteTemplates.includes(req.body.template) ? req.body.template : current.template;
-    const templateChanged = requestedTemplate !== current.template;
-    const templatePalette = websiteTemplatePalettes[requestedTemplate] || websiteTemplatePalettes.heritage;
-
-    const settings = mergeWebsiteSettings({
-      ...current,
-      template: requestedTemplate,
-      kennelBoxCapacity: normalizeBoxCapacity(current.kennelBoxCapacity, 12),
-      primaryColor: templateChanged ? templatePalette.primaryColor : (req.body.primaryColor || current.primaryColor),
-      secondaryColor: templateChanged ? templatePalette.secondaryColor : (req.body.secondaryColor || current.secondaryColor),
-      accentColor: templateChanged ? templatePalette.accentColor : (req.body.accentColor || current.accentColor),
-      backgroundColor: templateChanged ? templatePalette.backgroundColor : (req.body.backgroundColor || current.backgroundColor),
-      textColor: templateChanged ? templatePalette.textColor : (req.body.textColor || current.textColor),
-      heroTitle: req.body.heroTitle || '', heroSubtitle: req.body.heroSubtitle || '', siteSlogan: req.body.siteSlogan || '',
-      contactStripTitle: req.body.contactStripTitle || '', contactStripText: req.body.contactStripText || '',
-      primaryCtaLabel: req.body.primaryCtaLabel || '', secondaryCtaLabel: req.body.secondaryCtaLabel || '',
-      serviceSectionTitle: req.body.serviceSectionTitle || '', serviceSectionKicker: req.body.serviceSectionKicker || '',
-      strengthsTitle: req.body.strengthsTitle || '', strengthsKicker: req.body.strengthsKicker || '',
-      contactPanelTitle: req.body.contactPanelTitle || '', contactPanelText: req.body.contactPanelText || '',
-      footerText: req.body.footerText || '', openingHours: req.body.openingHours || '',
-      introTitle: req.body.introTitle || '', introText: req.body.introText || '',
-      showIntro: req.body.showIntro === 'on', showPuppies: req.body.showPuppies === 'on', showLitters: req.body.showLitters === 'on',
-      showDogs: req.body.showDogs === 'on', showServices: req.body.showServices === 'on', showGallery: req.body.showGallery === 'on',
-      showContact: req.body.showContact === 'on', showStrengths: req.body.showStrengths === 'on',
-      servicesEnabled: req.body.showServices === 'on', galleryEnabled: req.body.showGallery === 'on', contactEnabled: req.body.showContact === 'on',
-      servicePensionEnabled: req.body.servicePensionEnabled === 'on',
-      serviceTrainingEnabled: req.body.serviceTrainingEnabled === 'on',
-      serviceBreedingEnabled: req.body.serviceBreedingEnabled === 'on',
-      servicePensionTitle: req.body.servicePensionTitle || '', servicePensionText: req.body.servicePensionText || '', servicePensionButton: req.body.servicePensionButton || '',
-      serviceTrainingTitle: req.body.serviceTrainingTitle || '', serviceTrainingText: req.body.serviceTrainingText || '', serviceTrainingButton: req.body.serviceTrainingButton || '',
-      serviceBreedingTitle: req.body.serviceBreedingTitle || '', serviceBreedingText: req.body.serviceBreedingText || '', serviceBreedingButton: req.body.serviceBreedingButton || '',
-      service1Title: req.body.servicePensionTitle || req.body.service1Title || '', service1Text: req.body.servicePensionText || req.body.service1Text || '',
-      service2Title: req.body.serviceTrainingTitle || req.body.service2Title || '', service2Text: req.body.serviceTrainingText || req.body.service2Text || '',
-      service3Title: req.body.serviceBreedingTitle || req.body.service3Title || '', service3Text: req.body.serviceBreedingText || req.body.service3Text || '',
-      newsTitle: req.body.newsTitle || '', newsText: req.body.newsText || '', strengths: req.body.strengths || ''
-    });
+    const settings = buildWebsiteSettings(req.body, current);
 
     if (req.body.clearHeroImage === 'on') settings.heroImageUrl = '';
     const heroUrl = await uploadPublicImage(breederId, files.hero_image?.[0], 'hero');
@@ -324,7 +232,8 @@ exports.updateWebsiteSettings = async (req, res) => {
     }
     settings.litterGallery = litterGallery;
 
-    await pool.query('UPDATE breeder SET website_settings = $1 WHERE id = $2', [settings, breederId]);
+    await pool.query('UPDATE breeder SET website_settings = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [settings, breederId]);
+    req.session.flash = { type: 'success', message: 'Site vitrine enregistré. Les panneaux et contenus publics sont à jour.' };
     res.redirect('/settings?tab=vitrine');
   } catch (error) {
     console.error('Erreur sauvegarde vitrine:', error);

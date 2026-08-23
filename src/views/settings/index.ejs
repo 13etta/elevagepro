@@ -135,6 +135,10 @@
             <div class="settings-panel">
               <div class="section-title compact"><span class="section-kicker">Services</span><h3>Choisir les activités proposées</h3></div>
               <p class="muted">Coche uniquement les services réellement proposés. Chaque bloc peut avoir son texte, son bouton et son image.</p>
+              <div class="form-grid">
+                <div class="form-group"><label>Accroche de section</label><input name="serviceSectionKicker" value="<%= websiteSettings.serviceSectionKicker || '' %>"></div>
+                <div class="form-group"><label>Titre de section</label><input name="serviceSectionTitle" value="<%= websiteSettings.serviceSectionTitle || '' %>"></div>
+              </div>
               <div class="card" style="box-shadow:none; background:var(--surface-2);">
                 <label><input type="checkbox" name="servicePensionEnabled" <%= websiteSettings.servicePensionEnabled ? 'checked' : '' %>> Afficher Pension canine</label>
                 <div class="form-group"><label>Titre</label><input name="servicePensionTitle" value="<%= websiteSettings.servicePensionTitle || '' %>"></div>
