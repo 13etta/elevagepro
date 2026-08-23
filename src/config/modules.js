@@ -1,4 +1,6 @@
-const moduleGroups = [
+const selectionModulesEnabled = process.env.ENABLE_SELECTION_MODULES === 'true';
+
+const allModuleGroups = [
   { key: 'pilotage', labelKey: 'groups.pilotage' },
   { key: 'cheptel', labelKey: 'groups.cheptel' },
   { key: 'sante', labelKey: 'groups.sante' },
@@ -10,7 +12,7 @@ const moduleGroups = [
   { key: 'admin', labelKey: 'groups.admin' },
 ];
 
-const modules = [
+const allModules = [
   {
     key: 'dashboard',
     labelKey: 'nav.dashboard',
@@ -184,7 +186,16 @@ const modules = [
   },
 ];
 
+const moduleGroups = allModuleGroups.filter(
+  (group) => selectionModulesEnabled || group.key !== 'selection',
+);
+
+const modules = allModules.filter(
+  (module) => selectionModulesEnabled || module.group !== 'selection',
+);
+
 module.exports = {
   moduleGroups,
   modules,
+  selectionModulesEnabled,
 };

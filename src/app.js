@@ -6,7 +6,7 @@ const connectPgSimple = require('connect-pg-simple');
 const db = require('./db');
 const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
-const { modules, moduleGroups } = require('./config/modules');
+const { modules, moduleGroups, selectionModulesEnabled } = require('./config/modules');
 const { formatDateFr, dateInputValue } = require('./utils/dates');
 
 const authRoutes = require('./routes/auth.routes');
@@ -25,8 +25,6 @@ const breederRoutes = require('./routes/breeder.routes');
 const websiteRoutes = require('./routes/website.routes');
 const weightsRoutes = require('./routes/weights.routes');
 const profitabilityRoutes = require('./routes/profitability.routes');
-const strategyRoutes = require('./routes/strategy.routes');
-const cynognosticRoutes = require('./routes/cynognostic.routes');
 const structureRoutes = require('./routes/structure.routes');
 const calendarRoutes = require('./routes/calendar.routes');
 
@@ -156,13 +154,16 @@ app.use('/breeder', breederRoutes);
 app.use('/site', websiteRoutes);
 app.use('/weights', weightsRoutes);
 app.use('/profitability', profitabilityRoutes);
-app.use('/strategy', strategyRoutes);
-app.use('/cynognostic', cynognosticRoutes);
 app.use('/structure', structureRoutes);
 app.use('/calendar', calendarRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
-app.use('/genetics', require('./routes/genetics.routes'));
 app.use('/settings', require('./routes/settings.routes'));
+
+if (selectionModulesEnabled) {
+  app.use('/genetics', require('./routes/genetics.routes'));
+  app.use('/cynognostic', require('./routes/cynognostic.routes'));
+  app.use('/strategy', require('./routes/strategy.routes'));
+}
 
 app.use((req, res) => {
   res.status(404).render('errors/404', {
