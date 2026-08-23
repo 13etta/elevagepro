@@ -47,6 +47,7 @@ async function runMigrations() {
     '020_calendar_events.sql',
     '021_calendar_fk_indexes.sql',
     '022_ai_selection_agent.sql',
+    '023_selection_virtual_litters.sql',
   ];
 
   console.log('Démarrage des migrations...');

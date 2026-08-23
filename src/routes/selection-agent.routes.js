@@ -3,6 +3,7 @@ const multer = require('multer');
 const { requireAuth } = require('../middleware/auth');
 const { verifyCsrf } = require('../middleware/csrf');
 const controller = require('../controllers/selection-agent.controller');
+const virtualLitterController = require('../controllers/selection-virtual-litter.controller');
 
 const router = express.Router();
 const upload = multer({
@@ -32,6 +33,9 @@ function uploadPedigree(req, res, next) {
 router.use(requireAuth);
 router.get('/', controller.index);
 router.post('/analyze', uploadPedigree, verifyCsrf, controller.analyze);
+router.get('/virtual-litters/new', virtualLitterController.newVirtualLitter);
+router.post('/virtual-litters', verifyCsrf, virtualLitterController.createVirtualLitter);
+router.get('/virtual-litters/:id', virtualLitterController.showVirtualLitter);
 router.get('/:id', controller.show);
 router.post('/:id/validate', verifyCsrf, controller.validate);
 router.post('/:id/research', verifyCsrf, controller.research);

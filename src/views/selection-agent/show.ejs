@@ -18,6 +18,25 @@
     <article><small>Individus extraits</small><strong><%= individuals.length %></strong><span><%= analysis.completeness?.is_partial ? 'Calcul partiel : ascendance incomplète' : 'À confirmer par l’opérateur' %></span></article>
   </section>
 
+  <% if (analysis.validated_pedigree) { %>
+    <section class="card pedigree-mating-card">
+      <div>
+        <span class="material-symbols-outlined">family_history</span>
+        <span><small>Portée virtuelle</small><strong>Associer <%= analysis.subject_name %> à un second pedigree</strong><p>Calculez le COI du mariage et retrouvez les ancêtres communs des deux lignées.</p></span>
+      </div>
+      <div class="pedigree-mating-actions">
+        <% if (target?.sex === 'M') { %>
+          <a class="btn btn-primary" href="/selection-agent/virtual-litters/new?sire_id=<%= analysis.id %>">Ajouter le pedigree d’une femelle</a>
+        <% } else if (target?.sex === 'F') { %>
+          <a class="btn btn-primary" href="/selection-agent/virtual-litters/new?dam_id=<%= analysis.id %>">Ajouter le pedigree d’un mâle</a>
+        <% } else { %>
+          <a class="btn btn-secondary" href="/selection-agent/virtual-litters/new?sire_id=<%= analysis.id %>">Utiliser comme mâle</a>
+          <a class="btn btn-secondary" href="/selection-agent/virtual-litters/new?dam_id=<%= analysis.id %>">Utiliser comme femelle</a>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
+
   <% if (warnings.length) { %>
     <section class="selection-alert selection-alert-warning">
       <span class="material-symbols-outlined">warning</span>
