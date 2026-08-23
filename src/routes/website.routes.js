@@ -1,5 +1,6 @@
 const express = require('express');
 const { pool } = require('../db');
+const { mergeWebsiteSettings, buildServices } = require('../services/website-settings.service');
 
 const router = express.Router();
 
@@ -13,76 +14,6 @@ function buildSlug(input) {
     .slice(0, 120);
 }
 
-function defaultWebsiteSettings() {
-  return {
-    template: 'heritage',
-    primaryColor: '#29422c',
-    secondaryColor: '#bda66f',
-    accentColor: '#f4efe2',
-    backgroundColor: '#f6f1e8',
-    textColor: '#24301f',
-    heroTitle: 'Élevage et Dressage de prestige',
-    heroSubtitle: 'Excellence canine au cœur de la nature.',
-    heroImageUrl: '',
-    siteSlogan: 'Élevage canin familial, sélection et accompagnement.',
-    contactStripTitle: 'La saison est ouverte : contactez l’élevage pour les disponibilités.',
-    contactStripText: 'Portées, pension, dressage, conseils et accompagnement.',
-    primaryCtaLabel: 'Nos services',
-    secondaryCtaLabel: 'Contactez-nous',
-    serviceSectionTitle: 'Nos services',
-    serviceSectionKicker: 'Savoir-faire',
-    servicePensionEnabled: true,
-    serviceTrainingEnabled: true,
-    serviceBreedingEnabled: true,
-    servicePensionTitle: 'Pension Canine',
-    servicePensionText: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
-    servicePensionButton: 'Découvrir la pension',
-    servicePensionImageUrl: '',
-    serviceTrainingTitle: 'Dressage et Éducation',
-    serviceTrainingText: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
-    serviceTrainingButton: 'Programmes de dressage',
-    serviceTrainingImageUrl: '',
-    serviceBreedingTitle: 'Élevage de Sélection',
-    serviceBreedingText: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
-    serviceBreedingButton: 'Nos portées actuelles',
-    serviceBreedingImageUrl: '',
-    service1Title: 'Pension Canine',
-    service1Text: 'Accueil structuré, cadre propre, suivi quotidien et respect du rythme de chaque chien.',
-    service2Title: 'Dressage et Éducation',
-    service2Text: 'Travail progressif, conduite, obéissance, préparation terrain et accompagnement du binôme.',
-    service3Title: 'Élevage de Sélection',
-    service3Text: 'Sélection des reproducteurs, suivi sanitaire, portées raisonnées et accompagnement durable.',
-    strengthsTitle: 'Pourquoi nous choisir',
-    strengthsKicker: 'Engagements',
-    strengths: 'Expérience & Expertise\nQualité & Bien-être\nNutrition & Santé',
-    contactPanelTitle: 'Contact direct',
-    contactPanelText: 'Un élevage sérieux transmet une lignée, une méthode et un suivi.',
-    footerText: 'Élevage canin familial.',
-    openingHours: '',
-    introTitle: 'Une sélection lisible, suivie et assumée',
-    introText: 'Nous privilégions une sélection cohérente : santé, tempérament, aptitude naturelle, équilibre familial et accompagnement durable des adoptants.',
-    showIntro: true,
-    showPuppies: true,
-    showLitters: true,
-    showDogs: true,
-    showServices: true,
-    showGallery: true,
-    showContact: true,
-    showStrengths: true,
-    servicesEnabled: true,
-    newsEnabled: true,
-    strengthsEnabled: true,
-    galleryEnabled: true,
-    contactEnabled: true,
-    gallery: [],
-    litterGallery: {},
-  };
-}
-
-function mergeWebsiteSettings(settings) {
-  return { ...defaultWebsiteSettings(), ...(settings || {}) };
-}
-
 function groupByBreed(items) {
   return items.reduce((groups, item) => {
     const breed = item.breed || item.mother_breed || 'Race non renseignée';
@@ -90,40 +21,6 @@ function groupByBreed(items) {
     groups[breed].push(item);
     return groups;
   }, {});
-}
-
-function buildServices(settings) {
-  const services = [
-    {
-      key: 'pension',
-      enabled: settings.servicePensionEnabled,
-      title: settings.servicePensionTitle,
-      text: settings.servicePensionText,
-      button: settings.servicePensionButton,
-      imageUrl: settings.servicePensionImageUrl,
-      anchor: '#contact',
-    },
-    {
-      key: 'training',
-      enabled: settings.serviceTrainingEnabled,
-      title: settings.serviceTrainingTitle,
-      text: settings.serviceTrainingText,
-      button: settings.serviceTrainingButton,
-      imageUrl: settings.serviceTrainingImageUrl,
-      anchor: '#contact',
-    },
-    {
-      key: 'breeding',
-      enabled: settings.serviceBreedingEnabled,
-      title: settings.serviceBreedingTitle,
-      text: settings.serviceBreedingText,
-      button: settings.serviceBreedingButton,
-      imageUrl: settings.serviceBreedingImageUrl,
-      anchor: '#selection',
-    },
-  ];
-
-  return services.filter((service) => service.enabled !== false && (service.title || service.text));
 }
 
 async function ensureWebsiteSchema() {
@@ -191,8 +88,8 @@ async function renderPublic(req, res) {
       `
         SELECT p.*, l.birth_date, mother.name AS mother_name, mother.breed AS mother_breed
         FROM puppies p
-        LEFT JOIN litters l ON p.litter_id = l.id
-        LEFT JOIN dogs mother ON l.mother_id = mother.id
+        LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
+        LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = p.breeder_id
         WHERE p.breeder_id = $1
           AND COALESCE(lower(p.status), '') IN ('disponible', 'actif', 'active', 'réservé', 'reserve', 'reservé')
         ORDER BY mother.breed ASC NULLS LAST, l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
@@ -205,7 +102,7 @@ async function renderPublic(req, res) {
       `
         SELECT l.*, mother.name AS mother_name, mother.breed AS mother_breed
         FROM litters l
-        LEFT JOIN dogs mother ON l.mother_id = mother.id
+        LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = l.breeder_id
         WHERE l.breeder_id = $1
           AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage', 'née', 'nee')
         ORDER BY mother.breed ASC NULLS LAST, l.birth_date DESC NULLS LAST

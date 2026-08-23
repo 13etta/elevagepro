@@ -3,6 +3,7 @@
 :root {
   --forest-primary: #29422c;
   --forest-secondary: #bda66f;
+  --forest-accent: #f4efe2;
   --forest-bg: #f6f1e8;
   --forest-text: #24301f;
   --forest-cream: #f7f2e6;
@@ -41,6 +42,7 @@ body.domain-forest-site {
   line-height: 1;
   font-weight: 600;
 }
+.forest-site-slogan { display: block; max-width: 280px; font-size: 11px; color: var(--forest-muted); }
 
 .forest-hero {
   min-height: 430px;
@@ -122,6 +124,9 @@ body.domain-forest-site {
   margin: 0 auto;
   padding: 38px 24px 20px;
 }
+.forest-intro > p { max-width: 880px; margin: 0 auto; text-align: center; font-size: 18px; line-height: 1.8; color: var(--forest-muted); }
+.forest-services > .forest-section-title { padding: 0 7vw 30px; }
+.forest-empty-state { width: 100%; padding: 28px; border: 1px dashed color-mix(in srgb, var(--forest-primary) 30%, transparent); border-radius: 16px; text-align: center; color: var(--forest-muted); background: var(--forest-accent); }
 .forest-service {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -252,6 +257,7 @@ body.domain-forest-site {
   text-align: center;
 }
 .forest-strengths h2 { color: #fff; margin-bottom: 34px; }
+.forest-strengths-kicker { display: block; margin-bottom: 8px; color: rgba(255,255,255,.78); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .forest-strengths > div {
   width: min(100%, 1050px);
   margin: 0 auto;
@@ -331,6 +337,7 @@ body.domain-forest-site {
   color: rgba(255,255,255,.84);
   line-height: 1.7;
 }
+.forest-contact-copy { font-size: 18px; line-height: 1.65; }
 .forest-contact-details a { color: inherit; }
 
 .forest-footer {
@@ -343,6 +350,18 @@ body.domain-forest-site {
   color: rgba(255,255,255,.72);
 }
 .forest-footer strong { color: #fff; }
+.forest-footer p { margin: 0; color: rgba(255,255,255,.72); }
+
+.template-minimal .forest-service,
+.template-minimal .forest-animal-card,
+.template-minimal .forest-puppy-card,
+.template-minimal .forest-litter-card { border-radius: 4px; box-shadow: none; }
+.template-luxury .forest-header,
+.template-luxury .forest-section,
+.template-luxury .forest-services { background: var(--forest-bg); }
+.template-breeder .forest-animal-grid,
+.template-breeder .forest-puppy-grid,
+.template-breeder .forest-litter-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 
 @media (max-width: 900px) {
   .forest-service,
