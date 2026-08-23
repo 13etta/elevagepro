@@ -5,6 +5,7 @@ const {
   extractPedigree,
   researchPedigree,
 } = require('../services/selection/openai-selection.service');
+const { loadValidatedAnalyses } = require('./selection-virtual-litter.controller');
 
 function clean(value, maxLength = 500) {
   return String(value || '').trim().slice(0, maxLength);
@@ -67,18 +68,36 @@ function pedigreeFromForm(body) {
 exports.index = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
-    const result = await pool.query(
-      `SELECT id, subject_name, source_filename, status, coi_percent, completeness, created_at
-       FROM selection_analyses
-       WHERE breeder_id = $1
-       ORDER BY created_at DESC
-       LIMIT 30`,
-      [breederId],
-    );
+    const [result, validatedAnalyses, virtualLitterResult] = await Promise.all([
+      pool.query(
+        `SELECT id, subject_name, source_filename, status, coi_percent, completeness, created_at
+         FROM selection_analyses
+         WHERE breeder_id = $1
+         ORDER BY created_at DESC
+         LIMIT 30`,
+        [breederId],
+      ),
+      loadValidatedAnalyses(breederId),
+      pool.query(
+        `SELECT vl.id, vl.name, vl.coi_percent, vl.common_ancestors, vl.created_at,
+                sire.subject_name AS sire_name, dam.subject_name AS dam_name
+         FROM selection_virtual_litters vl
+         INNER JOIN selection_analyses sire
+           ON sire.id = vl.sire_analysis_id AND sire.breeder_id = vl.breeder_id
+         INNER JOIN selection_analyses dam
+           ON dam.id = vl.dam_analysis_id AND dam.breeder_id = vl.breeder_id
+         WHERE vl.breeder_id = $1
+         ORDER BY vl.created_at DESC
+         LIMIT 20`,
+        [breederId],
+      ),
+    ]);
 
     return res.render('selection-agent/index', {
       title: 'Sélection IA',
       analyses: result.rows,
+      validatedAnalyses,
+      virtualLitters: virtualLitterResult.rows,
       aiConfigured: Boolean(String(process.env.OPENAI_API_KEY || '').trim()),
     });
   } catch (error) {
@@ -141,11 +160,15 @@ exports.show = async (req, res) => {
     if (!analysis) return res.status(404).render('errors/404', { title: 'Dossier introuvable' });
 
     const displayedPedigree = analysis.validated_pedigree || analysis.extraction;
+    const target = displayedPedigree?.individuals?.find(
+      (individual) => individual.node_id === displayedPedigree.target_id,
+    ) || null;
     return res.render('selection-agent/show', {
       title: `${analysis.subject_name || 'Pedigree'} · Sélection IA`,
       analysis,
       pedigree: displayedPedigree,
       individuals: displayedPedigree?.individuals || [],
+      target,
       warnings: analysis.extraction?.warnings || [],
     });
   } catch (error) {

@@ -139,6 +139,12 @@ function calculateCoi(rawPedigree) {
   const target = byId.get(pedigree.target_id);
   const missingTargetParents = [target.sire_id, target.dam_id].filter((id) => !id || !byId.has(id));
   const completeness = calculateCompleteness(pedigree);
+  const individualCoi = Object.fromEntries(
+    ordered.map((individual) => [
+      individual.node_id,
+      Math.max(0, get(individual.node_id, individual.node_id) - 1),
+    ]),
+  );
 
   return {
     coefficient,
@@ -147,6 +153,7 @@ function calculateCoi(rawPedigree) {
     target_id: pedigree.target_id,
     is_partial: missingTargetParents.length > 0 || completeness.percent < 100,
     completeness,
+    individual_coi: individualCoi,
     pedigree,
   };
 }

@@ -1,0 +1,147 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container selection-agent-page">
+  <section class="page-hero selection-agent-hero virtual-litter-hero">
+    <div>
+      <a class="selection-back" href="/selection-agent"><span class="material-symbols-outlined">arrow_back</span> Sélection IA</a>
+      <p class="eyebrow">Simulation génétique</p>
+      <h1>Nouvelle portée virtuelle</h1>
+      <p>Associez un mâle et une femelle dont les pedigrees ont été contrôlés, confirmez les ancêtres communs puis calculez le COI prévisionnel.</p>
+    </div>
+    <span class="selection-agent-seal"><span class="material-symbols-outlined">family_history</span>Mariage étudié</span>
+  </section>
+
+  <section class="card virtual-pair-card">
+    <div class="section-title compact">
+      <span class="section-kicker">Reproducteurs</span>
+      <h2>Choisir les deux pedigrees</h2>
+      <p>Seuls les dossiers déjà validés sont proposés. Les pedigrees officiels restent inchangés.</p>
+    </div>
+
+    <form action="/selection-agent/virtual-litters/new" method="GET" class="virtual-pair-picker">
+      <div class="virtual-parent-field sire">
+        <span class="material-symbols-outlined">male</span>
+        <div class="form-group">
+          <label for="sire_id">Mâle</label>
+          <select id="sire_id" name="sire_id" required onchange="this.form.submit()">
+            <option value="">Sélectionner le pedigree du mâle</option>
+            <% analyses.filter((item) => item.target_sex !== 'F').forEach((item) => { %>
+              <option value="<%= item.id %>" <%= selectedSireId === item.id ? 'selected' : '' %>><%= item.subject_name %><%= item.registration_number ? ' · ' + item.registration_number : '' %><%= item.target_sex === 'U' ? ' · sexe à confirmer' : '' %></option>
+            <% }) %>
+          </select>
+          <% if (sire) { %><small>COI individuel : <%= Number(sire.coi_percent || 0).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</small><% } %>
+        </div>
+      </div>
+
+      <span class="virtual-cross">×</span>
+
+      <div class="virtual-parent-field dam">
+        <span class="material-symbols-outlined">female</span>
+        <div class="form-group">
+          <label for="dam_id">Femelle</label>
+          <select id="dam_id" name="dam_id" required onchange="this.form.submit()">
+            <option value="">Sélectionner le pedigree de la femelle</option>
+            <% analyses.filter((item) => item.target_sex !== 'M').forEach((item) => { %>
+              <option value="<%= item.id %>" <%= selectedDamId === item.id ? 'selected' : '' %>><%= item.subject_name %><%= item.registration_number ? ' · ' + item.registration_number : '' %><%= item.target_sex === 'U' ? ' · sexe à confirmer' : '' %></option>
+            <% }) %>
+          </select>
+          <% if (dam) { %><small>COI individuel : <%= Number(dam.coi_percent || 0).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</small><% } %>
+        </div>
+      </div>
+      <noscript><button class="btn btn-secondary" type="submit">Préparer la simulation</button></noscript>
+    </form>
+
+    <% if (!analyses.some((item) => item.target_sex === 'F')) { %>
+      <div class="selection-alert selection-alert-warning">
+        <span class="material-symbols-outlined">upload_file</span>
+        <div><strong>Aucun pedigree femelle validé</strong><p>Importez le PDF de la femelle dans Sélection IA, contrôlez son ascendance puis revenez créer la portée virtuelle.</p><a class="btn btn-secondary" href="/selection-agent#pedigree">Importer le pedigree de la femelle</a></div>
+      </div>
+    <% } %>
+  </section>
+
+  <% if (sire && dam && sire.id === dam.id) { %>
+    <section class="selection-alert selection-alert-danger"><span class="material-symbols-outlined">error</span><div><strong>Dossiers identiques</strong><p>Sélectionnez deux reproducteurs distincts.</p></div></section>
+  <% } %>
+
+  <% if (sire && dam && sire.id !== dam.id && preview) { %>
+    <form action="/selection-agent/virtual-litters" method="POST" class="virtual-litter-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="sire_id" value="<%= sire.id %>">
+      <input type="hidden" name="dam_id" value="<%= dam.id %>">
+
+      <section class="selection-metrics virtual-preview-metrics">
+        <article><small>COI prévisionnel initial</small><strong><%= Number(preview.coi_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</strong><span>Calculé avec les correspondances LOF fortes cochées ci-dessous</span></article>
+        <article><small>Ancêtres communs proposés</small><strong><%= candidates.length %></strong><span><%= candidates.filter((candidate) => candidate.match_type === 'registration').length %> par numéro · <%= candidates.filter((candidate) => candidate.match_type === 'name_exact').length %> par nom</span></article>
+        <article><small>Ascendants réunis</small><strong><%= preview.offspring_pedigree.individuals.length - 1 %></strong><span>Mâle et femelle réunis dans le pedigree virtuel</span></article>
+      </section>
+
+      <section class="card virtual-common-card">
+        <div class="section-title compact">
+          <span class="section-kicker">Rapprochement des lignées</span>
+          <h2>Confirmer les ancêtres communs</h2>
+          <p>Un numéro d’inscription identique est précoché. Un rapprochement fondé seulement sur le nom reste décoché jusqu’à votre confirmation.</p>
+        </div>
+
+        <% if (!candidates.length) { %>
+          <div class="selection-alert"><span class="material-symbols-outlined">account_tree_off</span><div><strong>Aucun ancêtre commun détecté</strong><p>Le COI ressort à 0 % sur les générations connues. Cela ne prouve pas une absence de parenté au-delà du pedigree fourni.</p></div></div>
+        <% } else { %>
+          <div class="virtual-match-list">
+            <% candidates.forEach((candidate) => { %>
+              <label class="virtual-match-row <%= candidate.ambiguous ? 'ambiguous' : '' %>">
+                <input type="checkbox" name="match_pair" value="<%= candidate.token %>" <%= candidate.default_confirmed ? 'checked' : '' %>>
+                <span class="material-symbols-outlined"><%= candidate.match_type === 'registration' ? 'verified' : 'person_search' %></span>
+                <span class="virtual-match-identity">
+                  <strong><%= candidate.name %></strong>
+                  <small>Branche mâle : <%= candidate.sire_registration_number || 'numéro [À COMPLÉTER]' %> · branche femelle : <%= candidate.dam_registration_number || 'numéro [À COMPLÉTER]' %></small>
+                </span>
+                <span class="selection-status <%= candidate.match_type === 'registration' ? 'status-validated' : 'status-review_required' %>"><%= candidate.match_type === 'registration' ? 'Numéro concordant' : 'Nom seul à confirmer' %></span>
+                <% if (candidate.ambiguous) { %><small class="virtual-ambiguous">Correspondance ambiguë : vérification obligatoire</small><% } %>
+              </label>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <div class="virtual-manual-matches">
+          <div class="section-title compact">
+            <span class="section-kicker">Correction opérateur</span>
+            <h3>Ajouter une correspondance non détectée</h3>
+            <p>À utiliser si le même ancêtre est écrit différemment dans les deux pedigrees. Chaque rapprochement manuel engage le calcul.</p>
+          </div>
+          <% [0, 1, 2].forEach((rowIndex) => { %>
+            <div class="virtual-manual-row">
+              <div class="form-group">
+                <label>Ascendant côté mâle</label>
+                <select name="manual_sire_node_id">
+                  <option value="">Aucun</option>
+                  <% sireAncestors.forEach((individual) => { %><option value="<%= individual.node_id %>"><%= individual.name %> · <%= individual.registration_number || 'numéro [À COMPLÉTER]' %></option><% }) %>
+                </select>
+              </div>
+              <span class="material-symbols-outlined">link</span>
+              <div class="form-group">
+                <label>Le même ascendant côté femelle</label>
+                <select name="manual_dam_node_id">
+                  <option value="">Aucun</option>
+                  <% damAncestors.forEach((individual) => { %><option value="<%= individual.node_id %>"><%= individual.name %> · <%= individual.registration_number || 'numéro [À COMPLÉTER]' %></option><% }) %>
+                </select>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+
+      <section class="card virtual-confirm-card">
+        <div class="form-group">
+          <label for="name">Nom du projet de mariage</label>
+          <input id="name" name="name" type="text" maxlength="220" value="<%= sire.subject_name %> × <%= dam.subject_name %>">
+        </div>
+        <div class="selection-consent">
+          <label><input type="checkbox" name="operator_confirmation" value="yes" required> J’ai contrôlé les deux reproducteurs et chaque rapprochement d’ancêtre coché. J’autorise le calcul de cette portée virtuelle.</label>
+          <button class="btn btn-primary" type="submit"><span class="material-symbols-outlined">calculate</span>Créer la portée et calculer le COI</button>
+        </div>
+      </section>
+    </form>
+  <% } %>
+</main>
+
+<%- include('../partials/foot') %>

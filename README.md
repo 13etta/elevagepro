@@ -39,6 +39,12 @@ et n'est pas enregistré dans le répertoire public. L'application conserve son 
 le COI et les recherches sourcées. Une mention trouvée sur le web reste « à
 valider » et ne modifie jamais un pedigree, un résultat ou une cotation officiels.
 
+Deux pedigrees validés peuvent ensuite être réunis dans une **portée virtuelle**.
+Le rapprochement des ancêtres utilise d'abord le numéro d'inscription ; une
+correspondance fondée uniquement sur le nom exige une confirmation de
+l'opérateur. Le moteur calcule le COI prévisionnel, les chemins de parenté et la
+contribution de chaque ancêtre commun sans nouvel appel à l'API OpenAI.
+
 ## Modules disponibles (lot 1)
 - Auth (login/register/logout)
 - Dashboard protégé

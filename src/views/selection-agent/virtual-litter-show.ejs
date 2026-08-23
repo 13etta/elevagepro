@@ -1,0 +1,76 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container selection-agent-page">
+  <section class="page-hero selection-agent-hero virtual-litter-hero">
+    <div>
+      <a class="selection-back" href="/selection-agent"><span class="material-symbols-outlined">arrow_back</span> Sélection IA</a>
+      <p class="eyebrow">Portée virtuelle</p>
+      <h1><%= litter.name %></h1>
+      <p><%= litter.sire_name %> × <%= litter.dam_name %> · calcul du <%= formatDate(litter.created_at) %></p>
+    </div>
+    <a class="btn btn-secondary" href="/selection-agent/virtual-litters/new?sire_id=<%= litter.sire_analysis_id %>&dam_id=<%= litter.dam_analysis_id %>">Recalculer ce mariage</a>
+  </section>
+
+  <section class="selection-metrics virtual-result-metrics">
+    <article class="virtual-coi-main"><small>COI prévisionnel de la portée</small><strong><%= Number(litter.coi_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</strong><span><%= litter.coi_method %></span></article>
+    <article><small>Ancêtres communs confirmés</small><strong><%= commonAncestors.length %></strong><span><%= Number(litter.explained_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> points de COI détaillés</span></article>
+    <article><small>Complétude des sources</small><strong><%= litter.completeness?.is_partial ? 'Partielle' : 'Contrôlée' %></strong><span>Calcul limité aux générations présentes dans les deux pedigrees</span></article>
+  </section>
+
+  <section class="virtual-parent-summary">
+    <a href="/selection-agent/<%= litter.sire_analysis_id %>"><span class="material-symbols-outlined">male</span><span><small>Mâle</small><strong><%= litter.sire_name %></strong></span><span class="material-symbols-outlined">open_in_new</span></a>
+    <span class="virtual-cross">×</span>
+    <a href="/selection-agent/<%= litter.dam_analysis_id %>"><span class="material-symbols-outlined">female</span><span><small>Femelle</small><strong><%= litter.dam_name %></strong></span><span class="material-symbols-outlined">open_in_new</span></a>
+  </section>
+
+  <% if (warnings.length) { %>
+    <section class="selection-alert selection-alert-warning"><span class="material-symbols-outlined">warning</span><div><strong>Limites à conserver avec le résultat</strong><ul><% warnings.forEach((warning) => { %><li><%= warning %></li><% }) %></ul></div></section>
+  <% } %>
+
+  <section class="card virtual-ancestor-results">
+    <div class="section-title compact">
+      <span class="section-kicker">Décomposition du coefficient</span>
+      <h2>Ancêtres communs et chemins de parenté</h2>
+      <p>La contribution suit la formule des chemins de Wright : ½<sup>n mâle + n femelle + 1</sup> × (1 + F de l’ancêtre).</p>
+    </div>
+
+    <% if (!commonAncestors.length) { %>
+      <div class="selection-alert"><span class="material-symbols-outlined">account_tree_off</span><div><strong>Aucun ancêtre commun confirmé</strong><p>COI de 0 % sur l’ascendance connue. Une parenté plus ancienne peut rester invisible si les générations sont incomplètes.</p></div></div>
+    <% } else { %>
+      <div class="selection-pedigree-table-wrap">
+        <table class="virtual-ancestor-table">
+          <thead><tr><th>Ancêtre commun</th><th>Branche mâle</th><th>Branche femelle</th><th>F ancêtre</th><th>Contribution COI</th><th>Chemins</th></tr></thead>
+          <tbody>
+            <% commonAncestors.forEach((ancestor) => { %>
+              <tr>
+                <td><strong><%= ancestor.name %></strong><small><%= ancestor.registration_number || 'Numéro [À COMPLÉTER]' %></small><span class="selection-status <%= ancestor.match_type === 'registration' ? 'status-validated' : 'status-review_required' %>"><%= ancestor.match_type === 'registration' ? 'Numéro concordant' : ancestor.match_type === 'operator_manual' ? 'Rapprochement opérateur' : 'Nom confirmé' %></span></td>
+                <td><strong>Génération <%= ancestor.sire_depth %></strong><small><%= ancestor.sire_path_count %> chemin<%= ancestor.sire_path_count > 1 ? 's' : '' %></small></td>
+                <td><strong>Génération <%= ancestor.dam_depth %></strong><small><%= ancestor.dam_path_count %> chemin<%= ancestor.dam_path_count > 1 ? 's' : '' %></small></td>
+                <td><%= Number(ancestor.ancestor_coi_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</td>
+                <td class="virtual-contribution"><strong><%= Number(ancestor.contribution_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</strong></td>
+                <td>
+                  <details>
+                    <summary><%= ancestor.valid_path_pairs %> combinaison<%= ancestor.valid_path_pairs > 1 ? 's' : '' %></summary>
+                    <div class="virtual-path-list">
+                      <% (ancestor.path_details || []).forEach((path) => { %>
+                        <div><b>Mâle :</b> <%= path.sire_path.join(' → ') %><br><b>Femelle :</b> <%= path.dam_path.join(' → ') %><br><small>Contribution : <%= Number(path.contribution_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</small></div>
+                      <% }) %>
+                    </div>
+                  </details>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="selection-alert virtual-method-note">
+    <span class="material-symbols-outlined">science</span>
+    <div><strong>Interprétation cynophile</strong><p>Ce COI est prévisionnel et dépend entièrement des ascendants connus et des identités communes confirmées. Il doit être rapproché de la santé, du type, du style, du nez, de la quête, de l’arrêt, du coulé, du patron, de la sagesse, des résultats et de la transmission observée avant toute décision de sélection.</p></div>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>

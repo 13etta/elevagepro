@@ -19,7 +19,7 @@
   </section>
 
   <section class="dashboard-columns selection-upload-grid">
-    <article class="card selection-upload-card">
+    <article class="card selection-upload-card" id="pedigree">
       <div class="section-title compact">
         <span class="section-kicker">Nouveau dossier</span>
         <h2>Analyser un pedigree</h2>
@@ -56,6 +56,58 @@
       </ul>
     </article>
   </section>
+
+  <section class="card virtual-dashboard-card">
+    <div class="section-title compact">
+      <span class="section-kicker">Mariage mâle × femelle</span>
+      <h2>Créer une portée virtuelle</h2>
+      <p>Réunissez deux pedigrees validés pour calculer le COI prévisionnel et identifier précisément les ancêtres communs.</p>
+    </div>
+
+    <form action="/selection-agent/virtual-litters/new" method="GET" class="virtual-dashboard-form">
+      <div class="form-group">
+        <label for="dashboard_sire_id">Mâle</label>
+        <select id="dashboard_sire_id" name="sire_id" required>
+          <option value="">Sélectionner un mâle validé</option>
+          <% validatedAnalyses.filter((item) => item.target_sex !== 'F').forEach((item) => { %>
+            <option value="<%= item.id %>"><%= item.subject_name %><%= item.registration_number ? ' · ' + item.registration_number : '' %></option>
+          <% }) %>
+        </select>
+      </div>
+      <span class="virtual-cross">×</span>
+      <div class="form-group">
+        <label for="dashboard_dam_id">Femelle</label>
+        <select id="dashboard_dam_id" name="dam_id" required>
+          <option value="">Sélectionner une femelle validée</option>
+          <% validatedAnalyses.filter((item) => item.target_sex !== 'M').forEach((item) => { %>
+            <option value="<%= item.id %>"><%= item.subject_name %><%= item.registration_number ? ' · ' + item.registration_number : '' %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit"><span class="material-symbols-outlined">family_history</span>Étudier le mariage</button>
+    </form>
+
+    <% if (validatedAnalyses.length < 2) { %>
+      <div class="selection-alert selection-alert-warning"><span class="material-symbols-outlined">info</span><div><strong>Deux pedigrees validés sont nécessaires</strong><p>Importez notamment le PDF de la femelle, contrôlez-le puis revenez dans cette section.</p></div></div>
+    <% } %>
+  </section>
+
+  <% if (virtualLitters.length) { %>
+    <section class="table-block">
+      <div class="section-title compact"><span class="section-kicker">Historique des mariages</span><h2>Portées virtuelles calculées</h2></div>
+      <div class="selection-analysis-list">
+        <% virtualLitters.forEach((litter) => { %>
+          <a class="selection-analysis-row virtual-history-row" href="/selection-agent/virtual-litters/<%= litter.id %>">
+            <span class="material-symbols-outlined">family_history</span>
+            <span class="selection-analysis-main"><strong><%= litter.name %></strong><small><%= litter.sire_name %> × <%= litter.dam_name %> · <%= formatDate(litter.created_at) %></small></span>
+            <span class="selection-status status-researched"><%= (litter.common_ancestors || []).length %> ancêtre<%= (litter.common_ancestors || []).length > 1 ? 's' : '' %> commun<%= (litter.common_ancestors || []).length > 1 ? 's' : '' %></span>
+            <span class="selection-coi"><small>COI portée</small><strong><%= Number(litter.coi_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) %> %</strong></span>
+            <span class="material-symbols-outlined">chevron_right</span>
+          </a>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
 
   <section class="table-block">
     <div class="section-title compact">
