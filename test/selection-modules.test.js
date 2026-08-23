@@ -21,12 +21,16 @@ function loadModules(flag) {
   return config;
 }
 
-test('la partie Sélection est absente du menu par défaut', () => {
+test('le nouvel agent IA remplace seul les anciens modules de sélection par défaut', () => {
   const config = loadModules(undefined);
 
   assert.equal(config.selectionModulesEnabled, false);
-  assert.equal(config.moduleGroups.some((group) => group.key === 'selection'), false);
-  assert.equal(config.modules.some((module) => module.group === 'selection'), false);
+  assert.equal(config.aiSelectionAgentEnabled, true);
+  assert.equal(config.moduleGroups.some((group) => group.key === 'selection'), true);
+  assert.deepEqual(
+    config.modules.filter((module) => module.group === 'selection').map((module) => module.key),
+    ['selectionAgent'],
+  );
 });
 
 test('la partie Sélection reste réactivable explicitement', () => {
@@ -37,7 +41,7 @@ test('la partie Sélection reste réactivable explicitement', () => {
     .sort();
 
   assert.equal(config.selectionModulesEnabled, true);
-  assert.deepEqual(selectionKeys, ['cynognostic', 'genetics', 'strategy']);
+  assert.deepEqual(selectionKeys, ['cynognostic', 'genetics', 'selectionAgent', 'strategy']);
 });
 
 test('les routes Sélection sont montées uniquement derrière le réglage dédié', () => {
