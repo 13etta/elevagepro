@@ -46,6 +46,7 @@ async function runMigrations() {
     '019_cynognostic_core.sql',
     '020_calendar_events.sql',
     '021_calendar_fk_indexes.sql',
+    '022_ai_selection_agent.sql',
   ];
 
   console.log('Démarrage des migrations...');

@@ -6,7 +6,12 @@ const connectPgSimple = require('connect-pg-simple');
 const db = require('./db');
 const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
-const { modules, moduleGroups, selectionModulesEnabled } = require('./config/modules');
+const {
+  modules,
+  moduleGroups,
+  selectionModulesEnabled,
+  aiSelectionAgentEnabled,
+} = require('./config/modules');
 const { formatDateFr, dateInputValue } = require('./utils/dates');
 
 const authRoutes = require('./routes/auth.routes');
@@ -158,6 +163,10 @@ app.use('/structure', structureRoutes);
 app.use('/calendar', calendarRoutes);
 app.use('/reproduction', require('./routes/reproduction.routes'));
 app.use('/settings', require('./routes/settings.routes'));
+
+if (aiSelectionAgentEnabled) {
+  app.use('/selection-agent', require('./routes/selection-agent.routes'));
+}
 
 if (selectionModulesEnabled) {
   app.use('/genetics', require('./routes/genetics.routes'));

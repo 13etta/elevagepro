@@ -3,6 +3,7 @@ services:
     name: elevage-pro
     env: docker
     plan: starter
+    preDeployCommand: npm run db:migrate
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,6 +15,12 @@ services:
         value: "true"
       - key: SESSION_SECRET
         generateValue: true
+      - key: ENABLE_AI_SELECTION_AGENT
+        value: "true"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_SELECTION_MODEL
+        value: gpt-5-mini
 
 databases:
   - name: elevage-pro-db

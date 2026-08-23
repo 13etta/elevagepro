@@ -18,6 +18,27 @@ Socle ERP d'élevage canin professionnel.
    npm start
    ```
 
+## Agent de sélection IA
+
+Le module `Sélection IA` lit un pedigree PDF, présente la transcription à
+l'opérateur, puis calcule le coefficient de consanguinité uniquement après sa
+validation. Le COI utilise une matrice de parenté additive (méthode tabulaire de
+Wright) : il n'est pas produit par le modèle de langage.
+
+Variables privées nécessaires :
+
+```text
+ENABLE_AI_SELECTION_AGENT=true
+OPENAI_API_KEY=<cle-api-privee>
+OPENAI_RESPONSES_URL=https://api.openai.com/v1/responses
+OPENAI_SELECTION_MODEL=gpt-5-mini
+```
+
+Le PDF brut est traité en mémoire, transmis à l'API OpenAI avec `store: false`,
+et n'est pas enregistré dans le répertoire public. L'application conserve son empreinte SHA-256, la transcription validée,
+le COI et les recherches sourcées. Une mention trouvée sur le web reste « à
+valider » et ne modifie jamais un pedigree, un résultat ou une cotation officiels.
+
 ## Modules disponibles (lot 1)
 - Auth (login/register/logout)
 - Dashboard protégé

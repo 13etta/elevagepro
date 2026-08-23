@@ -1,0 +1,145 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container selection-agent-page">
+  <section class="page-hero selection-agent-hero">
+    <div>
+      <a class="selection-back" href="/selection-agent"><span class="material-symbols-outlined">arrow_back</span> Tous les dossiers</a>
+      <p class="eyebrow">Dossier de lignée</p>
+      <h1><%= analysis.subject_name || '[À COMPLÉTER]' %></h1>
+      <p><%= analysis.source_filename %> · extraction <%= analysis.extraction_model || 'modèle [À COMPLÉTER]' %></p>
+    </div>
+    <span class="selection-status status-<%= analysis.status %>"><%= analysis.status === 'review_required' ? 'Contrôle obligatoire' : analysis.status === 'validated' ? 'Pedigree validé' : analysis.status === 'researched' ? 'Recherche effectuée' : 'Erreur' %></span>
+  </section>
+
+  <section class="selection-metrics">
+    <article><small>COI calculé</small><strong><%= analysis.coi_percent === null ? 'En attente' : Number(analysis.coi_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) + ' %' %></strong><span><%= analysis.coi_method || 'Validation du pedigree requise' %></span></article>
+    <article><small>Complétude connue</small><strong><%= analysis.completeness ? analysis.completeness.percent + ' %' : '—' %></strong><span><%= analysis.completeness ? analysis.completeness.known_ancestors + ' liens connus sur ' + analysis.completeness.expected_ancestors : 'Non calculée' %></span></article>
+    <article><small>Individus extraits</small><strong><%= individuals.length %></strong><span><%= analysis.completeness?.is_partial ? 'Calcul partiel : ascendance incomplète' : 'À confirmer par l’opérateur' %></span></article>
+  </section>
+
+  <% if (warnings.length) { %>
+    <section class="selection-alert selection-alert-warning">
+      <span class="material-symbols-outlined">warning</span>
+      <div><strong>Points à contrôler dans le PDF</strong><ul><% warnings.forEach((warning) => { %><li><%= warning %></li><% }) %></ul></div>
+    </section>
+  <% } %>
+
+  <section class="card selection-review-card">
+    <div class="section-title compact">
+      <span class="section-kicker"><%= analysis.validated_pedigree ? 'Pedigree validé' : 'Contrôle obligatoire' %></span>
+      <h2>Ascendance et liens de parenté</h2>
+      <p>Comparez chaque ligne au PDF. Corrigez l’identité, le sexe et surtout les liens père/mère. Un ancêtre répété doit être référencé par la même ligne.</p>
+    </div>
+
+    <form action="/selection-agent/<%= analysis.id %>/validate" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group selection-target-field">
+        <label for="target_id">Chien sujet du pedigree</label>
+        <select id="target_id" name="target_id" required>
+          <% individuals.forEach((individual) => { %>
+            <option value="<%= individual.node_id %>" <%= pedigree.target_id === individual.node_id ? 'selected' : '' %>><%= individual.name %> · <%= individual.registration_number || 'numéro [À COMPLÉTER]' %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="selection-pedigree-table-wrap">
+        <table class="selection-pedigree-table">
+          <thead><tr><th>Gén.</th><th>Identité</th><th>Sexe</th><th>Père</th><th>Mère</th><th>Lecture IA</th></tr></thead>
+          <tbody>
+            <% individuals.forEach((individual, index) => { %>
+              <% const extracted = (analysis.extraction?.individuals || []).find((item) => item.node_id === individual.node_id) || {}; %>
+              <tr>
+                <td>
+                  <input type="hidden" name="node_id" value="<%= individual.node_id %>">
+                  <input class="selection-generation" type="number" name="generation" min="0" max="12" value="<%= individual.generation ?? 0 %>" aria-label="Génération">
+                  <small class="selection-node-id"><%= individual.node_id %></small>
+                </td>
+                <td>
+                  <input type="text" name="name" value="<%= individual.name %>" maxlength="180" required aria-label="Nom du chien">
+                  <input type="text" name="registration_number" value="<%= individual.registration_number || '' %>" maxlength="120" placeholder="LOF / inscription [À COMPLÉTER]" aria-label="Numéro d'inscription">
+                </td>
+                <td>
+                  <select name="sex" aria-label="Sexe">
+                    <option value="U" <%= individual.sex === 'U' ? 'selected' : '' %>>?</option>
+                    <option value="M" <%= individual.sex === 'M' ? 'selected' : '' %>>M</option>
+                    <option value="F" <%= individual.sex === 'F' ? 'selected' : '' %>>F</option>
+                  </select>
+                </td>
+                <td>
+                  <select name="sire_id" aria-label="Père">
+                    <option value="">[À COMPLÉTER]</option>
+                    <% individuals.filter((parent) => parent.node_id !== individual.node_id).forEach((parent) => { %>
+                      <option value="<%= parent.node_id %>" <%= individual.sire_id === parent.node_id ? 'selected' : '' %>><%= parent.name %> · <%= parent.node_id %></option>
+                    <% }) %>
+                  </select>
+                </td>
+                <td>
+                  <select name="dam_id" aria-label="Mère">
+                    <option value="">[À COMPLÉTER]</option>
+                    <% individuals.filter((parent) => parent.node_id !== individual.node_id).forEach((parent) => { %>
+                      <option value="<%= parent.node_id %>" <%= individual.dam_id === parent.node_id ? 'selected' : '' %>><%= parent.name %> · <%= parent.node_id %></option>
+                    <% }) %>
+                  </select>
+                </td>
+                <td class="selection-confidence">
+                  <strong><%= extracted.confidence === null || extracted.confidence === undefined ? '—' : Math.round(extracted.confidence * 100) + ' %' %></strong>
+                  <small><%= extracted.page ? 'Page ' + extracted.page : 'Page [À COMPLÉTER]' %></small>
+                  <% if (extracted.evidence_text) { %><span title="<%= extracted.evidence_text %>"><%= extracted.evidence_text %></span><% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="selection-consent">
+        <label><input type="checkbox" name="operator_confirmation" value="yes" required> J’ai comparé cette transcription au pedigree fourni et j’autorise le calcul sur ces liens corrigés.</label>
+        <button class="btn btn-primary" type="submit"><%= analysis.validated_pedigree ? 'Revalider et recalculer le COI' : 'Valider et calculer le COI' %></button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card selection-research-card">
+    <div class="section-title compact">
+      <span class="section-kicker">Documentation cynophile</span>
+      <h2>Résultats, cotations et appréciations</h2>
+      <p>Recherche prioritaire sur LOF Select, CUNCA, Setter Club, setteranglais.com, pedigree.setter-anglais.fr, FCI et bases étrangères fiables.</p>
+    </div>
+
+    <% if (!analysis.validated_pedigree) { %>
+      <div class="selection-alert"><span class="material-symbols-outlined">lock</span><div><strong>Recherche verrouillée</strong><p>Validez le pedigree pour éviter toute recherche sur un homonyme ou une mauvaise branche.</p></div></div>
+    <% } else { %>
+      <form action="/selection-agent/<%= analysis.id %>/research" method="POST" class="selection-research-action">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <p>La recherche peut prendre plusieurs minutes. Les résultats sont des éléments documentaires à contrôler, pas des homologations automatiques.</p>
+        <button class="btn btn-primary" type="submit"><span class="material-symbols-outlined">travel_explore</span><%= analysis.research ? 'Actualiser la recherche sourcée' : 'Lancer la recherche sourcée' %></button>
+      </form>
+    <% } %>
+
+    <% if (analysis.research) { %>
+      <div class="selection-research-summary"><strong>Synthèse documentaire</strong><p><%= analysis.research.summary %></p></div>
+      <div class="selection-dog-results">
+        <% (analysis.research.dogs || []).forEach((dog) => { %>
+          <article>
+            <h3><%= dog.name %></h3>
+            <p><%= dog.analysis %></p>
+            <% if (!(dog.claims || []).length) { %><p class="muted">Aucune information suffisamment sourcée.</p><% } %>
+            <% (dog.claims || []).forEach((claim) => { %>
+              <div class="selection-claim">
+                <span class="selection-claim-category"><%= claim.category %></span>
+                <div><strong><%= claim.value %></strong><small><%= claim.source_name || 'Source [À COMPLÉTER]' %> · <%= claim.source_tier.replaceAll('_', ' ') %> · à valider</small></div>
+                <% if (claim.cited_by_search) { %><a href="<%= claim.source_url %>" target="_blank" rel="noopener noreferrer">Voir la source</a><% } else { %><span class="selection-unverified">URL non confirmée</span><% } %>
+              </div>
+            <% }) %>
+          </article>
+        <% }) %>
+      </div>
+      <% if ((analysis.research.missing_information || []).length) { %>
+        <div class="selection-missing"><strong>[À COMPLÉTER]</strong><ul><% analysis.research.missing_information.forEach((item) => { %><li><%= item %></li><% }) %></ul></div>
+      <% } %>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>

@@ -1,4 +1,5 @@
 const selectionModulesEnabled = process.env.ENABLE_SELECTION_MODULES === 'true';
+const aiSelectionAgentEnabled = process.env.ENABLE_AI_SELECTION_AGENT !== 'false';
 
 const allModuleGroups = [
   { key: 'pilotage', labelKey: 'groups.pilotage' },
@@ -140,6 +141,15 @@ const allModules = [
     accent: 'gold',
   },
   {
+    key: 'selectionAgent',
+    labelKey: 'nav.selectionAgent',
+    descriptionKey: 'modules.selectionAgent.description',
+    href: '/selection-agent',
+    icon: 'neurology',
+    group: 'selection',
+    accent: 'violet',
+  },
+  {
     key: 'genetics',
     labelKey: 'nav.genetics',
     descriptionKey: 'modules.genetics.description',
@@ -186,16 +196,19 @@ const allModules = [
   },
 ];
 
-const moduleGroups = allModuleGroups.filter(
-  (group) => selectionModulesEnabled || group.key !== 'selection',
-);
-
-const modules = allModules.filter(
-  (module) => selectionModulesEnabled || module.group !== 'selection',
+const legacySelectionKeys = new Set(['genetics', 'cynognostic', 'strategy']);
+const modules = allModules.filter((module) => {
+  if (module.key === 'selectionAgent') return aiSelectionAgentEnabled;
+  if (legacySelectionKeys.has(module.key)) return selectionModulesEnabled;
+  return true;
+});
+const moduleGroups = allModuleGroups.filter((group) =>
+  modules.some((module) => module.group === group.key),
 );
 
 module.exports = {
   moduleGroups,
   modules,
   selectionModulesEnabled,
+  aiSelectionAgentEnabled,
 };

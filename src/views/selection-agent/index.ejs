@@ -1,0 +1,84 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+
+<main class="container selection-agent-page">
+  <section class="page-hero selection-agent-hero">
+    <div>
+      <p class="eyebrow">Sélection cynophile assistée</p>
+      <h1>Agent IA pedigree & lignées</h1>
+      <p>Importez un pedigree, contrôlez chaque ascendant, calculez le COI puis documentez travail, beauté, santé, cotations et avis de juges avec leurs sources.</p>
+    </div>
+    <span class="selection-agent-seal"><span class="material-symbols-outlined">genetics</span>Le beau et le bon</span>
+  </section>
+
+  <section class="selection-workflow" aria-label="Méthode d'analyse">
+    <article><strong>1</strong><span><b>Lecture PDF</b><small>Extraction visuelle du pedigree</small></span></article>
+    <article><strong>2</strong><span><b>Contrôle opérateur</b><small>Noms, doublons, père et mère</small></span></article>
+    <article><strong>3</strong><span><b>Calcul COI</b><small>Méthode tabulaire de Wright</small></span></article>
+    <article><strong>4</strong><span><b>Recherche sourcée</b><small>Résultats et appréciations</small></span></article>
+  </section>
+
+  <section class="dashboard-columns selection-upload-grid">
+    <article class="card selection-upload-card">
+      <div class="section-title compact">
+        <span class="section-kicker">Nouveau dossier</span>
+        <h2>Analyser un pedigree</h2>
+      </div>
+
+      <% if (!aiConfigured) { %>
+        <div class="selection-alert selection-alert-danger">
+          <span class="material-symbols-outlined">key_off</span>
+          <div><strong>Moteur IA non configuré</strong><p>Ajoutez la variable privée OPENAI_API_KEY sur le serveur. Aucun document ne peut être analysé avant cette configuration.</p></div>
+        </div>
+      <% } %>
+
+      <form action="/selection-agent/analyze" method="POST" enctype="multipart/form-data" class="stacked-form selection-dropzone">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label for="pedigree">
+          <span class="material-symbols-outlined">picture_as_pdf</span>
+          <strong>Pedigree officiel ou copie lisible</strong>
+          <small>PDF uniquement · 20 Mo maximum · transmis à OpenAI pour lecture, sans publication ni archivage brut par ElevagePro</small>
+        </label>
+        <input id="pedigree" name="pedigree" type="file" accept="application/pdf,.pdf" required>
+        <button class="btn btn-primary" type="submit" <%= aiConfigured ? '' : 'disabled' %>>Lire le pedigree</button>
+      </form>
+    </article>
+
+    <article class="card selection-rules-card">
+      <div class="section-title compact">
+        <span class="section-kicker">Cadre de confiance</span>
+        <h2>Ce que l’agent garantit</h2>
+      </div>
+      <ul class="selection-checklist">
+        <li><span class="material-symbols-outlined">verified_user</span><span><b>Aucune donnée officielle modifiée</b><small>Le pedigree source, les résultats homologués et les cotations restent intacts.</small></span></li>
+        <li><span class="material-symbols-outlined">calculate</span><span><b>COI calculé, jamais estimé par le texte</b><small>Le coefficient est produit par une matrice de parenté après votre validation.</small></span></li>
+        <li><span class="material-symbols-outlined">fact_check</span><span><b>Preuves séparées des mentions</b><small>Une page spécialisée n’est pas automatiquement assimilée à une homologation officielle.</small></span></li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="table-block">
+    <div class="section-title compact">
+      <span class="section-kicker">Historique</span>
+      <h2>Dossiers de sélection</h2>
+    </div>
+
+    <% if (!analyses.length) { %>
+      <%- include('../partials/empty-state', { emptyTitle: 'Aucun pedigree analysé', emptyText: 'Importez un premier PDF pour démarrer un dossier de lignée traçable.' }) %>
+    <% } else { %>
+      <div class="selection-analysis-list">
+        <% analyses.forEach((analysis) => { %>
+          <a class="selection-analysis-row" href="/selection-agent/<%= analysis.id %>">
+            <span class="material-symbols-outlined">account_tree</span>
+            <span class="selection-analysis-main"><strong><%= analysis.subject_name || '[À COMPLÉTER]' %></strong><small><%= analysis.source_filename %> · <%= formatDate(analysis.created_at) %></small></span>
+            <span class="selection-status status-<%= analysis.status %>"><%= analysis.status === 'review_required' ? 'À contrôler' : analysis.status === 'validated' ? 'Validé' : analysis.status === 'researched' ? 'Documenté' : 'Erreur' %></span>
+            <span class="selection-coi"><small>COI</small><strong><%= analysis.coi_percent === null ? '—' : Number(analysis.coi_percent).toLocaleString('fr-FR', { maximumFractionDigits: 5 }) + ' %' %></strong></span>
+            <span class="material-symbols-outlined">chevron_right</span>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/foot') %>
