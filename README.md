@@ -29,6 +29,7 @@ Variables privées nécessaires :
 
 ```text
 ENABLE_AI_SELECTION_AGENT=true
+AI_SELECTION_OWNER_USER_ID=uuid-du-compte-autorise
 OPENAI_API_KEY=<cle-api-privee>
 OPENAI_RESPONSES_URL=https://api.openai.com/v1/responses
 OPENAI_SELECTION_MODEL=gpt-5-mini

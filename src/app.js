@@ -7,8 +7,8 @@ const db = require('./db');
 const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
 const {
-  modules,
-  moduleGroups,
+  modulesForUser,
+  moduleGroupsForModules,
   selectionModulesEnabled,
   aiSelectionAgentEnabled,
 } = require('./config/modules');
@@ -114,8 +114,9 @@ app.use((req, res, next) => {
   res.locals.__ = res.__.bind(req);
   res.locals.currentLang = currentLang;
   res.locals.theme = theme;
-  res.locals.modules = modules;
-  res.locals.moduleGroups = moduleGroups;
+  const visibleModules = modulesForUser(req.session?.user);
+  res.locals.modules = visibleModules;
+  res.locals.moduleGroups = moduleGroupsForModules(visibleModules);
   res.locals.currentPath = req.path;
   res.locals.user = req.session?.user || null;
   res.locals.flash = flash;

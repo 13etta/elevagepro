@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireAiSelectionOwner } = require('../middleware/auth');
 const { verifyCsrf } = require('../middleware/csrf');
 const controller = require('../controllers/selection-agent.controller');
 const virtualLitterController = require('../controllers/selection-virtual-litter.controller');
@@ -30,7 +30,7 @@ function uploadPedigree(req, res, next) {
   });
 }
 
-router.use(requireAuth);
+router.use(requireAuth, requireAiSelectionOwner);
 router.get('/', controller.index);
 router.post('/analyze', uploadPedigree, verifyCsrf, controller.analyze);
 router.get('/virtual-litters/new', virtualLitterController.newVirtualLitter);

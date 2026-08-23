@@ -1,3 +1,5 @@
+const { canAccessAiSelectionAgent } = require('./ai-selection-access');
+
 const selectionModulesEnabled = process.env.ENABLE_SELECTION_MODULES === 'true';
 const aiSelectionAgentEnabled = process.env.ENABLE_AI_SELECTION_AGENT !== 'false';
 
@@ -206,9 +208,23 @@ const moduleGroups = allModuleGroups.filter((group) =>
   modules.some((module) => module.group === group.key),
 );
 
+function modulesForUser(user) {
+  return modules.filter((module) => (
+    module.key !== 'selectionAgent' || canAccessAiSelectionAgent(user)
+  ));
+}
+
+function moduleGroupsForModules(visibleModules) {
+  return allModuleGroups.filter((group) =>
+    visibleModules.some((module) => module.group === group.key),
+  );
+}
+
 module.exports = {
   moduleGroups,
   modules,
+  modulesForUser,
+  moduleGroupsForModules,
   selectionModulesEnabled,
   aiSelectionAgentEnabled,
 };
