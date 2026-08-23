@@ -44,6 +44,27 @@ test('la partie Sélection reste réactivable explicitement', () => {
   assert.deepEqual(selectionKeys, ['cynognostic', 'genetics', 'selectionAgent', 'strategy']);
 });
 
+test('Sélection IA est visible uniquement pour le compte explicitement autorisé', () => {
+  const previousOwnerId = process.env.AI_SELECTION_OWNER_USER_ID;
+  process.env.AI_SELECTION_OWNER_USER_ID = '83b1656c-57b9-4e46-a79c-7203710c4a41';
+
+  try {
+    const config = loadModules(undefined);
+    const ownerModules = config.modulesForUser({ id: process.env.AI_SELECTION_OWNER_USER_ID });
+    const otherUserModules = config.modulesForUser({ id: '96dea951-5faf-4424-bbe9-81b03684cf1f' });
+
+    assert.equal(ownerModules.some((module) => module.key === 'selectionAgent'), true);
+    assert.equal(otherUserModules.some((module) => module.key === 'selectionAgent'), false);
+    assert.equal(
+      config.moduleGroupsForModules(otherUserModules).some((group) => group.key === 'selection'),
+      false,
+    );
+  } finally {
+    if (previousOwnerId === undefined) delete process.env.AI_SELECTION_OWNER_USER_ID;
+    else process.env.AI_SELECTION_OWNER_USER_ID = previousOwnerId;
+  }
+});
+
 test('les routes Sélection sont montées uniquement derrière le réglage dédié', () => {
   const appSource = fs.readFileSync(path.resolve(__dirname, '../src/app.js'), 'utf8');
   const guardedRoutes = appSource.match(/if \(selectionModulesEnabled\) \{([\s\S]*?)\n\}/);

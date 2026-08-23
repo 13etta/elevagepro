@@ -7,7 +7,7 @@ const projectRoot = path.resolve(__dirname, '..');
 
 test('les routes de portée virtuelle sont protégées et déclarées avant la route dynamique', () => {
   const source = fs.readFileSync(path.join(projectRoot, 'src/routes/selection-agent.routes.js'), 'utf8');
-  assert.match(source, /router\.use\(requireAuth\)/);
+  assert.match(source, /router\.use\(requireAuth, requireAiSelectionOwner\)/);
   assert.match(source, /router\.post\('\/virtual-litters', verifyCsrf/);
   assert.ok(
     source.indexOf("router.get('/virtual-litters/new'") < source.indexOf("router.get('/:id'"),
