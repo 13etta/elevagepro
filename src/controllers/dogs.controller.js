@@ -1,50 +1,12 @@
 const { pool } = require('../db');
 const registerService = require('../services/register.service');
-const fs = require('fs/promises');
-const path = require('path');
+const { uploadPublicImage } = require('../services/uploads.service');
 
-const DOG_PHOTO_BUCKET = process.env.SUPABASE_DOG_PHOTO_BUCKET || process.env.SUPABASE_PUBLIC_BUCKET || 'logos';
-const SUPPORTED_DOG_PHOTO_TYPES = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp',
-};
 
-async function ensureDogsSchema() {
-    await pool.query('ALTER TABLE dogs ADD COLUMN IF NOT EXISTS photo_url TEXT').catch(() => {});
-    await pool.query("ALTER TABLE dogs ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'actif'").catch(() => {});
-}
 
-async function ensureDogMovementsSchema(dbClient = pool) {
-    await dbClient.query(`
-        CREATE TABLE IF NOT EXISTS dog_movements (
-            id BIGSERIAL PRIMARY KEY,
-            breeder_id BIGINT NULL,
-            dog_id BIGINT NOT NULL,
-            movement_type TEXT NOT NULL CHECK (movement_type IN ('ENTREE', 'SORTIE')),
-            movement_date DATE NOT NULL,
-            reason VARCHAR(255) NOT NULL,
-            notes TEXT NULL,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        )
-    `);
 
-    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS breeder_id BIGINT NULL');
-    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS dog_id BIGINT');
-    await dbClient.query("ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS movement_type TEXT");
-    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS movement_date DATE');
-    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS reason VARCHAR(255)');
-    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS notes TEXT NULL');
-    await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
-
-    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_breeder_id ON dog_movements (breeder_id)');
-    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_dog_id ON dog_movements (dog_id)');
-    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_type ON dog_movements (movement_type)');
-    await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_date ON dog_movements (movement_date)');
-}
 
 async function logDogMovement({ dbClient, breederId, dogId, movementType, movementDate, reason, notes }) {
-    await ensureDogMovementsSchema(dbClient);
     await dbClient.query(
         `
             INSERT INTO dog_movements (breeder_id, dog_id, movement_type, movement_date, reason, notes)
@@ -69,40 +31,7 @@ function normalizeDate(value) {
     return normalizeOptional(value) || null;
 }
 
-function buildDogPhotoName(breederId, file) {
-    const ext = SUPPORTED_DOG_PHOTO_TYPES[file.mimetype] || 'jpg';
-    const safeBreederId = String(breederId).replace(/[^a-zA-Z0-9-]/g, '');
-    return `dogs/${safeBreederId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-}
-
-async function uploadDogPhoto(breederId, file) {
-    if (!file) return null;
-    if (!SUPPORTED_DOG_PHOTO_TYPES[file.mimetype]) {
-        throw new Error('Format de photo non supporte.');
-    }
-
-    const fileName = buildDogPhotoName(breederId, file);
-
-    if (process.env.SUPABASE_URL && (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY)) {
-        const supabase = require('../utils/supabase');
-        const { error } = await supabase.storage
-            .from(DOG_PHOTO_BUCKET)
-            .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: true });
-
-        if (!error) {
-            const { data } = supabase.storage.from(DOG_PHOTO_BUCKET).getPublicUrl(fileName);
-            return data.publicUrl;
-        }
-
-        console.warn('Upload Supabase indisponible, fallback local:', error.message);
-    }
-
-    const uploadRoot = path.join(__dirname, '..', 'public', 'uploads', 'dogs');
-    await fs.mkdir(uploadRoot, { recursive: true });
-    const localName = path.basename(fileName);
-    await fs.writeFile(path.join(uploadRoot, localName), file.buffer);
-    return `/uploads/dogs/${localName}`;
-}
+async function uploadDogPhoto(breederId, file) { return uploadPublicImage(breederId, file, 'dogs'); }
 
 function dogInitials(name) {
     return String(name || 'Chien')
@@ -180,7 +109,6 @@ function normalizeMovementDate(value) {
 
 exports.listDogs = async (req, res) => {
     try {
-        await ensureDogsSchema();
         const breederId = req.session.user.breeder_id;
         const optionalColumns = await getDogOptionalColumns();
 
@@ -250,7 +178,6 @@ exports.showDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
-        await ensureDogsSchema();
 
         const dogRes = await pool.query(
             `
@@ -259,8 +186,8 @@ exports.showDog = async (req, res) => {
                     father.name AS father_name,
                     mother.name AS mother_name
                 FROM dogs d
-                LEFT JOIN dogs father ON d.father_id = father.id
-                LEFT JOIN dogs mother ON d.mother_id = mother.id
+                LEFT JOIN dogs father ON d.father_id = father.id AND father.breeder_id = d.breeder_id
+                LEFT JOIN dogs mother ON d.mother_id = mother.id AND mother.breeder_id = d.breeder_id
                 WHERE d.id = $1
                   AND d.breeder_id = $2
             `,
@@ -324,7 +251,7 @@ exports.showDog = async (req, res) => {
                 `
                     SELECT p.id, p.name, p.sex, p.status, p.chip_number, p.color, p.created_at
                     FROM puppies p
-                    INNER JOIN litters l ON p.litter_id = l.id
+                    INNER JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
                     WHERE p.breeder_id = $1
                       AND l.${litterMotherColumn} = $2
                     ORDER BY p.created_at DESC NULLS LAST, p.name ASC NULLS LAST
@@ -355,7 +282,6 @@ exports.getForm = async (req, res) => {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
         let dog = { status: 'actif' };
-        await ensureDogsSchema();
 
         if (dogId) {
             const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
@@ -379,7 +305,6 @@ exports.saveDog = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
-        await ensureDogsSchema();
 
         let {
             name,
@@ -503,7 +428,6 @@ exports.getDeleteForm = async (req, res) => {
     try {
         const breederId = req.session.user.breeder_id;
         const dogId = req.params.id;
-        await ensureDogsSchema();
 
         const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
         if (dogRes.rows.length === 0) {
@@ -538,7 +462,6 @@ exports.deleteDog = async (req, res) => {
     let dog = null;
 
     try {
-        await ensureDogsSchema();
         const dogRes = await pool.query('SELECT * FROM dogs WHERE id = $1 AND breeder_id = $2', [dogId, breederId]);
 
         if (dogRes.rows.length === 0) {

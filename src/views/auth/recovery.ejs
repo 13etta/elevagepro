@@ -1,0 +1,17 @@
+<%- include('../partials/head') %>
+<main class="auth-page"><section class="card" style="max-width:520px;margin:4rem auto;padding:2rem">
+  <h1><%= mode === 'reset' ? 'Nouveau mot de passe' : 'Retrouver l’accès à mon compte' %></h1>
+  <% if (message) { %><p role="status"><%= message %></p><% } %>
+  <form method="post" action="<%= mode === 'reset' ? '/auth/reset-password' : '/auth/forgot-password' %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <% if (mode === 'reset') { %>
+      <input type="hidden" name="token" value="<%= token %>">
+      <label for="password">Nouveau mot de passe</label><input id="password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+      <p>12 caractères minimum. Les anciennes sessions seront déconnectées.</p>
+    <% } else { %>
+      <label for="email">Email du compte</label><input id="email" name="email" type="email" autocomplete="email" maxlength="255" required>
+    <% } %>
+    <button class="btn btn-primary" type="submit"><%= mode === 'reset' ? 'Enregistrer le mot de passe' : 'Recevoir un lien' %></button>
+  </form><p><a href="/auth/login">Revenir à la connexion</a></p>
+</section></main>
+<%- include('../partials/foot') %>

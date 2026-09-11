@@ -1,0 +1,12 @@
+node_modules
+.npm-cache
+.git
+.env
+.env.*
+!.env.example
+dominia-app
+private-uploads
+src/public/uploads
+artifacts
+test
+*.log

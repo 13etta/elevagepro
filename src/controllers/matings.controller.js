@@ -10,8 +10,8 @@ exports.listMatings = async (req, res) => {
                    d1.name AS male_name, d1.id_scc AS male_id_scc,
                    d2.name AS female_name, d2.id_scc AS female_id_scc
             FROM matings m
-            LEFT JOIN dogs d1 ON m.male_id = d1.id
-            LEFT JOIN dogs d2 ON m.female_id = d2.id
+            LEFT JOIN dogs d1 ON m.male_id = d1.id AND d1.breeder_id = m.breeder_id
+            LEFT JOIN dogs d2 ON m.female_id = d2.id AND d2.breeder_id = m.breeder_id
             WHERE m.breeder_id = $1
         `;
         let params = [breederId];

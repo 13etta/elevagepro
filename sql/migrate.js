@@ -1,81 +1,65 @@
-const dns = require('dns');
-const fs = require('fs');
-const path = require('path');
-const { Pool } = require('pg');
-require('dotenv').config();
-
-// Codespaces et certains conteneurs peuvent résoudre PostgreSQL en IPv6
-// alors que le réseau sortant IPv6 est indisponible.
-// On force donc la résolution IPv4 sauf désactivation explicite.
-dns.setDefaultResultOrder?.('ipv4first');
-
-if (process.env.PG_FORCE_IPV4 !== 'false') {
-  const originalLookup = dns.lookup.bind(dns);
-  dns.lookup = (hostname, options, callback) => {
-    if (typeof options === 'function') {
-      return originalLookup(hostname, { family: 4 }, options);
-    }
-
-    return originalLookup(hostname, { ...(options || {}), family: 4 }, callback);
-  };
+const fs = require('node:fs');
+const path = require('node:path');
+const { createHash } = require('node:crypto');
+const migrationDirectory = path.resolve(__dirname, '../supabase/migrations');
+function migrations() {
+  return fs.readdirSync(migrationDirectory).filter(name => /^\d+_.+\.sql$/.test(name)).sort().map(name => {
+    const sql = fs.readFileSync(path.join(migrationDirectory, name), 'utf8');
+    return { name, sql, checksum: createHash('sha256').update(sql).digest('hex') };
+  });
 }
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-async function runMigrations() {
-  const files = [
-    '001_schema.sql',
-    '002_indexes.sql',
-    ...(process.env.RUN_DEMO_SEED === 'true' ? ['003_seed.sql'] : []),
-    '004_dog_photos.sql',
-    '005_puppy_commercial_fields.sql',
-    '006_sales_reservations.sql',
-    '007_litter_status_fields.sql',
-    '008_pregnancy_compatibility_fields.sql',
-    '009_dashboard_compatibility_fields.sql',
-    '010_stabilization_dogs_registry.sql',
-    '011_health_tests.sql',
-    '012_registry_automation.sql',
-    '013_registry_backfill_existing_dogs.sql',
-    '014_registry_litter_events.sql',
-    '019_cynognostic_core.sql',
-    '020_calendar_events.sql',
-    '021_calendar_fk_indexes.sql',
-    '022_ai_selection_agent.sql',
-    '023_selection_virtual_litters.sql',
-  ];
-
-  console.log('Démarrage des migrations...');
-
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    for (const file of files) {
-      const filePath = path.join(__dirname, file);
-      if (fs.existsSync(filePath)) {
-        const sql = fs.readFileSync(filePath, 'utf8');
-        console.log(`Exécution de ${file}...`);
-        await client.query(sql);
-      }
-    }
-
-    await client.query('COMMIT');
-    console.log('Migrations terminées avec succès.');
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Erreur lors des migrations, rollback effectué.', err);
-    process.exitCode = 1;
-  } finally {
-    client.release();
-    await pool.end();
+async function plan(client) {
+  const exists = (await client.query("SELECT to_regclass('app_private.schema_migrations') IS NOT NULL AS present")).rows[0].present;
+  const applied = exists ? (await client.query('SELECT name,checksum FROM app_private.schema_migrations')).rows : [];
+  const files = migrations();
+  for (const entry of applied) {
+    const file = files.find(item => item.name === entry.name);
+    if (!file || file.checksum !== entry.checksum) throw new Error('Historique de migration modifié : ' + entry.name);
   }
+  return files.filter(file => !applied.some(entry => entry.name === file.name));
 }
-
-runMigrations();
+async function apply(client) {
+  await client.query('BEGIN');
+  try {
+    await client.query("SET LOCAL lock_timeout = '5s'");
+    await client.query("SET LOCAL statement_timeout = '120s'");
+    await client.query('SELECT pg_advisory_xact_lock(741820260908)');
+    if (!(await client.query("SELECT to_regclass('public.breeder') IS NOT NULL AS present")).rows[0].present) {
+      throw new Error('Base métier absente. Ce correctif exige une base ElevagePro existante ; aucune initialisation automatique.');
+    }
+    await client.query("CREATE SCHEMA IF NOT EXISTS app_private; REVOKE ALL ON SCHEMA app_private FROM PUBLIC; CREATE TABLE IF NOT EXISTS app_private.schema_migrations(name text PRIMARY KEY,checksum text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now()); REVOKE ALL ON app_private.schema_migrations FROM PUBLIC;");
+    const pending = await plan(client);
+    for (const file of pending) {
+      await client.query(file.sql);
+      await client.query('INSERT INTO app_private.schema_migrations(name,checksum) VALUES($1,$2)', [file.name, file.checksum]);
+    }
+    await client.query('COMMIT');
+    return pending.map(file => file.name);
+  } catch (error) { await client.query('ROLLBACK'); throw error; }
+}
+async function main() {
+  require('dotenv').config();
+  const args = process.argv.slice(2);
+  if (args.some(arg => !['--check', '--apply'].includes(arg)) || (args.includes('--check') && args.includes('--apply'))) throw new Error('Utiliser --check (lecture seule) ou --apply.');
+  if (args.includes('--apply')) {
+    const hostname = new URL(process.env.DATABASE_URL).hostname;
+    if (!process.env.MIGRATION_CONFIRM_HOST || process.env.MIGRATION_CONFIRM_HOST !== hostname) throw new Error('MIGRATION_CONFIRM_HOST doit correspondre exactement à la base sauvegardée et validée en préproduction.');
+  }
+  const { Pool } = require('pg');
+  const { databaseOptions } = require('../src/config/database');
+  const pool = new Pool(databaseOptions());
+  let client;
+  try {
+    client = await pool.connect();
+    if (args.includes('--apply')) console.log('Migrations appliquées :', await apply(client));
+    else {
+      await client.query('BEGIN READ ONLY');
+      const pending = await plan(client);
+      await client.query('COMMIT');
+      console.log(pending.length ? 'Migrations à appliquer avant déploiement : ' + pending.map(file => file.name).join(', ') : 'Schéma de livraison à jour.');
+      if (pending.length) process.exitCode = 1;
+    }
+  } finally { client?.release(); await pool.end(); }
+}
+if (require.main === module) main().catch(error => { console.error('Migration interrompue :', error.code || error.message); process.exitCode = 1; });
+module.exports = { migrations, plan, apply };

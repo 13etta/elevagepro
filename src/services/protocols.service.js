@@ -28,15 +28,9 @@ function addDays(date, days) {
     return d.toISOString().split('T')[0];
 }
 
-async function ensureAutomationColumns(client) {
-  await client.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE');
-  await client.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE');
-  await client.query('ALTER TABLE soins ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE');
-  await client.query('ALTER TABLE soins ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE');
-}
+
 
 async function createPuppyProtocolReminders(client, { breederId, litterId, birthDate, motherName }) {
-  await ensureAutomationColumns(client);
 
   for (const step of DEFAULT_PUPPY_PROTOCOL) {
     const dueDate = addDays(birthDate, step.offsetDays);
@@ -70,6 +64,5 @@ async function createPuppyProtocolReminders(client, { breederId, litterId, birth
 
 module.exports = {
   DEFAULT_PUPPY_PROTOCOL,
-  ensureAutomationColumns,
   createPuppyProtocolReminders,
 };

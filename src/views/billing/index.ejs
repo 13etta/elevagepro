@@ -1,0 +1,32 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <header class="page-header"><div><p class="eyebrow">Votre compte</p><h1>Abonnement</h1><p>Un tarif simple pour gérer votre élevage au quotidien.</p></div></header>
+  <section class="card" style="max-width:760px;padding:2rem">
+    <h2>ElevagePro</h2><p><strong style="font-size:2.5rem">7 €</strong> / mois</p>
+    <p>Gestion des chiens, portées, soins, ventes et suivi de votre élevage.</p>
+    <% if (billing?.beta_access) { %>
+      <p class="alert alert-success">Votre accès de test est maintenu. Aucun paiement n’est demandé.</p>
+    <% } else { %>
+      <% const statuses = {active:'Actif',trialing:'Période d’essai',past_due:'Paiement à régulariser',unpaid:'Paiement en attente',canceled:'Résilié',incomplete:'Paiement à terminer',incomplete_expired:'Paiement expiré',inactive:'À activer',price_mismatch:'Tarif à vérifier',paused:'Suspendu'}; %>
+      <p>État : <strong><%= statuses[billing?.status] || 'À activer' %></strong></p>
+      <% if (result === 'success') { %><p role="status">Votre retour du paiement a bien été reçu. L’accès s’active après confirmation sécurisée du paiement. Si nécessaire, actualisez cette page dans quelques instants.</p><% } %>
+      <% if (result === 'cancel') { %><p>La souscription a été interrompue. Vous pouvez la reprendre ci-dessous.</p><% } %>
+      <% if (billing?.cancel_at_period_end && billing.current_period_end) { %><p>Résiliation prévue le <%= formatDate(billing.current_period_end) %>.</p><% } %>
+      <% if (!billing?.stripe_subscription_id || ['canceled','incomplete_expired'].includes(billing.status)) { %>
+        <p>Renouvellement automatique chaque mois. Vous pouvez résilier depuis le portail de facturation. Le montant total est présenté avant validation du paiement.</p>
+        <form method="post" action="/billing/checkout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-primary" type="submit">S’abonner — 7 € par mois</button></form>
+      <% } %>
+      <% if (billing?.stripe_customer_id) { %>
+        <form method="post" action="/billing/portal" style="margin-top:1rem"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-secondary" type="submit">Factures, moyen de paiement et résiliation</button></form>
+      <% } %>
+      <p style="margin-top:1.5rem">En cas d’arrêt de l’abonnement, vos données restent consultables. Le paiement est traité par Stripe.</p>
+    <% } %>
+  </section>
+  <section class="card" style="max-width:760px;padding:2rem;margin-top:1.5rem">
+    <h2>Données et sécurité</h2><p>Vous pouvez télécharger les données métier de votre élevage. Les fichiers joints restent accessibles depuis leurs fiches.</p>
+    <a class="btn btn-secondary" href="/account/export">Exporter mes données</a>
+    <form method="post" action="/account/revoke-sessions" style="margin-top:1rem"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-secondary" type="submit">Déconnecter toutes mes sessions</button></form>
+  </section>
+</main>
+<%- include('../partials/foot') %>

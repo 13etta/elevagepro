@@ -1,4 +1,5 @@
 const authService = require('../services/auth.service');
+const { establishSession } = require('../services/login-session.service');
 
 function renderLogin(req, res) {
   res.render('auth/login', {
@@ -25,10 +26,11 @@ async function register(req, res) {
     primary_breed: primaryBreed,
   } = req.body;
 
-  if (!kennelName || !fullName || !email || !password || !primaryBreed || password.length < 8) {
+  if (![kennelName, fullName, email, primaryBreed].every(value => typeof value === 'string' && value.trim().length > 0 && value.length <= 255) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !require('../services/account-recovery.service').validPassword(password)) {
     return res.status(400).render('auth/register', {
       title: 'Créer un compte',
-      error: 'Tous les champs sont obligatoires, race principale incluse, mot de passe minimum 8 caractères.',
+      error: 'Tous les champs sont obligatoires. Utilisez un email valide et un mot de passe de 12 caractères minimum (72 octets maximum).',
       user: null,
     });
   }
@@ -41,7 +43,7 @@ async function register(req, res) {
       password,
       primaryBreed,
     });
-    req.session.user = user;
+    await establishSession(req, user);
     return res.redirect('/dashboard');
   } catch (error) {
     const message = error.message === 'EMAIL_ALREADY_EXISTS'
@@ -56,30 +58,32 @@ async function register(req, res) {
   }
 }
 
-async function login(req, res) {
-  const { email, password } = req.body;
+async function login(req, res, next) {
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).render('auth/login', {
-      title: 'Connexion',
-      error: 'Email et mot de passe requis.',
-      user: null,
-    });
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password || email.length > 255 || Buffer.byteLength(password) > 72) {
+      return res.status(400).render('auth/login', {
+        title: 'Connexion',
+        error: 'Email et mot de passe requis.',
+        user: null,
+      });
+    }
+
+    const user = await authService.login({ email, password });
+    if (!user) {
+      return res.status(401).render('auth/login', {
+        title: 'Connexion',
+        error: 'Identifiants invalides.',
+        user: null,
+      });
+    }
+
+    const returnTo = await establishSession(req, user);
+    return res.redirect(returnTo);
+  } catch (error) {
+    return next(error);
   }
-
-  const user = await authService.login({ email, password });
-  if (!user) {
-    return res.status(401).render('auth/login', {
-      title: 'Connexion',
-      error: 'Identifiants invalides.',
-      user: null,
-    });
-  }
-
-  req.session.user = user;
-  const returnTo = req.session.returnTo || '/dashboard';
-  delete req.session.returnTo;
-  return res.redirect(returnTo);
 }
 
 function logout(req, res) {

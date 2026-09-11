@@ -13,9 +13,9 @@ exports.listPregnancies = async (req, res) => {
                 m.mating_date,
                 father.name AS father_name
             FROM pregnancies p
-            LEFT JOIN dogs f ON p.female_id = f.id
-            LEFT JOIN matings m ON p.mating_id = m.id
-            LEFT JOIN dogs father ON m.male_id = father.id
+            LEFT JOIN dogs f ON p.female_id = f.id AND f.breeder_id = p.breeder_id
+            LEFT JOIN matings m ON p.mating_id = m.id AND m.breeder_id = p.breeder_id
+            LEFT JOIN dogs father ON m.male_id = father.id AND father.breeder_id = m.breeder_id
             WHERE p.breeder_id = $1
         `;
         let params = [breederId];
@@ -76,8 +76,8 @@ exports.getForm = async (req, res) => {
         const matings = await pool.query(`
             SELECT m.id, m.mating_date, f.name as female_name, male.name as male_name
             FROM matings m
-            JOIN dogs f ON m.female_id = f.id
-            JOIN dogs male ON m.male_id = male.id
+            JOIN dogs f ON m.female_id = f.id AND f.breeder_id = m.breeder_id
+            JOIN dogs male ON m.male_id = male.id AND male.breeder_id = m.breeder_id
             WHERE m.breeder_id = $1
             ORDER BY m.mating_date DESC
         `, [breederId]);

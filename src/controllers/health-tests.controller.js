@@ -1,5 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { randomUUID } = require('node:crypto');
+const { privateRoot } = require('../services/certificates.service');
 const { pool } = require('../db');
 const { toIsoDate } = require('../utils/dates');
 const { logActivity } = require('../services/activity.service');
@@ -20,24 +22,7 @@ const RESULT_OPTIONS = {
   Autre: ['Sain', 'Porteur', 'Atteint', 'À revoir'],
 };
 
-async function ensureHealthTestsSchema() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS health_tests (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
-      dog_id UUID NOT NULL REFERENCES dogs(id) ON DELETE CASCADE,
-      test_type VARCHAR(80) NOT NULL,
-      test_name VARCHAR(160) NOT NULL,
-      result VARCHAR(120),
-      test_date DATE,
-      laboratory VARCHAR(160),
-      certificate_url TEXT,
-      notes TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-}
+
 
 function clean(value) {
   const text = String(value || '').trim();
@@ -68,16 +53,17 @@ function normalizeResult(testType, result) {
 function buildCertificateName(breederId, file) {
   const ext = ALLOWED_CERTIFICATE_TYPES[file.mimetype] || 'bin';
   const safeBreederId = String(breederId).replace(/[^a-zA-Z0-9-]/g, '');
-  return `${safeBreederId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  return `${safeBreederId}-${randomUUID()}.${ext}`;
 }
 
 async function saveCertificate(breederId, file) {
   if (!file) return null;
+  require('../services/uploads.service').validateUpload(file, true);
   if (!ALLOWED_CERTIFICATE_TYPES[file.mimetype]) {
     throw new Error('Format justificatif non supporté. Utilisez PDF, JPG, PNG ou WebP.');
   }
 
-  const uploadRoot = path.join(__dirname, '..', 'public', 'uploads', 'health-tests');
+  const uploadRoot = path.join(privateRoot, 'health-tests');
   await fs.mkdir(uploadRoot, { recursive: true });
   const filename = buildCertificateName(breederId, file);
   await fs.writeFile(path.join(uploadRoot, filename), file.buffer);
@@ -106,7 +92,7 @@ async function loadTests(breederId, dogId = null) {
   const result = await pool.query(
     `SELECT ht.*, d.name AS dog_name, d.breed AS dog_breed
      FROM health_tests ht
-     INNER JOIN dogs d ON d.id = ht.dog_id
+     INNER JOIN dogs d ON d.id = ht.dog_id AND d.breeder_id = ht.breeder_id
      WHERE ht.breeder_id = $1
        ${dogFilter}
      ORDER BY ht.test_date DESC NULLS LAST, ht.created_at DESC`,
@@ -121,7 +107,6 @@ function setFlash(req, type, message) {
 
 exports.listHealthTests = async (req, res) => {
   try {
-    await ensureHealthTestsSchema();
     const breederId = req.session.user.breeder_id;
     const dogId = clean(req.query.dog_id);
     const [dogs, tests] = await Promise.all([
@@ -145,9 +130,7 @@ exports.listHealthTests = async (req, res) => {
 
 exports.createHealthTest = async (req, res) => {
   try {
-    await ensureHealthTestsSchema();
     const breederId = req.session.user.breeder_id;
-    const certificateUrl = await saveCertificate(breederId, req.file);
 
     const dogId = clean(req.body.dog_id);
     const testType = clean(req.body.test_type);
@@ -182,6 +165,7 @@ exports.createHealthTest = async (req, res) => {
       return res.redirect(`/health-tests?dog_id=${dogId}`);
     }
 
+    const certificateUrl = await saveCertificate(breederId, req.file);
     const inserted = await pool.query(
       `INSERT INTO health_tests
         (breeder_id, dog_id, test_type, test_name, result, test_date, laboratory, certificate_url, notes)
@@ -221,7 +205,6 @@ exports.createHealthTest = async (req, res) => {
 
 exports.deleteHealthTest = async (req, res) => {
   try {
-    await ensureHealthTestsSchema();
     const breederId = req.session.user.breeder_id;
     const testId = req.params.id;
     const current = await pool.query(

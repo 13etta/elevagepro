@@ -24,6 +24,7 @@ const textSettingKeys = [
 ];
 
 const checkboxSettingKeys = [
+  'isPublished',
   'showIntro', 'showPuppies', 'showLitters', 'showDogs',
   'showServices', 'showGallery', 'showContact', 'showStrengths',
   'servicePensionEnabled', 'serviceTrainingEnabled', 'serviceBreedingEnabled',
@@ -31,6 +32,7 @@ const checkboxSettingKeys = [
 
 function defaultWebsiteSettings() {
   return {
+    isPublished: true, // Preserve existing published sites; registration explicitly starts in draft.
     template: 'heritage', kennelBoxCapacity: 12,
     primaryColor: '#29422c', secondaryColor: '#bda66f', accentColor: '#f4efe2', backgroundColor: '#f6f1e8', textColor: '#24301f',
     heroTitle: 'Élevage et Dressage de prestige',

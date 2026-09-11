@@ -6,6 +6,9 @@ const connectPgSimple = require('connect-pg-simple');
 const db = require('./db');
 const i18n = require('./middleware/i18n');
 const { csrfToken } = require('./middleware/csrf');
+const { requireAuth } = require('./middleware/auth');
+const { serveCertificate } = require('./services/certificates.service');
+const securityHeaders = require('./middleware/security-headers');
 const {
   modulesForUser,
   moduleGroupsForModules,
@@ -41,11 +44,19 @@ if (process.env.NODE_ENV === 'production' && (!sessionSecret || sessionSecret.le
 }
 const PgSession = connectPgSimple(session);
 
-app.set('trust proxy', 1);
+// Render terminates TLS at one proxy; direct local connections trust no forwarded headers.
+app.set('trust proxy', process.env.TRUST_PROXY_HOPS === '1' ? 1 : false);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.disable('x-powered-by');
+app.use(securityHeaders);
+for (const directory of ['css', 'js', 'images']) {
+  app.use('/' + directory, express.static(path.join(__dirname, 'public', directory)));
+}
+app.get('/healthz', (req, res) => res.status(200).json({ ok: true }));
+// Provider endpoint: authenticated by a signature over the untouched request bytes.
+app.post('/billing/webhook', express.raw({ type: 'application/json', limit: '256kb' }), require('./services/billing.service').webhook);
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
@@ -55,8 +66,9 @@ app.use((req, res, next) => {
       .filter(Boolean)
       .map((cookie) => {
         const [rawKey, ...rawValue] = cookie.trim().split('=');
-        const key = decodeURIComponent(rawKey || '');
-        const value = decodeURIComponent(rawValue.join('=') || '');
+        const decode = value => { try { return decodeURIComponent(value); } catch { return ''; } };
+        const key = decode(rawKey || '');
+        const value = decode(rawValue.join('=') || '');
         return [key, value];
       }),
   );
@@ -68,7 +80,7 @@ app.use(
     store: new PgSession({
       pool: db.pool,
       tableName: 'session',
-      createTableIfMissing: true,
+      createTableIfMissing: false,
     }),
     secret: sessionSecret || 'dev-secret-change-me',
     resave: false,
@@ -132,6 +144,19 @@ app.use((req, res, next) => {
 
 app.use(csrfToken);
 
+app.get('/uploads/health-tests/:filename', requireAuth, serveCertificate);
+// Never let a malformed or nested certificate URL fall through to static serving.
+app.use('/uploads/health-tests', (req, res) => res.sendStatus(404));
+app.use((req, res, next) => {
+  try {
+    const normalized = path.posix.normalize(decodeURIComponent(req.path).replace(/\\/g, '/')).toLowerCase();
+    if (normalized === '/uploads/health-tests' || normalized.startsWith('/uploads/health-tests/')) return res.sendStatus(404);
+    return next();
+  } catch { return res.sendStatus(400); }
+});
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads/images', express.static(path.join(require('./services/uploads.service').publicRoot, 'images'), { dotfiles: 'deny' }));
+
 app.get('/', (req, res) => {
   if (req.session?.user) {
     return res.redirect('/dashboard');
@@ -140,11 +165,9 @@ app.get('/', (req, res) => {
   return res.redirect('/auth/login');
 });
 
-app.get('/healthz', (req, res) => {
-  res.status(200).json({ ok: true });
-});
-
 app.use('/auth', authRoutes);
+app.use('/billing', require('./routes/billing.routes'));
+app.use('/account', require('./routes/account.routes'));
 app.use('/dashboard', dashboardRoutes);
 app.use('/dogs', dogsRoutes);
 app.use('/soins', soinsRoutes);
@@ -183,7 +206,7 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
-  console.error(error);
+  console.error('request.failed', { code: error.code || error.name, method: req.method, route: req.route?.path || 'unknown' });
 
   if (res.headersSent) {
     return next(error);

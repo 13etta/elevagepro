@@ -83,7 +83,7 @@ exports.getDashboard = async (req, res) => {
         FROM puppies
         WHERE breeder_id = $1
           AND COALESCE(is_sold, false) = false
-          AND COALESCE(lower(status), 'disponible') NOT IN ('vendu', 'vendue', 'sold')
+          AND lower(trim(COALESCE(status, ''))) IN ('disponible', 'available')
       `,
       [breederId],
       countFallback,
@@ -217,10 +217,10 @@ exports.getDashboard = async (req, res) => {
             ELSE 'Général'
           END AS scope
         FROM reminders r
-        LEFT JOIN dogs d ON r.dog_id = d.id
-        LEFT JOIN puppies p ON r.puppy_id = p.id
-        LEFT JOIN litters l ON r.litter_id = l.id
-        LEFT JOIN dogs lm ON l.mother_id = lm.id
+        LEFT JOIN dogs d ON r.dog_id = d.id AND d.breeder_id = r.breeder_id
+        LEFT JOIN puppies p ON r.puppy_id = p.id AND p.breeder_id = r.breeder_id
+        LEFT JOIN litters l ON r.litter_id = l.id AND l.breeder_id = r.breeder_id
+        LEFT JOIN dogs lm ON l.mother_id = lm.id AND lm.breeder_id = l.breeder_id
         WHERE r.breeder_id = $1
           AND COALESCE(r.is_completed, FALSE) = FALSE
         ORDER BY r.due_date ASC
@@ -280,8 +280,8 @@ exports.getDashboard = async (req, res) => {
       `
         SELECT s.event_date, s.type, s.label, COALESCE(d.name, p.name) AS dog_name
         FROM soins s
-        LEFT JOIN dogs d ON s.dog_id = d.id
-        LEFT JOIN puppies p ON s.puppy_id = p.id
+        LEFT JOIN dogs d ON s.dog_id = d.id AND d.breeder_id = s.breeder_id
+        LEFT JOIN puppies p ON s.puppy_id = p.id AND p.breeder_id = s.breeder_id
         WHERE s.breeder_id = $1
         ORDER BY s.event_date DESC
         LIMIT 5
@@ -318,8 +318,8 @@ exports.getDashboard = async (req, res) => {
           s.deposit_amount,
           COALESCE(p.name, d.name) AS animal_name
         FROM sales s
-        LEFT JOIN puppies p ON s.puppy_id = p.id
-        LEFT JOIN dogs d ON s.dog_id = d.id
+        LEFT JOIN puppies p ON s.puppy_id = p.id AND p.breeder_id = s.breeder_id
+        LEFT JOIN dogs d ON s.dog_id = d.id AND d.breeder_id = s.breeder_id
         WHERE s.breeder_id = $1
           AND COALESCE(s.is_reservation, FALSE) = TRUE
         ORDER BY COALESCE(s.sale_date, s.created_at::date) ASC
@@ -333,8 +333,8 @@ exports.getDashboard = async (req, res) => {
       `
         SELECT l.id, l.birth_date, d.name AS mother_name
         FROM litters l
-        LEFT JOIN dogs d ON l.mother_id = d.id
-        LEFT JOIN puppies p ON p.litter_id = l.id
+        LEFT JOIN dogs d ON l.mother_id = d.id AND d.breeder_id = l.breeder_id
+        LEFT JOIN puppies p ON p.litter_id = l.id AND p.breeder_id = l.breeder_id
         WHERE l.breeder_id = $1
           AND COALESCE(lower(l.status), 'active') IN ('active', 'sevrage', 'en cours', 'en_cours')
         GROUP BY l.id, d.name

@@ -122,8 +122,8 @@ exports.showArchive = async (req, res) => {
     const dogs = await safeRows(
       `SELECT d.*, father.name AS father_name, mother.name AS mother_name
        FROM dogs d
-       LEFT JOIN dogs father ON father.id = d.father_id
-       LEFT JOIN dogs mother ON mother.id = d.mother_id
+       LEFT JOIN dogs father ON father.id = d.father_id AND father.breeder_id = d.breeder_id
+       LEFT JOIN dogs mother ON mother.id = d.mother_id AND mother.breeder_id = d.breeder_id
        WHERE d.id = $1
          AND d.breeder_id = $2
          AND LOWER(COALESCE(d.status, 'actif')) = 'sorti'`,
@@ -179,8 +179,8 @@ exports.showArchive = async (req, res) => {
       safeRows(
         `SELECT m.*, male.name AS male_name, female.name AS female_name
          FROM matings m
-         LEFT JOIN dogs male ON male.id = m.male_id
-         LEFT JOIN dogs female ON female.id = m.female_id
+         LEFT JOIN dogs male ON male.id = m.male_id AND male.breeder_id = m.breeder_id
+         LEFT JOIN dogs female ON female.id = m.female_id AND female.breeder_id = m.breeder_id
          WHERE m.breeder_id = $1 AND (m.male_id = $2 OR m.female_id = $2)
          ORDER BY m.mating_date DESC`,
         [breederId, dogId],
@@ -188,8 +188,8 @@ exports.showArchive = async (req, res) => {
       safeRows(
         `SELECT p.*, male.name AS father_name
          FROM pregnancies p
-         LEFT JOIN matings m ON m.id = p.mating_id
-         LEFT JOIN dogs male ON male.id = m.male_id
+         LEFT JOIN matings m ON m.id = p.mating_id AND m.breeder_id = p.breeder_id
+         LEFT JOIN dogs male ON male.id = m.male_id AND male.breeder_id = m.breeder_id
          WHERE p.breeder_id = $1 AND p.female_id = $2
          ORDER BY p.start_date DESC`,
         [breederId, dogId],
@@ -198,8 +198,8 @@ exports.showArchive = async (req, res) => {
         ? safeRows(
           `SELECT l.*, male.name AS father_name
            FROM litters l
-           LEFT JOIN matings m ON m.id = l.mating_id
-           LEFT JOIN dogs male ON male.id = m.male_id
+           LEFT JOIN matings m ON m.id = l.mating_id AND m.breeder_id = l.breeder_id
+           LEFT JOIN dogs male ON male.id = m.male_id AND male.breeder_id = m.breeder_id
            WHERE l.breeder_id = $1 AND l.${litterMotherColumn} = $2
            ORDER BY l.birth_date DESC`,
           [breederId, dogId],
@@ -209,7 +209,7 @@ exports.showArchive = async (req, res) => {
         ? safeRows(
           `SELECT p.*
            FROM puppies p
-           INNER JOIN litters l ON l.id = p.litter_id
+           INNER JOIN litters l ON l.id = p.litter_id AND l.breeder_id = p.breeder_id
            WHERE p.breeder_id = $1 AND l.${litterMotherColumn} = $2
            ORDER BY p.birth_date DESC NULLS LAST, p.created_at DESC NULLS LAST`,
           [breederId, dogId],
@@ -218,8 +218,8 @@ exports.showArchive = async (req, res) => {
       safeRows(
         `SELECT ia.*, i.name AS infrastructure_name, previous.name AS previous_infrastructure_name
          FROM infrastructure_assignments ia
-         LEFT JOIN infrastructures i ON i.id = ia.infrastructure_id
-         LEFT JOIN infrastructures previous ON previous.id = ia.previous_infrastructure_id
+         LEFT JOIN infrastructures i ON i.id = ia.infrastructure_id AND i.breeder_id = ia.breeder_id
+         LEFT JOIN infrastructures previous ON previous.id = ia.previous_infrastructure_id AND previous.breeder_id = ia.breeder_id
          WHERE ia.breeder_id = $1 AND ia.dog_id = $2
          ORDER BY ia.assigned_at DESC, ia.created_at DESC`,
         [breederId, dogId],

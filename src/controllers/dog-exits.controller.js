@@ -11,37 +11,7 @@ function defaultMovementDate(value) {
   return normalizeOptional(value) || new Date().toISOString().slice(0, 10);
 }
 
-async function ensureDogExitSchema(dbClient = pool) {
-  await dbClient.query(`
-    CREATE TABLE IF NOT EXISTS dog_movements (
-      id BIGSERIAL PRIMARY KEY,
-      breeder_id TEXT NULL,
-      dog_id TEXT NOT NULL,
-      movement_type TEXT NOT NULL CHECK (movement_type IN ('ENTREE', 'SORTIE')),
-      movement_date DATE NOT NULL,
-      reason VARCHAR(255) NOT NULL,
-      notes TEXT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `);
 
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS breeder_id TEXT NULL');
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS dog_id TEXT');
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS movement_type TEXT');
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS movement_date DATE');
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS reason VARCHAR(255)');
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS notes TEXT NULL');
-  await dbClient.query('ALTER TABLE dog_movements ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()');
-
-  await dbClient.query('ALTER TABLE dog_movements ALTER COLUMN breeder_id TYPE TEXT USING breeder_id::TEXT');
-  await dbClient.query('ALTER TABLE dog_movements ALTER COLUMN dog_id TYPE TEXT USING dog_id::TEXT');
-  await dbClient.query('ALTER TABLE dog_movements ALTER COLUMN movement_type TYPE TEXT USING movement_type::TEXT');
-
-  await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_breeder_id ON dog_movements (breeder_id)');
-  await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_dog_id ON dog_movements (dog_id)');
-  await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_type ON dog_movements (movement_type)');
-  await dbClient.query('CREATE INDEX IF NOT EXISTS idx_dog_movements_date ON dog_movements (movement_date)');
-}
 
 async function loadDogForBreeder(dogId, breederId, dbClient = pool) {
   const result = await dbClient.query(
@@ -116,7 +86,6 @@ exports.deleteDog = async (req, res) => {
 
   try {
     await client.query('BEGIN');
-    await ensureDogExitSchema(client);
 
     await client.query(
       `

@@ -5,6 +5,9 @@
 
 # Dependencies
 node_modules/
+.npm-cache/
+private-uploads/
+artifacts/
 
 # Runtime uploads and generated files
 /uploads/

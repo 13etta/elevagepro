@@ -54,6 +54,7 @@ function buildMissingInformation(context) {
   const missing = [];
 
   if (!context.puppy?.name) missing.push('Nom ou collier du chiot');
+  if (!context.puppy?.status) missing.push('Statut du chiot');
   if (!context.puppy?.sex) missing.push('Sexe du chiot');
   if (!context.puppy?.color) missing.push('Robe / couleur');
   if (!context.birthDate) missing.push('Date de naissance');
@@ -66,11 +67,14 @@ function buildMissingInformation(context) {
 function buildStructuredContext(data, options = {}) {
   const puppy = data.puppy || {};
   const breeder = data.breeder || {};
+  const showChipNumber = [true, 'true', 'on'].includes(options.showChipNumber);
+  const privateChip = cleanText(puppy.chip_number);
+  const publicText = value => !showChipNumber && privateChip ? cleanText(value).replaceAll(privateChip, '[numéro de puce masqué]') : cleanText(value);
   const birthDate = puppy.birth_date || puppy.litter_birth_date || data.litter?.birth_date;
 
   return {
     tone: options.tone || 'professional',
-    showChipNumber: options.showChipNumber === true || options.showChipNumber === 'true' || options.showChipNumber === 'on',
+    showChipNumber,
     birthDate,
     puppy: {
       name: cleanText(puppy.name),
@@ -78,12 +82,12 @@ function buildStructuredContext(data, options = {}) {
       color: cleanText(puppy.color),
       status: cleanText(puppy.status),
       salePrice: puppy.sale_price || null,
-      notes: cleanText(puppy.notes),
-      chipNumber: cleanText(puppy.chip_number),
+      notes: publicText(puppy.notes),
+      chipNumber: showChipNumber ? privateChip : '',
     },
     litter: {
       birthDate: formatDateFr(data.litter?.birth_date || puppy.litter_birth_date),
-      notes: cleanText(data.litter?.notes),
+      notes: publicText(data.litter?.notes),
       puppiesCount: data.litter?.puppies_count_total || data.litter?.puppies_count || data.litter?.nb_puppies || null,
     },
     parents: {
@@ -108,7 +112,7 @@ function buildFallbackAd(context, providerError = '') {
   const color = context.puppy.color || 'robe à préciser';
   const birthDate = formatDateFr(context.birthDate);
   const breederName = context.breeder.affixName || context.breeder.companyName || 'notre élevage';
-  const status = context.puppy.status || 'disponible';
+  const status = context.puppy.status || 'à confirmer';
   const price = context.puppy.salePrice ? `${context.puppy.salePrice} €` : '';
   const mother = context.parents.motherName ? `La mère est ${context.parents.motherName}.` : '';
   const father = context.parents.fatherName ? `Le père est ${context.parents.fatherName}.` : '';
@@ -122,23 +126,23 @@ function buildFallbackAd(context, providerError = '') {
     mother,
     father,
     price ? `Prix indiqué : ${price}.` : '',
-    `Élevé au sein de ${breederName}, avec suivi sérieux et accompagnement des adoptants.`,
+    `Élevage : ${breederName}.`,
     contact ? `Contact : ${contact}.` : '',
   ].filter(Boolean).join(' ');
 
   const longAd = [
-    `Nous proposons ${puppyName}, ${sex} ${color}${birthDate ? `, né(e) le ${birthDate}` : ''}.`,
+    `Présentation de ${puppyName}, ${sex} ${color}${birthDate ? `, né(e) le ${birthDate}` : ''}.`,
     `${mother} ${father}`.trim(),
     notes,
     `Statut actuel : ${status}.`,
     price ? `Prix de vente attendu : ${price}.` : '',
     chip,
-    `${breederName} privilégie une sélection cohérente, un suivi sanitaire structuré et un accompagnement durable des familles adoptantes.`,
+    `Élevage : ${breederName}. Les conditions de départ et le suivi sont à préciser avec l’éleveur.`,
     contact ? `Pour tout renseignement : ${contact}.` : '',
   ].filter(Boolean).join('\n\n');
 
   const socialPost = [
-    `${puppyName} cherche sa future famille.`,
+    `Présentation de ${puppyName}.`,
     `${sex.charAt(0).toUpperCase() + sex.slice(1)} ${color}${birthDate ? `, né(e) le ${birthDate}` : ''}.`,
     status ? `Statut : ${status}.` : '',
     contact ? `Infos : ${contact}` : '',
@@ -192,6 +196,7 @@ async function callOpenAI(prompt) {
 
   const response = await fetch(process.env.OPENAI_API_URL || 'https://api.openai.com/v1/chat/completions', {
     method: 'POST',
+    signal: AbortSignal.timeout(20000),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
@@ -208,8 +213,7 @@ async function callOpenAI(prompt) {
   });
 
   if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    console.error('OpenAI response body:', body.slice(0, 500));
+
     throw new Error(`OPENAI_ERROR_${response.status}`);
   }
 
@@ -223,6 +227,7 @@ async function callSingleGeminiModel(prompt, model) {
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
+    signal: AbortSignal.timeout(20000),
     headers: {
       'Content-Type': 'application/json',
       'x-goog-api-key': apiKey,
@@ -242,8 +247,7 @@ async function callSingleGeminiModel(prompt, model) {
   });
 
   if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    console.error(`Gemini response body for ${model}:`, body.slice(0, 500));
+
     throw new Error(`GEMINI_ERROR_${response.status}_${model}`);
   }
 

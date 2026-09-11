@@ -31,7 +31,6 @@ const DEFAULT_INFRASTRUCTURES = [
   { name: "Parcs d'ébats", type: 'parc', capacity: 3, status: 'libre' },
 ];
 
-let schemaReadyPromise = null;
 const bootstrappedBreeders = new Set();
 
 function setFlash(req, type, message) {
@@ -98,67 +97,9 @@ function parseAnimalRef(body) {
   return { animalType: null, dogId: null, puppyId: null };
 }
 
-async function ensureStructureSchema() {
-  await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS infrastructures (
-      id SERIAL PRIMARY KEY,
-      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
-      name VARCHAR(255) NOT NULL,
-      type VARCHAR(80) DEFAULT 'box',
-      description TEXT,
-      capacity INTEGER DEFAULT 0,
-      status VARCHAR(80) DEFAULT 'actif',
-      image_url TEXT,
-      zone_label VARCHAR(120),
-      occupied_count INTEGER DEFAULT 0,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  await pool.query('ALTER TABLE infrastructures ADD COLUMN IF NOT EXISTS description TEXT');
-  await pool.query('ALTER TABLE infrastructures ADD COLUMN IF NOT EXISTS image_url TEXT');
-  await pool.query('ALTER TABLE infrastructures ADD COLUMN IF NOT EXISTS zone_label VARCHAR(120)');
-  await pool.query('ALTER TABLE infrastructures ADD COLUMN IF NOT EXISTS occupied_count INTEGER DEFAULT 0');
-  await pool.query('ALTER TABLE infrastructures ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP');
-  await pool.query('ALTER TABLE dogs ADD COLUMN IF NOT EXISTS infrastructure_id INTEGER');
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS infrastructure_id INTEGER');
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP');
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS infrastructure_assignments (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
-      infrastructure_id INTEGER REFERENCES infrastructures(id) ON DELETE SET NULL,
-      previous_infrastructure_id INTEGER REFERENCES infrastructures(id) ON DELETE SET NULL,
-      animal_type VARCHAR(20) NOT NULL CHECK (animal_type IN ('dog', 'puppy')),
-      dog_id UUID REFERENCES dogs(id) ON DELETE CASCADE,
-      puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE,
-      reason TEXT,
-      sanitary_context VARCHAR(120),
-      assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      ended_at TIMESTAMP WITH TIME ZONE,
-      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      CHECK ((animal_type = 'dog' AND dog_id IS NOT NULL AND puppy_id IS NULL) OR (animal_type = 'puppy' AND puppy_id IS NOT NULL AND dog_id IS NULL))
-    )
-  `);
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_infrastructures_breeder_type ON infrastructures(breeder_id, type, name)');
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_dogs_infrastructure ON dogs(breeder_id, infrastructure_id)');
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_puppies_infrastructure ON puppies(breeder_id, infrastructure_id)');
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_infrastructure_assignments_breeder_date ON infrastructure_assignments(breeder_id, assigned_at DESC)');
-  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS ux_infra_active_dog ON infrastructure_assignments(breeder_id, dog_id) WHERE ended_at IS NULL AND dog_id IS NOT NULL');
-  await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS ux_infra_active_puppy ON infrastructure_assignments(breeder_id, puppy_id) WHERE ended_at IS NULL AND puppy_id IS NOT NULL');
-}
 
-function ensureStructureSchemaOnce() {
-  if (!schemaReadyPromise) {
-    schemaReadyPromise = ensureStructureSchema().catch((error) => {
-      schemaReadyPromise = null;
-      throw error;
-    });
-  }
-  return schemaReadyPromise;
-}
+
+
 
 async function seedDefaultInfrastructures(breederId) {
   const existing = await pool.query('SELECT COUNT(*)::int AS total FROM infrastructures WHERE breeder_id = $1', [breederId]);
@@ -174,7 +115,7 @@ async function seedDefaultInfrastructures(breederId) {
 }
 
 async function bootstrapStructureForBreeder(breederId) {
-  await ensureStructureSchemaOnce();
+
   if (bootstrappedBreeders.has(String(breederId))) return;
   await seedDefaultInfrastructures(breederId);
   bootstrappedBreeders.add(String(breederId));
@@ -284,10 +225,10 @@ exports.index = async (req, res) => {
               COALESCE(i.name, 'Non assigné') AS infrastructure_name,
               COALESCE(pi.name, 'Non assigné') AS previous_infrastructure_name
        FROM infrastructure_assignments ia
-       LEFT JOIN dogs d ON d.id = ia.dog_id
-       LEFT JOIN puppies p ON p.id = ia.puppy_id
-       LEFT JOIN infrastructures i ON i.id = ia.infrastructure_id
-       LEFT JOIN infrastructures pi ON pi.id = ia.previous_infrastructure_id
+       LEFT JOIN dogs d ON d.id = ia.dog_id AND d.breeder_id = ia.breeder_id
+       LEFT JOIN puppies p ON p.id = ia.puppy_id AND p.breeder_id = ia.breeder_id
+       LEFT JOIN infrastructures i ON i.id = ia.infrastructure_id AND i.breeder_id = ia.breeder_id
+       LEFT JOIN infrastructures pi ON pi.id = ia.previous_infrastructure_id AND pi.breeder_id = ia.breeder_id
        WHERE ia.breeder_id = $1
        ORDER BY ia.assigned_at DESC, ia.created_at DESC
        LIMIT 10`,
@@ -384,7 +325,7 @@ exports.index = async (req, res) => {
 
 exports.storeInfrastructure = async (req, res) => {
   try {
-    await ensureStructureSchemaOnce();
+
     const breederId = req.session.user.breeder_id;
     const name = clean(req.body.name);
     if (!name) {
@@ -411,7 +352,7 @@ exports.storeInfrastructure = async (req, res) => {
 exports.assignInfrastructure = async (req, res) => {
   const client = await pool.connect();
   try {
-    await ensureStructureSchemaOnce();
+
     const breederId = req.session.user.breeder_id;
     const infrastructureId = parseNullableInteger(req.body.infrastructure_id);
     const { animalType, dogId, puppyId } = parseAnimalRef(req.body);

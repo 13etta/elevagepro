@@ -7,7 +7,7 @@ exports.listHeats = async (req, res) => {
         const result = await pool.query(`
             SELECT h.*, d.name AS dog_name
             FROM heats h
-            JOIN dogs d ON h.dog_id = d.id
+            JOIN dogs d ON h.dog_id = d.id AND d.breeder_id = h.breeder_id
             WHERE h.breeder_id = $1
             ORDER BY h.start_date DESC
         `, [breederId]);

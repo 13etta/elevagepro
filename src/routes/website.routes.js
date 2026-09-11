@@ -1,4 +1,5 @@
 const express = require('express');
+const { requireAuth } = require('../middleware/auth');
 const { pool } = require('../db');
 const { mergeWebsiteSettings, buildServices } = require('../services/website-settings.service');
 
@@ -23,31 +24,12 @@ function groupByBreed(items) {
   }, {});
 }
 
-async function ensureWebsiteSchema() {
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS slug VARCHAR(180)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS address TEXT').catch(() => {});
-  await pool.query("ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb").catch(() => {});
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS sale_price DECIMAL(10,2)').catch(() => {});
-  await pool.query("ALTER TABLE litters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'").catch(() => {});
-}
 
-async function ensureBreederSlug(breeder) {
-  if (breeder.slug) return breeder.slug;
 
-  const base = buildSlug(breeder.company_name || breeder.name || 'elevage') || 'elevage';
-  const slug = `${base}-${String(breeder.id).slice(0, 8)}`;
-
-  await pool.query('UPDATE breeder SET slug = $1 WHERE id = $2', [slug, breeder.id]).catch(() => {});
-  return slug;
-}
+async function ensureBreederSlug(breeder) { return breeder.slug || breeder.id; }
 
 async function renderPublic(req, res) {
   try {
-    await ensureWebsiteSchema();
     const slug = req.params.slug;
 
     const breederRes = await pool.query(
@@ -68,13 +50,13 @@ async function renderPublic(req, res) {
     }
 
     const breeder = breederRes.rows[0];
-    breeder.slug = await ensureBreederSlug(breeder);
     const websiteSettings = mergeWebsiteSettings(breeder.website_settings);
+    if (websiteSettings.isPublished === false && !(req.preview && req.session.user.breeder_id === breeder.id)) return res.status(404).render('errors/404', { title: 'Élevage introuvable', user: null });
 
     const dogs = await pool.query(
       `
-        SELECT id, name, sex, breed, chip_number, birth_date, status, notes, photo_url,
-               COALESCE(lof, pedigree, pedigree_number, id_scc) AS lof
+        SELECT id, name, sex, breed, birth_date, status, photo_url,
+               COALESCE(lof, pedigree_number, id_scc) AS lof
         FROM dogs
         WHERE breeder_id = $1
           AND COALESCE(lower(status), '') IN ('actif', 'active', 'reproducteur', 'reproductrice', 'disponible')
@@ -136,9 +118,8 @@ async function renderPublic(req, res) {
   }
 }
 
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
-    await ensureWebsiteSchema();
 
     if (!req.session?.user?.breeder_id) {
       return res.redirect('/auth/login');
@@ -161,6 +142,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/preview', requireAuth, (req, res) => { req.params.slug = req.session.user.breeder_id; req.preview = true; return renderPublic(req, res); });
 router.get('/elevage/:slug', renderPublic);
 router.get('/:slug', renderPublic);
 

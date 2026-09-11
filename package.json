@@ -6,8 +6,10 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "db:migrate": "node sql/migrate.js && node sql/apply-dog-exit-archive.js",
-    "test": "node --test",
+    "db:migrate": "node sql/migrate.js --check",
+    "db:check": "node sql/migrate.js --check",
+    "db:upgrade": "node sql/migrate.js --apply",
+    "test": "node --test test/*.test.js",
     "test:security": "node --test test/security.test.js"
   },
   "engines": {
@@ -20,11 +22,20 @@
     "dotenv": "^16.6.1",
     "ejs": "6.0.1",
     "express": "4.22.2",
+    "express-rate-limit": "8.7.0",
     "express-session": "^1.18.1",
     "i18n": "^0.15.3",
-    "multer": "2.2.0",
+    "multer": "2.3.0",
+    "nodemailer": "10.0.1",
     "pdfkit": "^0.18.0",
     "pg": "8.22.0",
+    "stripe": "22.6.1",
     "ws": "8.21.1"
+  },
+  "overrides": {
+    "qs": "6.16.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8"
   }
 }

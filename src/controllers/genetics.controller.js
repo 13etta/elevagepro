@@ -21,20 +21,20 @@ exports.getSimulator = async (req, res) => {
 };
 
 // Requête récursive pour obtenir la généalogie d'un chien (Wright's Algorithm)
-const getPedigree = async (dogId, maxGenerations = 5) => {
+const getPedigree = async (dogId, breederId, maxGenerations = 5) => {
     const query = `
         WITH RECURSIVE tree AS (
             SELECT id, name, father_id, mother_id, 0 AS generation
-            FROM dogs WHERE id = $1
+            FROM dogs WHERE id = $1 AND breeder_id = $3
             UNION ALL
             SELECT d.id, d.name, d.father_id, d.mother_id, t.generation + 1
             FROM dogs d
             JOIN tree t ON d.id = t.father_id OR d.id = t.mother_id
-            WHERE t.generation < $2
+            WHERE t.generation < $2 AND d.breeder_id = $3
         )
         SELECT * FROM tree WHERE generation > 0;
     `;
-    const res = await pool.query(query, [dogId, maxGenerations]);
+    const res = await pool.query(query, [dogId, maxGenerations, breederId]);
     return res.rows;
 };
 
@@ -48,11 +48,12 @@ exports.runSimulation = async (req, res) => {
             return res.redirect('/genetics/simulator');
         }
 
-        const sireRes = await pool.query('SELECT name FROM dogs WHERE id = $1', [sire_id]);
-        const damRes = await pool.query('SELECT name FROM dogs WHERE id = $1', [dam_id]);
+        const sireRes = await pool.query('SELECT name FROM dogs WHERE id = $1 AND breeder_id = $2', [sire_id, breederId]);
+        const damRes = await pool.query('SELECT name FROM dogs WHERE id = $1 AND breeder_id = $2', [dam_id, breederId]);
 
-        const sirePedigree = await getPedigree(sire_id, 5);
-        const damPedigree = await getPedigree(dam_id, 5);
+        if (!sireRes.rows.length || !damRes.rows.length) return res.status(404).send('Parents introuvables pour cet élevage.');
+        const sirePedigree = await getPedigree(sire_id, breederId, 5);
+        const damPedigree = await getPedigree(dam_id, breederId, 5);
 
         let coi = 0;
         const commonAncestors = [];
