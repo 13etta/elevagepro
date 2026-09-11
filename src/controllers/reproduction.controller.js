@@ -13,7 +13,7 @@ exports.getIndex = async (req, res) => {
         const heats = await pool.query(`
             SELECT h.id, h.start_date, h.stage, d.name AS dog_name, d.breed, d.photo_url
             FROM heats h
-            JOIN dogs d ON h.dog_id = d.id
+            JOIN dogs d ON h.dog_id = d.id AND d.breeder_id = h.breeder_id
             WHERE h.breeder_id = $1
             ORDER BY h.start_date DESC
             LIMIT 20
@@ -31,9 +31,9 @@ exports.getIndex = async (req, res) => {
                 ma.breed AS male_breed,
                 ma.photo_url AS male_photo_url
             FROM matings m
-            JOIN dogs f ON m.female_id = f.id
-            JOIN dogs ma ON m.male_id = ma.id
-            LEFT JOIN pregnancies p ON p.mating_id = m.id
+            JOIN dogs f ON m.female_id = f.id AND f.breeder_id = m.breeder_id
+            JOIN dogs ma ON m.male_id = ma.id AND ma.breeder_id = m.breeder_id
+            LEFT JOIN pregnancies p ON p.mating_id = m.id AND p.breeder_id = m.breeder_id
             WHERE m.breeder_id = $1
               AND p.id IS NULL
             ORDER BY m.mating_date DESC
@@ -49,7 +49,7 @@ exports.getIndex = async (req, res) => {
                 f.breed,
                 f.photo_url
             FROM pregnancies p
-            JOIN dogs f ON p.female_id = f.id
+            JOIN dogs f ON p.female_id = f.id AND f.breeder_id = p.breeder_id
             WHERE p.breeder_id = $1
               AND p.result = 'En cours'
             ORDER BY p.expected_date ASC

@@ -103,7 +103,7 @@
                     <span><%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : 'Chien' %></span>
                     <h4><%= dog.name %></h4>
                     <% if (dog.lof) { %><p>LOF : <%= dog.lof %></p><% } %>
-                    <% if (dog.notes) { %><p><%= String(dog.notes).slice(0, 140) %><%= String(dog.notes).length > 140 ? '…' : '' %></p><% } %>
+
                   </div>
                 </article>
               <% }) %>
@@ -200,22 +200,18 @@
 
     <section id="contact" class="forest-contact" style="<%= websiteSettings.showContact ? '' : 'display:none' %>">
         <div class="forest-contact-inner">
-          <form class="forest-contact-form">
+          <div class="forest-contact-form">
             <h2><%= websiteSettings.contactPanelTitle || 'Contact' %></h2>
-            <div class="forest-form-grid">
-              <input placeholder="Nom">
-              <input placeholder="E-mail">
-              <input placeholder="Téléphone">
-              <input placeholder="Projet">
-            </div>
-            <textarea placeholder="Message"></textarea>
-            <button type="button">Envoyer le message</button>
-          </form>
+            <p>Pour connaître les disponibilités ou nous présenter votre projet, contactez directement l’élevage.</p>
+            <% if (breeder.email) { %><a class="forest-btn" href="mailto:<%= breeder.email %>">Écrire à l’élevage</a>
+            <% } else if (breeder.phone) { %><a class="forest-btn" href="tel:<%= breeder.phone %>">Appeler l’élevage</a>
+            <% } else { %><p>Les coordonnées de contact seront prochainement renseignées.</p><% } %>
+          </div>
           <div class="forest-contact-details">
             <p class="forest-contact-copy" style="<%= websiteSettings.contactPanelText ? '' : 'display:none' %>"><%= websiteSettings.contactPanelText || '' %></p>
             <% if (breeder.phone) { %><p>☎ <a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
             <% if (breeder.email) { %><p>✉ <a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
-            <% if (breeder.address) { %><p>◆ <%= breeder.address %></p><% } %>
+            <% if (websiteSettings.showPublicAddress === true && breeder.address) { %><p>◆ <%= breeder.address %></p><% } %>
             <p data-contact-key="openingHours" style="<%= websiteSettings.openingHours ? '' : 'display:none' %>">◷ <span><%= websiteSettings.openingHours || '' %></span></p>
             <p data-contact-key="instagram" style="<%= websiteSettings.instagram ? '' : 'display:none' %>">Instagram : <span><%= websiteSettings.instagram || '' %></span></p>
             <p data-contact-key="facebook" style="<%= websiteSettings.facebook ? '' : 'display:none' %>">Facebook : <span><%= websiteSettings.facebook || '' %></span></p>

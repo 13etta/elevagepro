@@ -1,0 +1,23 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const express = require('express');
+const Stripe = require('stripe');
+test('Stripe endpoint requires a fresh signature over the original bytes', async t => {
+  process.env.STRIPE_SECRET_KEY = 'sk_test_fixture';
+  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_fixture';
+  const {webhook} = require('../src/services/billing.service');
+  const app = express();
+  app.post('/billing/webhook',express.raw({type:'application/json'}),webhook);
+  const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const url='http://127.0.0.1:'+server.address().port+'/billing/webhook';
+  const body=JSON.stringify({id:'evt_ignored',type:'product.updated',data:{object:{}}});
+  const stripe=new Stripe(process.env.STRIPE_SECRET_KEY);
+  const signature=stripe.webhooks.generateTestHeaderString({payload:body,secret:process.env.STRIPE_WEBHOOK_SECRET});
+  const request=(payload,sig)=>fetch(url,{method:'POST',headers:{'content-type':'application/json',...(sig?{'stripe-signature':sig}:{})},body:payload});
+  assert.equal((await request(body)).status,400);
+  assert.equal((await request(body+' ',signature)).status,400);
+  assert.equal((await request(body,signature)).status,200);
+  const expired=stripe.webhooks.generateTestHeaderString({payload:body,secret:process.env.STRIPE_WEBHOOK_SECRET,timestamp:Math.floor(Date.now()/1000)-1000});
+  assert.equal((await request(body,expired)).status,400);
+});

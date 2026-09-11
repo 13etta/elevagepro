@@ -2,17 +2,42 @@ services:
   - type: web
     name: elevage-pro
     env: docker
+    healthCheckPath: /healthz
     plan: starter
-    preDeployCommand: npm run db:migrate
+    preDeployCommand: npm run db:check
+    disk:
+      name: elevagepro-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: elevage-pro-db
-          property: connectionString
+        sync: false
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: PRIVATE_UPLOAD_DIR
+        value: /var/data/private
+      - key: PUBLIC_UPLOAD_DIR
+        value: /var/data/public
+      - key: APP_BASE_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_URL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
       - key: DATABASE_SSL
         value: "true"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: ENABLE_AI_SELECTION_AGENT
@@ -23,7 +48,3 @@ services:
         sync: false
       - key: OPENAI_SELECTION_MODEL
         value: gpt-5-mini
-
-databases:
-  - name: elevage-pro-db
-    plan: starter

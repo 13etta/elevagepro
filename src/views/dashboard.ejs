@@ -1,11 +1,12 @@
 <%- include('partials/head') %>
 <%- include('partials/nav') %>
 
-<main class="container dashboard-stitch">
+<main id="main-content" tabindex="-1" class="container dashboard-stitch">
   <section class="page-hero dashboard-titlebar">
     <div>
-      <h1>Pilotage d'élevage canin</h1>
-      <p><span class="material-symbols-outlined">verified</span> Cockpit professionnel de l'élevage</p>
+      <p class="eyebrow">VOTRE ÉLEVAGE, AU QUOTIDIEN</p>
+      <h1>Tableau de bord</h1>
+      <p>Vos effectifs, vos échéances et vos priorités en un coup d’œil.</p>
     </div>
     <div class="hero-actions">
       <a class="btn btn-secondary" href="/calendar/new"><span class="material-symbols-outlined">event</span> Ajouter une échéance</a>
@@ -35,7 +36,7 @@
       <strong><%= kpis.activeLitters %></strong>
     </article>
     <article class="kpi-card">
-      <span>Chiots dispo.</span>
+      <span>Chiots disponibles</span>
       <strong><%= kpis.availablePuppies %></strong>
     </article>
     <article class="kpi-card kpi-warning">
@@ -55,7 +56,7 @@
   <section class="dashboard-columns stitch-main-grid">
     <article class="table-block dashboard-sales-panel stitch-chart-card">
       <div class="section-title compact">
-        <h2>Performances Financières</h2>
+        <h2>Activité commerciale</h2>
         <p class="muted">Revenus des ventes et réservations</p>
         <a href="/sales" class="report-link">Voir le rapport <span class="material-symbols-outlined">arrow_forward</span></a>
       </div>
@@ -63,11 +64,12 @@
       <% if (!salesSeries || !salesSeries.length) { %>
         <p class="muted empty-chart-text">Aucune donnée de vente à afficher.</p>
       <% } else { %>
-        <div class="mini-bar-chart" aria-label="Graphique des ventes mensuelles">
+        <div class="mini-bar-chart" role="list" aria-label="Montants des ventes par mois">
           <% salesSeries.forEach((item) => { %>
-            <div class="mini-bar-item">
+            <div class="mini-bar-item" role="listitem">
+              <strong><%= formatCurrency(item.total) %></strong>
               <div class="mini-bar-track">
-                <div class="mini-bar-fill" style="height:<%= Math.max(5, Math.round((item.total / maxMonthlySales) * 100)) %>%"></div>
+                <div class="mini-bar-fill" style="height:<%= maxMonthlySales > 0 ? Math.max(0, Math.round((item.total / maxMonthlySales) * 100)) : 0 %>%"></div>
               </div>
               <small><%= item.label %></small>
             </div>
@@ -79,7 +81,7 @@
     <article class="card stitch-alert-card">
       <div class="section-title compact alert-heading">
         <span class="material-symbols-outlined">warning</span>
-        <h2>Alertes Actives</h2>
+        <h2>À traiter</h2>
       </div>
       <div class="alert-list">
         <% if (alerts && alerts.length) { %>

@@ -13,43 +13,7 @@ const EXPENSE_CATEGORIES = [
   ['autre', 'Autre'],
 ];
 
-async function ensureProfitabilityTables() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS expenses (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
-      litter_id UUID REFERENCES litters(id) ON DELETE SET NULL,
-      dog_id UUID REFERENCES dogs(id) ON DELETE SET NULL,
-      puppy_id UUID REFERENCES puppies(id) ON DELETE SET NULL,
-      expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
-      category VARCHAR(80) NOT NULL DEFAULT 'autre',
-      label TEXT NOT NULL DEFAULT '',
-      amount NUMERIC(10,2) NOT NULL DEFAULT 0,
-      notes TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
 
-  await pool.query('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP').catch(() => {});
-  await pool.query('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS puppy_id UUID').catch(() => {});
-  await pool.query('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS dog_id UUID').catch(() => {});
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS sale_price NUMERIC(10,2)').catch(() => {});
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE').catch(() => {});
-  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS is_reservation BOOLEAN DEFAULT FALSE').catch(() => {});
-  await pool.query('ALTER TABLE sales ADD COLUMN IF NOT EXISTS deposit_amount NUMERIC(10,2) DEFAULT 0').catch(() => {});
-  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP').catch(() => {});
-  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS puppies_count_total INTEGER').catch(() => {});
-  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS puppies_count INTEGER').catch(() => {});
-  await pool.query('ALTER TABLE litters ADD COLUMN IF NOT EXISTS nb_puppies INTEGER').catch(() => {});
-  await pool.query(`
-    UPDATE litters
-    SET puppies_count_total = COALESCE(puppies_count_total, puppies_count, nb_puppies)
-    WHERE puppies_count_total IS NULL
-  `).catch(() => {});
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_expenses_breeder_date ON expenses(breeder_id, expense_date DESC)').catch(() => {});
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_expenses_litter ON expenses(breeder_id, litter_id)').catch(() => {});
-}
 
 function parseMoney(value) {
   const parsed = Number.parseFloat(String(value || '0').replace(',', '.'));
@@ -93,7 +57,6 @@ function buildLitterLabel(litter) {
 
 exports.getProfitability = async (req, res) => {
   try {
-    await ensureProfitabilityTables();
     const breederId = req.session.user.breeder_id;
     const requestedLitterId = req.query.litter_id || '';
 
@@ -107,8 +70,8 @@ exports.getProfitability = async (req, res) => {
         COALESCE(mother.name, female.name) AS mother_name,
         COALESCE(mother.breed, female.breed) AS mother_breed
       FROM litters l
-      LEFT JOIN dogs mother ON l.mother_id = mother.id
-      LEFT JOIN dogs female ON l.female_id = female.id
+      LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = l.breeder_id
+      LEFT JOIN dogs female ON (to_jsonb(l)->>'female_id') = female.id::text AND female.breeder_id = l.breeder_id
       WHERE l.breeder_id = $1
       ORDER BY l.birth_date DESC NULLS LAST, l.updated_at DESC NULLS LAST, l.id DESC
     `, [breederId]);
@@ -131,16 +94,16 @@ exports.getProfitability = async (req, res) => {
       ? await pool.query(`
           SELECT e.*, p.name AS puppy_name, d.name AS dog_name
           FROM expenses e
-          LEFT JOIN puppies p ON e.puppy_id = p.id
-          LEFT JOIN dogs d ON e.dog_id = d.id
+          LEFT JOIN puppies p ON e.puppy_id = p.id AND p.breeder_id = e.breeder_id
+          LEFT JOIN dogs d ON e.dog_id = d.id AND d.breeder_id = e.breeder_id
           WHERE e.breeder_id = $1 AND e.litter_id = $2
           ORDER BY e.expense_date DESC, e.created_at DESC
         `, [breederId, selectedId])
       : await pool.query(`
           SELECT e.*, p.name AS puppy_name, d.name AS dog_name
           FROM expenses e
-          LEFT JOIN puppies p ON e.puppy_id = p.id
-          LEFT JOIN dogs d ON e.dog_id = d.id
+          LEFT JOIN puppies p ON e.puppy_id = p.id AND p.breeder_id = e.breeder_id
+          LEFT JOIN dogs d ON e.dog_id = d.id AND d.breeder_id = e.breeder_id
           WHERE e.breeder_id = $1 AND e.litter_id IS NULL
           ORDER BY e.expense_date DESC, e.created_at DESC
         `, [breederId]);
@@ -155,7 +118,7 @@ exports.getProfitability = async (req, res) => {
             p.color AS puppy_color,
             p.sex AS puppy_sex
           FROM sales s
-          JOIN puppies p ON s.puppy_id = p.id
+          JOIN puppies p ON s.puppy_id = p.id AND p.breeder_id = s.breeder_id
           WHERE s.breeder_id = $1 AND p.litter_id = $2
           ORDER BY s.sale_date DESC, s.created_at DESC NULLS LAST
         `, [breederId, selectedId])
@@ -169,7 +132,7 @@ exports.getProfitability = async (req, res) => {
       total: puppies.length || Number(selectedLitter?.puppies_count_total || 0),
       reserved: puppies.filter((puppy) => isReservedStatus(puppy.status)).length,
       sold: puppies.filter((puppy) => isSoldStatus(puppy.status) || puppy.is_sold).length,
-      available: puppies.filter((puppy) => !isSoldStatus(puppy.status) && !isReservedStatus(puppy.status) && !puppy.is_sold).length,
+      available: puppies.filter((puppy) => ['disponible', 'available'].includes(normalizeStatus(puppy.status)) && !puppy.is_sold).length,
     };
 
     const totalExpenses = expenses.reduce((sum, row) => sum + parseMoney(row.amount), 0);
@@ -231,7 +194,6 @@ exports.getProfitability = async (req, res) => {
 
 exports.addExpense = async (req, res) => {
   try {
-    await ensureProfitabilityTables();
     const breederId = req.session.user.breeder_id;
     const { expense_date, category, label, amount, notes } = req.body;
     let { litter_id, puppy_id } = req.body;

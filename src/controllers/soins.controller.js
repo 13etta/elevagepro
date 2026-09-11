@@ -1,10 +1,6 @@
 const { pool } = require('../db');
 
-async function ensureHealthAnimalColumns() {
-  await pool.query('ALTER TABLE soins ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE');
-  await pool.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE');
-  await pool.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS soin_id UUID REFERENCES soins(id) ON DELETE CASCADE');
-}
+
 
 async function columnExists(tableName, columnName) {
   const result = await pool.query(
@@ -99,7 +95,7 @@ async function loadAnimals(breederId) {
   const puppies = await pool.query(
     `SELECT p.id, p.name, p.chip_number, p.status, l.birth_date AS litter_birth_date, d.name AS mother_name
      FROM puppies p
-     LEFT JOIN litters l ON p.litter_id = l.id
+     LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
      ${motherJoin}
      WHERE p.breeder_id = $1
        AND COALESCE(lower(p.status), '') NOT IN ('vendu', 'vendue', 'décédé', 'decede', 'décédée', 'decedee')
@@ -119,8 +115,8 @@ async function loadSoins(breederId) {
                  ELSE 'Général'
             END AS animal_category
      FROM soins s
-     LEFT JOIN dogs d ON s.dog_id = d.id
-     LEFT JOIN puppies p ON s.puppy_id = p.id
+     LEFT JOIN dogs d ON s.dog_id = d.id AND d.breeder_id = s.breeder_id
+     LEFT JOIN puppies p ON s.puppy_id = p.id AND p.breeder_id = s.breeder_id
      WHERE s.breeder_id = $1
      ORDER BY s.event_date DESC NULLS LAST`,
     [breederId],
@@ -129,7 +125,6 @@ async function loadSoins(breederId) {
 }
 
 async function renderIndex(req, res, editingSoin = null) {
-  await ensureHealthAnimalColumns();
   const breederId = req.session.user.breeder_id;
   const animals = await loadAnimals(breederId);
   const soins = await loadSoins(breederId);
@@ -153,7 +148,6 @@ exports.listSoins = async (req, res) => {
 
 exports.editSoin = async (req, res) => {
   try {
-    await ensureHealthAnimalColumns();
     const breederId = req.session.user.breeder_id;
     const result = await pool.query(
       `SELECT id, dog_id, puppy_id, type, label, event_date, next_due, notes
@@ -177,7 +171,6 @@ exports.editSoin = async (req, res) => {
 exports.createSoin = async (req, res) => {
   const client = await pool.connect();
   try {
-    await ensureHealthAnimalColumns();
     const breederId = req.session.user.breeder_id;
     const { type, label, event_date, notes } = req.body;
     const nextDue = cleanDate(req.body.next_due);
@@ -206,7 +199,6 @@ exports.createSoin = async (req, res) => {
 exports.updateSoin = async (req, res) => {
   const client = await pool.connect();
   try {
-    await ensureHealthAnimalColumns();
     const breederId = req.session.user.breeder_id;
     const soinId = req.params.id;
     const { type, label, event_date, notes } = req.body;
@@ -250,7 +242,6 @@ exports.updateSoin = async (req, res) => {
 exports.deleteSoin = async (req, res) => {
   const client = await pool.connect();
   try {
-    await ensureHealthAnimalColumns();
     const breederId = req.session.user.breeder_id;
     const soinId = req.params.id;
     const previous = await client.query(

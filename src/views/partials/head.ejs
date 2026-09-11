@@ -27,5 +27,6 @@
     <link rel="stylesheet" href="/css/profitability-stitch.css">
     <link rel="stylesheet" href="/css/calendar.css">
     <link rel="stylesheet" href="/css/selection-agent.css">
+    <link rel="stylesheet" href="/css/application.css">
 </head>
-<body data-theme="<%= theme || 'prestige' %>">
+<body class="<%= typeof user !== 'undefined' && user ? 'app-interface' : '' %>" data-theme="<%= theme || 'prestige' %>">

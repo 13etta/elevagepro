@@ -1,3 +1,4 @@
+<a class="skip-link" href="#app-content">Aller au contenu</a>
 <div class="mobile-appbar">
   <a class="brand mobile-brand" href="/dashboard" aria-label="ElevagePro">
     <span class="brand-mark">EP</span>
@@ -46,6 +47,7 @@
   </nav>
 
   <div class="sidebar-footer">
+    <% if (user && ['owner', 'admin'].includes(user.role)) { %><a class="settings-chip" href="/billing"><span class="material-symbols-outlined">credit_card</span>Abonnement</a><% } %>
     <a class="settings-chip" href="/settings"><span class="material-symbols-outlined">settings</span><%= __('nav.settings') %></a>
     <form method="POST" action="/auth/logout">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -54,11 +56,11 @@
   </div>
 </aside>
 
-<div class="app-shell">
+<div class="app-shell" id="app-content" tabindex="-1">
   <header class="topbar">
     <form class="topbar-search" action="/dogs" method="GET" role="search">
       <span class="material-symbols-outlined">search</span>
-      <input type="search" name="q" placeholder="Rechercher un chien, document..." aria-label="Recherche">
+      <input type="search" name="q" placeholder="Rechercher un chien…" aria-label="Recherche">
     </form>
 
     <div class="topbar-actions">
@@ -68,7 +70,7 @@
       <a class="icon-action" href="/calendar" aria-label="Calendrier"><span class="material-symbols-outlined">calendar_month</span></a>
       <a class="icon-action" href="/reminders" aria-label="Rappels"><span class="material-symbols-outlined">notifications</span></a>
       <a class="icon-action" href="/settings" aria-label="Paramètres"><span class="material-symbols-outlined">settings</span></a>
-      <a class="user-avatar" href="/settings" aria-label="Profil"><span><%= user && user.name ? user.name.charAt(0).toUpperCase() : 'E' %></span></a>
+      <a class="user-avatar" href="/settings" aria-label="Profil"><span><%= user && user.full_name ? user.full_name.charAt(0).toUpperCase() : 'E' %></span></a>
     </div>
   </header>
 
@@ -77,4 +79,7 @@
       <span class="material-symbols-outlined"><%= flash.type === 'error' ? 'error' : flash.type === 'success' ? 'check_circle' : 'info' %></span>
       <span><%= flash.message %></span>
     </div>
+  <% } %>
+  <% if (typeof accountAccess !== 'undefined' && !accountAccess) { %>
+    <div class="flash-message flash-info" role="status"><span>Votre élevage est consultable en lecture seule. Un abonnement actif permet d’enregistrer des modifications.</span><% if (user && ['owner','admin'].includes(user.role)) { %> <a href="/billing">Gérer l’abonnement</a><% } %></div>
   <% } %>

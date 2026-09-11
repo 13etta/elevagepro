@@ -22,7 +22,7 @@ exports.listReminders = async (req, res) => {
       `
         SELECT r.*, d.name AS dog_name
         FROM reminders r
-        LEFT JOIN dogs d ON r.dog_id = d.id
+        LEFT JOIN dogs d ON r.dog_id = d.id AND d.breeder_id = r.breeder_id
         WHERE r.breeder_id = $1
         ORDER BY r.is_completed ASC, r.due_date ASC, r.created_at DESC
       `,

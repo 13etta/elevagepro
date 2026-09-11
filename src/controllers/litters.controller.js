@@ -20,11 +20,11 @@ exports.listLitters = async (req, res) => {
                 COUNT(p.id)::int AS created_puppies_count,
                 COUNT(s.id)::int AS sales_count
             FROM litters l
-            LEFT JOIN dogs mother ON l.mother_id = mother.id
-            LEFT JOIN matings m ON l.mating_id = m.id
-            LEFT JOIN dogs father ON m.male_id = father.id
-            LEFT JOIN puppies p ON p.litter_id = l.id
-            LEFT JOIN sales s ON s.puppy_id = p.id
+            LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = l.breeder_id
+            LEFT JOIN matings m ON l.mating_id = m.id AND m.breeder_id = l.breeder_id
+            LEFT JOIN dogs father ON m.male_id = father.id AND father.breeder_id = m.breeder_id
+            LEFT JOIN puppies p ON p.litter_id = l.id AND p.breeder_id = l.breeder_id
+            LEFT JOIN sales s ON s.puppy_id = p.id AND s.breeder_id = p.breeder_id
             WHERE l.breeder_id = $1
         `;
         let params = [breederId];
@@ -85,8 +85,8 @@ exports.getForm = async (req, res) => {
         const matings = await pool.query(`
             SELECT m.id, m.mating_date, f.name as female_name, male.name as male_name
             FROM matings m
-            JOIN dogs f ON m.female_id = f.id
-            JOIN dogs male ON m.male_id = male.id
+            JOIN dogs f ON m.female_id = f.id AND f.breeder_id = m.breeder_id
+            JOIN dogs male ON m.male_id = male.id AND male.breeder_id = m.breeder_id
             WHERE m.breeder_id = $1
             ORDER BY m.mating_date DESC
         `, [breederId]);
@@ -165,9 +165,9 @@ exports.deleteLitter = async (req, res) => {
               COUNT(s.id)::int AS sales_count,
               COUNT(so.id)::int AS soins_count
             FROM litters l
-            LEFT JOIN puppies p ON p.litter_id = l.id
-            LEFT JOIN sales s ON s.puppy_id = p.id
-            LEFT JOIN soins so ON so.puppy_id = p.id
+            LEFT JOIN puppies p ON p.litter_id = l.id AND p.breeder_id = l.breeder_id
+            LEFT JOIN sales s ON s.puppy_id = p.id AND s.breeder_id = p.breeder_id
+            LEFT JOIN soins so ON so.puppy_id = p.id AND so.breeder_id = p.breeder_id
             WHERE l.id = $1 AND l.breeder_id = $2
         `, [litterId, breederId]);
 
@@ -196,7 +196,7 @@ exports.showLitter = async (req, res) => {
         const litterRes = await pool.query(`
             SELECT l.*, d.name AS mother_name 
             FROM litters l 
-            LEFT JOIN dogs d ON l.mother_id = d.id 
+            LEFT JOIN dogs d ON l.mother_id = d.id AND d.breeder_id = l.breeder_id
             WHERE l.id = $1 AND l.breeder_id = $2
         `, [litterId, breederId]);
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const puppiesController = require('../controllers/puppies.controller');
 const { requireAuth } = require('../middleware/auth');
 const { verifyCsrf } = require('../middleware/csrf');
+const { aiLimit } = require('../middleware/rate-limit');
 
 router.use(requireAuth);
 router.use(verifyCsrf);
@@ -17,7 +18,7 @@ router.post('/save', puppiesController.savePuppy);
 router.get('/edit/:id', puppiesController.getForm);
 router.post('/save/:id', puppiesController.savePuppy);
 
-router.post('/:id/generate-ad', puppiesController.generatePuppyAd);
+router.post('/:id/generate-ad', aiLimit, puppiesController.generatePuppyAd);
 
 router.get('/:id/edit', puppiesController.getForm);
 router.post('/:id/edit', puppiesController.savePuppy);

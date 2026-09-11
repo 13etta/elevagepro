@@ -35,11 +35,7 @@ function normalizeNullableText(value, maxLength = null) {
   return maxLength ? text.slice(0, maxLength) : text;
 }
 
-async function ensurePuppiesSchema() {
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS birth_date DATE').catch(() => {});
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS notes TEXT').catch(() => {});
-  await pool.query('ALTER TABLE puppies ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE').catch(() => {});
-}
+
 
 function buildPuppyFilters(query, breederId) {
   const values = [breederId];
@@ -91,7 +87,6 @@ function buildPuppyFilters(query, breederId) {
 
 async function fetchPuppies(req) {
   const breederId = req.session.user.breeder_id;
-  await ensurePuppiesSchema();
   const filters = buildPuppyFilters(req.query, breederId);
 
   const result = await pool.query(
@@ -112,8 +107,8 @@ async function fetchPuppies(req) {
         l.birth_date AS litter_birth_date,
         d.name AS mother_name
       FROM puppies p
-      LEFT JOIN litters l ON p.litter_id = l.id
-      LEFT JOIN dogs d ON l.mother_id = d.id
+      LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
+      LEFT JOIN dogs d ON l.mother_id = d.id AND d.breeder_id = l.breeder_id
       WHERE ${filters.whereSql}
       ORDER BY l.birth_date DESC NULLS LAST, p.created_at DESC
     `,
@@ -124,7 +119,6 @@ async function fetchPuppies(req) {
 }
 
 async function fetchFilterOptions(breederId) {
-  await ensurePuppiesSchema();
   const [colors, statuses] = await Promise.all([
     pool.query(
       `
@@ -157,7 +151,6 @@ async function fetchFilterOptions(breederId) {
 }
 
 async function fetchPuppyAdContext(breederId, puppyId) {
-  await ensurePuppiesSchema();
   const puppyResult = await pool.query(
     `
       SELECT
@@ -171,10 +164,10 @@ async function fetchPuppyAdContext(breederId, puppyId) {
         father.name AS father_name,
         father.breed AS father_breed
       FROM puppies p
-      LEFT JOIN litters l ON p.litter_id = l.id
-      LEFT JOIN dogs mother ON l.mother_id = mother.id
-      LEFT JOIN matings m ON l.mating_id = m.id
-      LEFT JOIN dogs father ON m.male_id = father.id
+      LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
+      LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = l.breeder_id
+      LEFT JOIN matings m ON l.mating_id = m.id AND m.breeder_id = l.breeder_id
+      LEFT JOIN dogs father ON m.male_id = father.id AND father.breeder_id = m.breeder_id
       WHERE p.id = $1 AND p.breeder_id = $2
       LIMIT 1
     `,
@@ -250,7 +243,6 @@ exports.showPuppy = async (req, res) => {
   try {
     const breederId = req.session.user.breeder_id;
     const puppyId = req.params.id;
-    await ensurePuppiesSchema();
 
     const puppyResult = await pool.query(
       `
@@ -259,10 +251,10 @@ exports.showPuppy = async (req, res) => {
                mother.name AS mother_name,
                father.name AS father_name
         FROM puppies p
-        LEFT JOIN litters l ON p.litter_id = l.id
-        LEFT JOIN dogs mother ON l.mother_id = mother.id
-        LEFT JOIN matings m ON l.mating_id = m.id
-        LEFT JOIN dogs father ON m.male_id = father.id
+        LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
+        LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = l.breeder_id
+        LEFT JOIN matings m ON l.mating_id = m.id AND m.breeder_id = l.breeder_id
+        LEFT JOIN dogs father ON m.male_id = father.id AND father.breeder_id = m.breeder_id
         WHERE p.id = $1 AND p.breeder_id = $2
       `,
       [puppyId, breederId],
@@ -350,7 +342,6 @@ exports.getForm = async (req, res) => {
     const breederId = req.session.user.breeder_id;
     const puppyId = req.params.id;
     const litterId = req.query.litter_id;
-    await ensurePuppiesSchema();
 
     let puppy = { status: 'Actif', litter_id: litterId };
 
@@ -371,7 +362,7 @@ exports.getForm = async (req, res) => {
       `
         SELECT l.id, d.name as mother_name, l.birth_date
         FROM litters l
-        JOIN dogs d ON l.mother_id = d.id
+        JOIN dogs d ON l.mother_id = d.id AND d.breeder_id = l.breeder_id
         WHERE l.breeder_id = $1
         ORDER BY l.birth_date DESC
       `,
@@ -400,7 +391,6 @@ exports.savePuppy = async (req, res) => {
       birth_date: req.body.birth_date || null,
       notes: normalizeNullableText(req.body.notes, 2000),
     };
-    await ensurePuppiesSchema();
 
     if (!puppyData.litter_id || !puppyData.name || !puppyData.sex) {
       return res.status(400).send('Portée, nom et sexe du chiot sont obligatoires.');

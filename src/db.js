@@ -7,12 +7,8 @@ require('dotenv').config();
 // On privilégie donc l'IPv4 pour éviter les erreurs ENETUNREACH sur les connexions PG.
 dns.setDefaultResultOrder?.('ipv4first');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+const { databaseOptions } = require('./config/database');
+const pool = new Pool(databaseOptions());
 
 module.exports = {
   query: (text, params) => pool.query(text, params),

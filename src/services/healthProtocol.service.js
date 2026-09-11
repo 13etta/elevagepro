@@ -21,18 +21,7 @@ function addDays(dateValue, days) {
   return date.toISOString().split('T')[0];
 }
 
-async function ensureHealthAutomationSchema(client) {
-  await client.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE');
-  await client.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE');
-  await client.query('ALTER TABLE reminders ADD COLUMN IF NOT EXISTS source_key VARCHAR(255)');
-  await client.query('ALTER TABLE soins ADD COLUMN IF NOT EXISTS puppy_id UUID REFERENCES puppies(id) ON DELETE CASCADE');
-  await client.query('ALTER TABLE soins ADD COLUMN IF NOT EXISTS litter_id UUID REFERENCES litters(id) ON DELETE CASCADE');
-  await client.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_reminders_breeder_source_key
-    ON reminders(breeder_id, source_key)
-    WHERE source_key IS NOT NULL
-  `);
-}
+
 
 async function createReminder(client, { breederId, dogId = null, puppyId = null, litterId = null, type, title, dueDate, sourceKey }) {
   await client.query(
@@ -48,7 +37,6 @@ async function createReminder(client, { breederId, dogId = null, puppyId = null,
 async function createLitterProtocolReminders(client, { breederId, litterId, motherId = null, birthDate, motherName = null }) {
   if (!breederId || !litterId || !birthDate) return;
 
-  await ensureHealthAutomationSchema(client);
 
   for (const step of DEFAULT_LITTER_PROTOCOL) {
     const dueDate = addDays(birthDate, step.offsetDays);
@@ -70,7 +58,6 @@ async function createLitterProtocolReminders(client, { breederId, litterId, moth
 async function createPuppyProtocolReminders(client, { breederId, puppyId, litterId, puppyName = null, birthDate }) {
   if (!breederId || !puppyId || !birthDate) return;
 
-  await ensureHealthAutomationSchema(client);
 
   for (const step of DEFAULT_PUPPY_PROTOCOL) {
     const dueDate = addDays(birthDate, step.offsetDays);
@@ -92,7 +79,6 @@ async function createPuppyProtocolReminders(client, { breederId, puppyId, litter
 module.exports = {
   DEFAULT_PUPPY_PROTOCOL,
   DEFAULT_LITTER_PROTOCOL,
-  ensureHealthAutomationSchema,
   createLitterProtocolReminders,
   createPuppyProtocolReminders,
 };

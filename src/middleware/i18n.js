@@ -8,7 +8,7 @@ i18n.configure({
   defaultLocale: 'fr',
   cookie: 'lang',
   queryParameter: 'lang',
-  autoReload: true,
+  autoReload: process.env.NODE_ENV === 'development',
   updateFiles: false,
   objectNotation: true
 });

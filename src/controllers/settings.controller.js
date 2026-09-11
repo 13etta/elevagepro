@@ -1,5 +1,5 @@
 const { pool } = require('../db');
-const supabase = require('../utils/supabase');
+const { uploadPublicImage } = require('../services/uploads.service');
 const {
   allowedWebsiteTemplates,
   mergeWebsiteSettings,
@@ -41,7 +41,7 @@ async function getLittersForSettings(breederId) {
         : 'NULL';
   const statusExpression = await columnExists('litters', 'status') ? 'l.status' : 'NULL::text';
   const motherSelect = motherColumn ? 'mother.name' : 'NULL::text';
-  const motherJoin = motherColumn ? `LEFT JOIN dogs mother ON l.${motherColumn} = mother.id` : '';
+  const motherJoin = motherColumn ? `LEFT JOIN dogs mother ON l.${motherColumn} = mother.id AND mother.breeder_id = l.breeder_id` : '';
 
   const result = await pool.query(
     `
@@ -64,29 +64,8 @@ async function getLittersForSettings(breederId) {
   return result.rows;
 }
 
-async function ensureSettingsSchema() {
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS name VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS address TEXT').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS phone VARCHAR(50)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS email VARCHAR(255)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS producer_number VARCHAR(100)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS slug VARCHAR(180)').catch(() => {});
-  await pool.query('ALTER TABLE breeder ADD COLUMN IF NOT EXISTS logo_url TEXT').catch(() => {});
-  await pool.query("ALTER TABLE breeder ADD COLUMN IF NOT EXISTS website_settings JSONB DEFAULT '{}'::jsonb").catch(() => {});
-}
 
-async function uploadPublicImage(breederId, file, folder) {
-  if (!file) return null;
-  const ext = file.originalname.split('.').pop();
-  const fileName = `${folder}/${breederId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  const { error } = await supabase.storage.from('logos').upload(fileName, file.buffer, { contentType: file.mimetype, upsert: true });
-  if (error) throw error;
-  const { data } = supabase.storage.from('logos').getPublicUrl(fileName);
-  return data.publicUrl;
-}
 
 function groupedFiles(files) {
   const map = {};
@@ -103,7 +82,6 @@ function arrayFromBody(value) {
 
 exports.getSettings = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
     const result = await pool.query('SELECT * FROM breeder WHERE id = $1', [breederId]);
     const breeder = result.rows[0] || {
@@ -132,7 +110,6 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
     const { company_name, affix_name, siret, producer_number, address, phone, email } = req.body;
 
@@ -140,6 +117,7 @@ exports.updateSettings = async (req, res) => {
     const currentSettings = mergeWebsiteSettings(currentResult.rows[0]?.website_settings);
     const settings = mergeWebsiteSettings({
       ...currentSettings,
+      showPublicAddress: req.body.showPublicAddress === 'on',
       kennelBoxCapacity: normalizeBoxCapacity(req.body.kennelBoxCapacity, currentSettings.kennelBoxCapacity),
     });
 
@@ -168,7 +146,6 @@ exports.updatePreferences = async (req, res) => {
 
 exports.uploadLogo = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
     const file = req.file;
     if (!file) return res.status(400).send('Aucun fichier détecté.');
@@ -182,7 +159,6 @@ exports.uploadLogo = async (req, res) => {
 
 exports.updateWebsiteSettings = async (req, res) => {
   try {
-    await ensureSettingsSchema();
     const breederId = req.session.user.breeder_id;
     const result = await pool.query('SELECT website_settings FROM breeder WHERE id = $1', [breederId]);
     const current = mergeWebsiteSettings(result.rows[0]?.website_settings);
@@ -223,6 +199,7 @@ exports.updateWebsiteSettings = async (req, res) => {
     for (const [fieldName, litterFiles] of Object.entries(files)) {
       if (!fieldName.startsWith('litter_images_')) continue;
       const litterId = fieldName.replace('litter_images_', '');
+      if (!/^[a-f0-9-]{36}$/i.test(litterId) || !(await pool.query('SELECT id FROM litters WHERE id=$1 AND breeder_id=$2', [litterId, breederId])).rows.length) return res.status(404).send('Portée introuvable.');
       if (!litterGallery[litterId]) litterGallery[litterId] = [];
       for (const file of litterFiles) {
         const url = await uploadPublicImage(breederId, file, `litters/${litterId}`);

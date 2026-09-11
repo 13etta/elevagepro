@@ -1,0 +1,34 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { database } = require('./helpers/database.cjs');
+const { apply, plan } = require('../sql/migrate');
+
+test('additive upgrade preserves two breeders, applies once, blocks cross-breeder references and keeps beta access', async t => {
+  const { engine, client } = await database();
+  t.after(() => engine.close());
+  const breeders = (await client.query("INSERT INTO breeder(company_name) VALUES('Test A'),('Test B') RETURNING id")).rows;
+  const [a, b] = breeders.map(row => row.id);
+  const dogA = (await client.query("INSERT INTO dogs(breeder_id,name,sex) VALUES($1,'A','F') RETURNING id", [a])).rows[0].id;
+  const dogB = (await client.query("INSERT INTO dogs(breeder_id,name,sex) VALUES($1,'B','M') RETURNING id", [b])).rows[0].id;
+  const before = (await client.query('SELECT row_to_json(dogs) AS record FROM dogs ORDER BY id')).rows;
+  assert.equal((await plan(client)).length, 3);
+  assert.equal((await apply(client)).length, 3);
+  const after = (await client.query('SELECT row_to_json(dogs) AS record FROM dogs ORDER BY id')).rows;
+  assert.deepEqual(after.map(row=>({record:Object.fromEntries(Object.keys(before[0].record).map(key=>[key,row.record[key]]))})), before);
+  assert.deepEqual(await plan(client), []);
+  assert.deepEqual(await apply(client), []);
+  assert.equal((await client.query('SELECT count(*)::int AS n FROM billing_accounts WHERE beta_access=true')).rows[0].n, 2);
+  await assert.rejects(client.query('UPDATE dogs SET breeder_id=$1 WHERE id=$2 AND breeder_id=$3', [b, dogA, a]), /ownership/);
+  await assert.rejects(client.query('UPDATE dogs SET father_id=$1 WHERE id=$2 AND breeder_id=$3', [dogB, dogA, a]), /outside breeder/);
+  await client.query('UPDATE dogs SET mother_id=$1 WHERE id=$1 AND breeder_id=$2', [dogA, a]);
+  await assert.rejects(client.query("INSERT INTO heats(breeder_id,dog_id,start_date) VALUES($1,$2,current_date)", [a, dogB]), /outside breeder/);
+  const tables = await client.query("SELECT relname FROM pg_class JOIN pg_namespace n ON n.oid=relnamespace WHERE n.nspname='public' AND relkind='r' AND NOT relrowsecurity");
+  assert.deepEqual(tables.rows.map(row=>row.relname).filter(name=>name!=='breeder'), []);
+  const auth = require('../src/services/auth.service');
+  const db = require('../src/db');
+  t.mock.method(db.pool, 'connect', async () => client);
+  const created = await auth.createBreederWithAdmin({ kennelName:'Test C', fullName:'Owner C', email:'owner-c@example.test', password:'A-strong-test-password', primaryBreed:'Test' });
+  assert.equal((await client.query('SELECT beta_access FROM billing_accounts WHERE breeder_id=$1', [created.breeder_id])).rows[0].beta_access, false);
+  await apply(client);
+  assert.equal((await client.query('SELECT beta_access FROM billing_accounts WHERE breeder_id=$1', [created.breeder_id])).rows[0].beta_access, false);
+});

@@ -9,7 +9,7 @@
       <p>Paramètres internes de l’application et générateur de site vitrine public.</p>
     </div>
     <% if (typeof publicSiteUrl !== 'undefined') { %>
-      <a class="btn btn-secondary" href="<%= publicSiteUrl %>" target="_blank">Voir la vitrine</a>
+      <a class="btn btn-secondary" href="/site/preview" target="_blank" rel="noopener">Aperçu de la vitrine</a>
     <% } %>
   </section>
 
@@ -33,7 +33,8 @@
             <div class="form-group"><label>Téléphone de contact</label><input type="tel" name="phone" value="<%= breeder.phone || '' %>"></div>
             <div class="form-group"><label>E-mail de contact public</label><input type="email" name="email" value="<%= breeder.email || '' %>"></div>
           </div>
-          <div class="form-group"><label>Adresse postale complète</label><textarea name="address" rows="3"><%= breeder.address || '' %></textarea></div>
+          <div class="form-group"><label>Adresse postale complète (privée par défaut)</label><textarea name="address" rows="3"><%= breeder.address || '' %></textarea></div>
+          <label><input type="checkbox" name="showPublicAddress" <%= websiteSettings.showPublicAddress === true ? 'checked' : '' %>> Publier mon adresse complète sur la vitrine</label>
           <div class="form-grid">
             <div class="form-group"><label>Affixe SCC</label><input name="affix_name" value="<%= breeder.affix_name || '' %>"></div>
             <div class="form-group"><label>N° producteur</label><input name="producer_number" value="<%= breeder.producer_number || '' %>"></div>
@@ -77,6 +78,8 @@
       <div class="website-live-builder">
         <div class="website-live-form">
           <form id="website-settings-form" action="/settings/website" method="POST" enctype="multipart/form-data" class="stacked-form">
+            <label><input type="checkbox" name="isPublished" <%= websiteSettings.isPublished !== false ? 'checked' : '' %>> Publier ma vitrine sur Internet</label>
+            <p class="muted">Décochez pour garder la vitrine en brouillon. L’aperçu reste accessible depuis votre compte.</p>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
             <div class="settings-panel">

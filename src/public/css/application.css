@@ -1,0 +1,85 @@
+/* Shared application finish. Public breeder websites keep their own identity. */
+.app-interface { --stitch-bg: #f4f5f2; --stitch-ink: #202c29; --stitch-muted: #596760; --stitch-bronze: #345b4c; --stitch-bronze-2: #254538; --stitch-line: #d8dfd9; --stitch-line-soft: #e4e8e2; }
+.app-interface .sidebar { background: #182c25 !important; box-shadow: none !important; }
+.app-interface .sidebar .brand small, .app-interface .nav-group-title { color: #aebfb5 !important; }
+.app-interface .nav-link { color: #c2cfc6 !important; font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0 !important; }
+.app-interface .nav-link.active { background: #304c3f !important; color: #fff !important; box-shadow: inset 3px 0 #cbb889 !important; }
+.app-interface .nav-link.active::before { display: none !important; }
+.app-interface .topbar { background: #fff; border-bottom: 1px solid #e4e8e2; box-shadow: none; }
+.app-interface .page-hero h1 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 750; letter-spacing: -.045em; }
+.app-interface .page-hero p { line-height: 1.6; }
+.app-interface .btn { border-radius: 9px; min-height: 42px; font-weight: 650; box-shadow: none; }
+.app-interface .btn-primary { background: #345b4c; color: #fff; border-color: #345b4c; }
+.app-interface .btn-primary:hover { background: #254538; }
+.app-interface .btn-secondary { background: #fff; border: 1px solid #d8dfd9; color: #30473b; }
+.app-interface .section-title h2 { font-size: 1.2rem; font-weight: 750; letter-spacing: -.02em; }
+.app-interface .card, .app-interface .table-block { border-radius: 14px; box-shadow: 0 3px 12px #23392c05; }
+.app-interface .table-block { overflow-x: auto; }
+.app-interface thead { background: #f0f3ee; }
+.app-interface th { background: #f0f3ee; color: #536357; font-size: .72rem; letter-spacing: .06em; padding: 14px 20px; }
+.app-interface td { padding: 17px 20px; font-size: .9rem; }
+.app-interface tbody tr:hover { background: #f8faf6; }
+.app-interface input, .app-interface select, .app-interface textarea { border-radius: 8px; }
+.app-interface :is(a,button,input,select,textarea,summary):focus-visible { outline: 3px solid #b68635 !important; outline-offset: 3px; }
+.skip-link { position: fixed; left: 16px; top: -100px; z-index: 10000; background: #fff; color: #203a2a; padding: 12px 20px; border-radius: 8px; }
+.skip-link:focus { top: 12px; }
+.dashboard-stitch .dashboard-titlebar { align-items: center; margin-bottom: 24px; }
+.dashboard-stitch .dashboard-titlebar .eyebrow { font-size: .7rem; letter-spacing: .14em; margin-bottom: 6px; }
+.dashboard-stitch .stitch-kpis { gap: 14px; margin-bottom: 24px; }
+.dashboard-stitch .kpi-card { min-height: 126px; padding: 21px; border: 1px solid #e1e6dd; border-radius: 12px; box-shadow: none; }
+.dashboard-stitch .kpi-card > span { color: #59675c; font-size: .8rem; letter-spacing: 0; font-weight: 600; margin-bottom: 19px; }
+.dashboard-stitch .kpi-card > strong { color: #203c2c; font-size: clamp(1.7rem, 2.3vw, 2.3rem); line-height: 1.1; font-weight: 750; letter-spacing: -.04em; }
+.dashboard-stitch .kpi-warning { border-top: 3px solid #b68635; }
+.dashboard-stitch .kpi-revenue { background: #edf3e9; }
+.dashboard-stitch .dashboard-columns { gap: 22px; margin-bottom: 24px; }
+.dashboard-stitch .mini-bar-chart { min-height: 240px; padding: 25px 25px 20px; gap: 18px; }
+.dashboard-stitch .mini-bar-track { height: 150px; border: 0; background: #f3f5ef; border-radius: 6px; }
+.dashboard-stitch .mini-bar-fill { min-height: 0; background: #6c8c69; border-radius: 5px 5px 0 0; }
+.dashboard-stitch .mini-bar-item strong { color: #40533e; font-size: .76rem; font-weight: 650; }
+.dashboard-stitch .stitch-chart-card { min-height: 0; }
+.dashboard-stitch .alert-item { border-radius: 9px; }
+.dashboard-stitch .module-card { min-height: 128px; box-shadow: none; }
+.dashboard-stitch .module-card:hover { transform: none; border-color: #6c8c69; }
+@media(max-width:1280px) { .dashboard-stitch .stitch-kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media(max-width:900px) { .dashboard-stitch .dashboard-columns { grid-template-columns: minmax(0,1fr); } .dashboard-stitch .hero-actions { flex-wrap: wrap; } }
+@media(max-width:600px) {
+ .dashboard-stitch .stitch-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+ .dashboard-stitch .kpi-card { padding: 16px; min-height: 112px; }
+ .dashboard-stitch .dashboard-titlebar { display: block; }
+ .dashboard-stitch .hero-actions { margin-top: 16px; display: flex; gap: 8px; }
+ .dashboard-stitch .hero-actions .btn { flex: 1 1 auto; font-size: .78rem; }
+ .dashboard-stitch .mini-bar-chart { grid-template-columns: repeat(6,minmax(50px,1fr)); gap: 9px; padding: 20px 14px; overflow-x: auto; }
+ .app-interface td, .app-interface th { padding: 13px 15px; }
+}
+@media(prefers-reduced-motion:reduce) { .app-interface *, .app-interface *::before, .app-interface *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+/* Resolve the older page theme's explicit overrides without changing public sites. */
+.app-interface .page-hero { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.app-interface .btn-primary, .app-interface .topbar-btn-primary { background: #345b4c !important; border-color: #345b4c !important; }
+.app-interface .btn, .app-interface .topbar-btn { border-radius: 9px !important; }
+.app-interface .sidebar-footer { background: transparent !important; box-shadow: none !important; border-top: 1px solid #3a5043 !important; }
+.app-interface .kpi-card::before, .app-interface .kpi-card::after { display: none !important; }
+.app-interface .dashboard-stitch .stitch-kpis { gap: 14px !important; }
+.app-interface .dashboard-stitch .kpi-card { min-height: 124px !important; padding: 20px !important; box-shadow: none !important; background: #fff !important; border: 1px solid #e1e6dd !important; }
+.app-interface .dashboard-stitch .kpi-card > span { color: #59675c !important; font-size: .8rem !important; font-weight: 600 !important; letter-spacing: 0 !important; margin-bottom: 14px !important; }
+.app-interface .dashboard-stitch .kpi-card > strong { color: #203c2c !important; font-size: clamp(1.7rem,2.3vw,2.3rem) !important; line-height: 1.1 !important; font-weight: 750 !important; }
+.app-interface .dashboard-stitch .kpi-warning { border-top: 3px solid #b68635 !important; }
+.app-interface .dashboard-stitch .kpi-revenue { background: #edf3e9 !important; }
+.app-interface .dashboard-stitch .mini-bar-chart { min-height: 240px !important; }
+.app-interface .dashboard-stitch .mini-bar-fill { background: #6c8c69 !important; min-height: 0 !important; }
+.app-interface .dashboard-stitch .mini-bar-item strong { color: #40533e !important; }
+.app-interface th { background: #f0f3ee !important; color: #536357 !important; }
+@media(max-width:900px) { .app-interface .dashboard-stitch .stitch-main-grid { grid-template-columns: minmax(0,1fr) !important; } }
+@media(max-width:600px) { .app-interface .dashboard-stitch .kpi-card { padding: 16px !important; min-height: 112px !important; } }
+.app-interface .dashboard-stitch .stitch-alert-strip { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+.app-interface .dashboard-stitch .business-alert { width: auto !important; min-width: 0 !important; }
+@media(max-width:600px) {
+ .app-interface .dashboard-stitch .stitch-alert-strip { grid-template-columns: minmax(0,1fr) !important; gap: 10px !important; }
+ .app-interface .mobile-appbar { height: 76px !important; min-height: 76px !important; padding: 10px 16px !important; }
+ .app-interface .mobile-brand strong { font-size: 24px !important; }
+ .app-interface .mobile-brand small { font-size: 9px !important; }
+ .app-interface .app-shell { padding-top: 82px !important; }
+}
+.app-interface .dashboard-stitch .dashboard-priority-zone { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+.app-interface .dashboard-priority-zone table { min-width: 0 !important; table-layout: fixed; }
+.app-interface .dashboard-priority-zone td, .app-interface .dashboard-priority-zone th { overflow-wrap: anywhere; white-space: normal !important; }
+@media(max-width:900px) { .app-interface .dashboard-stitch .dashboard-priority-zone { grid-template-columns: minmax(0,1fr) !important; } }

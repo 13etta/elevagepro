@@ -2,20 +2,7 @@ const { pool } = require('../db');
 const { assertIsoDate } = require('../utils/dates');
 const { logActivity } = require('../services/activity.service');
 
-async function ensureWeightTables() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS puppy_weights (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      breeder_id UUID NOT NULL REFERENCES breeder(id) ON DELETE CASCADE,
-      puppy_id UUID NOT NULL REFERENCES puppies(id) ON DELETE CASCADE,
-      weight_date DATE NOT NULL,
-      weight_grams INTEGER NOT NULL,
-      notes TEXT,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  await pool.query('CREATE INDEX IF NOT EXISTS idx_puppy_weights_breeder_puppy_date ON puppy_weights(breeder_id, puppy_id, weight_date DESC)');
-}
+
 
 function setFlash(req, type, message) {
   req.session.flash = { type, message };
@@ -23,15 +10,14 @@ function setFlash(req, type, message) {
 
 exports.listWeights = async (req, res) => {
   try {
-    await ensureWeightTables();
     const breederId = req.session.user.breeder_id;
     const puppyId = req.query.puppy_id || '';
 
     const puppies = await pool.query(`
       SELECT p.id, p.name, p.sex, p.status, p.chip_number, d.name AS mother_name, l.birth_date
       FROM puppies p
-      LEFT JOIN litters l ON p.litter_id = l.id
-      LEFT JOIN dogs d ON l.mother_id = d.id
+      LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
+      LEFT JOIN dogs d ON l.mother_id = d.id AND d.breeder_id = l.breeder_id
       WHERE p.breeder_id = $1
       ORDER BY l.birth_date DESC NULLS LAST, p.name ASC NULLS LAST
     `, [breederId]);
@@ -70,7 +56,6 @@ exports.listWeights = async (req, res) => {
 
 exports.addWeight = async (req, res) => {
   try {
-    await ensureWeightTables();
     const breederId = req.session.user.breeder_id;
     const puppyId = req.body.puppy_id;
     const weightDate = assertIsoDate(req.body.weight_date, 'date de pesée');

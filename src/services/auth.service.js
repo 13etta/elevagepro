@@ -11,65 +11,7 @@ function buildSlug(input) {
     .slice(0, 120);
 }
 
-async function ensureAuthSchema(client) {
-  await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)
-  `);
-
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS name VARCHAR(255)
-  `);
-
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS slug VARCHAR(180)
-  `);
-
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS affix_name VARCHAR(255)
-  `);
-
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS siret VARCHAR(32)
-  `);
-
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS address TEXT
-  `);
-
-  await client.query(`
-    ALTER TABLE breeder
-    ADD COLUMN IF NOT EXISTS primary_breed VARCHAR(255)
-  `);
-
-  await client.query(`
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE
-  `);
-
-  await client.query(`
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)
-  `);
-
-  await client.query(`
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'admin'
-  `);
-
-  await client.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_breeder_slug_unique
-    ON breeder(slug)
-    WHERE slug IS NOT NULL
-  `);
-}
 
 async function createUniqueSlug(client, kennelName) {
   const baseSlug = buildSlug(kennelName) || `elevage-${Date.now()}`;
@@ -91,7 +33,6 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName, p
   const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
-    await ensureAuthSchema(client);
 
     const normalizedEmail = String(email || '').toLowerCase().trim();
     const cleanKennelName = String(kennelName || '').trim();
@@ -107,8 +48,8 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName, p
 
     const breederResult = await client.query(
       `
-        INSERT INTO breeder (company_name, name, slug, primary_breed)
-        VALUES ($1, $1, $2, $3)
+        INSERT INTO breeder (company_name, name, slug, primary_breed, website_settings)
+        VALUES ($1, $1, $2, $3, '{"isPublished":false}'::jsonb)
         RETURNING id
       `,
       [cleanKennelName, slug, cleanPrimaryBreed],
@@ -120,11 +61,12 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName, p
       `
         INSERT INTO users (breeder_id, email, password_hash, full_name, role, is_active)
         VALUES ($1, $2, $3, $4, 'owner', TRUE)
-        RETURNING id, breeder_id, email, full_name, role
+        RETURNING id, breeder_id, email, full_name, role, session_version
       `,
       [breederResult.rows[0].id, normalizedEmail, hashedPassword, cleanFullName],
     );
 
+    await client.query('INSERT INTO billing_accounts (breeder_id) VALUES ($1)', [breederResult.rows[0].id]);
     await client.query('COMMIT');
     return userResult.rows[0];
   } catch (error) {
@@ -138,7 +80,7 @@ async function createBreederWithAdmin({ kennelName, email, password, fullName, p
 async function login({ email, password }) {
   const result = await db.query(
     `
-      SELECT id, breeder_id, email, full_name, role, password_hash
+      SELECT id, breeder_id, email, full_name, role, password_hash, session_version
       FROM users
       WHERE email = $1 AND COALESCE(is_active, TRUE) = TRUE
     `,
@@ -161,6 +103,7 @@ async function login({ email, password }) {
     email: user.email,
     full_name: user.full_name,
     role: user.role,
+    session_version: user.session_version,
   };
 }
 
