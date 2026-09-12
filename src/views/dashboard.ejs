@@ -4,9 +4,9 @@
 <main id="main-content" tabindex="-1" class="container dashboard-stitch">
   <section class="page-hero dashboard-titlebar">
     <div>
-      <p class="eyebrow">ELEVAGEPRO / VUE D’ENSEMBLE</p>
-      <h1>L’excellence se cultive<br><em>au quotidien.</em></h1>
-      <p>Votre élevage en perspective. Vos prochaines décisions, à portée de main.</p>
+      <p class="eyebrow">AUJOURD’HUI DANS VOTRE ÉLEVAGE</p>
+      <h1>Bonjour<%= user && user.full_name ? ' ' + user.full_name.trim().split(/\s+/)[0] : '' %>.</h1>
+      <p>Voici vos priorités, vos suivis et vos prochaines échéances.</p>
     </div>
     <div class="hero-actions">
       <a class="btn btn-secondary" href="/calendar/new"><span class="material-symbols-outlined">event</span> Ajouter une échéance</a>
@@ -14,58 +14,7 @@
     </div>
   </section>
 
-  <section class="dashboard-kpi-grid stitch-kpis">
-    <a class="kpi-card" href="/dogs">
-      <span>Chiens actifs</span>
-      <strong><%= kpis.activeDogs %></strong>
-    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
-    <a class="kpi-card" href="/litters">
-      <span>Portées en cours</span>
-      <strong><%= kpis.activeLitters %></strong>
-    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
-    <a class="kpi-card" href="/puppies">
-      <span>Chiots disponibles</span>
-      <strong><%= kpis.availablePuppies %></strong>
-    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
-    <a class="kpi-card kpi-warning" href="/reminders">
-      <span>Rappels de soins</span>
-      <strong><%= kpis.upcomingReminders %></strong>
-    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
-    <a class="kpi-card" href="/sales">
-      <span>Ventes en attente</span>
-      <strong><%= kpis.incompleteSales %></strong>
-    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
-    <a class="kpi-card kpi-revenue" href="/profitability">
-      <span>Revenu mensuel</span>
-      <strong><%= formatCurrency(kpis.currentMonthSales) %></strong>
-    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
-  </section>
-
-  <section class="dashboard-columns stitch-main-grid">
-    <article class="table-block dashboard-sales-panel stitch-chart-card">
-      <div class="section-title compact">
-        <h2>Activité commerciale</h2>
-        <p class="muted">Revenus des ventes et réservations</p>
-        <a href="/sales" class="report-link">Voir le rapport <span class="material-symbols-outlined">arrow_forward</span></a>
-      </div>
-
-      <% if (!salesSeries || !salesSeries.length) { %>
-        <p class="muted empty-chart-text">Aucune donnée de vente à afficher.</p>
-      <% } else { %>
-        <div class="mini-bar-chart" role="list" aria-label="Montants des ventes par mois">
-          <% salesSeries.forEach((item) => { %>
-            <div class="mini-bar-item" role="listitem">
-              <strong><%= formatCurrency(item.total) %></strong>
-              <div class="mini-bar-track">
-                <div class="mini-bar-fill" style="height:<%= maxMonthlySales > 0 ? Math.max(0, Math.round((item.total / maxMonthlySales) * 100)) : 0 %>%"></div>
-              </div>
-              <small><%= item.label %></small>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </article>
-
+  <section class="daily-workspace">
     <article class="card stitch-alert-card">
       <div class="section-title compact alert-heading">
         <span class="material-symbols-outlined">warning</span>
@@ -94,6 +43,60 @@
       </div>
       <a class="btn btn-secondary full-width" href="/reminders">Consulter les rappels (<%= kpis.upcomingReminders %>)</a>
     </article>
+<article class="card daily-followup"><span class="section-kicker">Votre prochain geste</span><h2>Le suivi de votre élevage</h2><a class="work-shortcut" href="/reproduction"><span class="material-symbols-outlined">hub</span><span><strong>Reproduction</strong><small><%= kpis.ongoingPregnancies || 0 %> gestation(s) en cours</small></span><span aria-hidden="true">→</span></a><a class="work-shortcut" href="/weights"><span class="material-symbols-outlined">monitor_weight</span><span><strong>Peser les chiots</strong><small>Ouvrir les courbes et enregistrer un poids</small></span><span aria-hidden="true">→</span></a><a class="work-shortcut" href="/calendar"><span class="material-symbols-outlined">event</span><span><strong>Préparer les échéances</strong><small>Rendez-vous et engagements à venir</small></span><span aria-hidden="true">→</span></a></article></section>
+  <section class="dashboard-kpi-grid stitch-kpis">
+    <a class="kpi-card" href="/dogs">
+      <span>Chiens actifs</span>
+      <strong><%= kpis.activeDogs %></strong>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card" href="/litters">
+      <span>Portées en cours</span>
+      <strong><%= kpis.activeLitters %></strong>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card" href="/puppies">
+      <span>Chiots disponibles</span>
+      <strong><%= kpis.availablePuppies %></strong>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card kpi-warning" href="/reminders">
+      <span>Rappels de soins</span>
+      <strong><%= kpis.upcomingReminders %></strong>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card" href="/sales">
+      <span>Ventes en attente</span>
+      <strong><%= kpis.incompleteSales %></strong>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card kpi-revenue" href="/profitability">
+      <span>Revenu mensuel</span>
+      <strong><%= formatCurrency(kpis.currentMonthSales) %></strong>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+  </section>
+
+  <section class="dashboard-columns daily-sales">
+    <article class="table-block dashboard-sales-panel stitch-chart-card">
+      <div class="section-title compact">
+        <h2>Activité commerciale</h2>
+        <p class="muted">Revenus des ventes et réservations</p>
+        <a href="/sales" class="report-link">Voir le rapport <span class="material-symbols-outlined">arrow_forward</span></a>
+      </div>
+
+      <% if (!salesSeries || !salesSeries.length) { %>
+        <p class="muted empty-chart-text">Aucune donnée de vente à afficher.</p>
+      <% } else { %>
+        <div class="mini-bar-chart" role="list" aria-label="Montants des ventes par mois">
+          <% salesSeries.forEach((item) => { %>
+            <div class="mini-bar-item" role="listitem">
+              <strong><%= formatCurrency(item.total) %></strong>
+              <div class="mini-bar-track">
+                <div class="mini-bar-fill" style="height:<%= maxMonthlySales > 0 ? Math.max(0, Math.round((item.total / maxMonthlySales) * 100)) : 0 %>%"></div>
+              </div>
+              <small><%= item.label %></small>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </article>
+
+
   </section>
 
   <section class="dashboard-columns dashboard-priority-zone">

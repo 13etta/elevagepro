@@ -51,7 +51,8 @@
     </form>
   </section>
 
-  <section class="table-block dogs-table-card">
+<div class="collection-tools"><div><h2>Mes chiens</h2><p class="muted"><%= dogs.length %> résultat(s) selon vos filtres</p></div><div class="view-switch" data-view-switch hidden><button type="button" data-dog-view="cards" aria-pressed="true">Cartes</button><button type="button" data-dog-view="table" aria-pressed="false">Tableau</button></div></div><section class="animal-grid" data-dog-cards><% dogs.forEach((dog) => { %><article class="animal-card"><a href="/dogs/<%= dog.id %>" class="animal-photo"><% if(dog.photo_url) { %><img src="<%= dog.photo_url %>" alt="<%= dog.name %>" loading="lazy" width="400" height="260"><% } else { %><span class="material-symbols-outlined" aria-hidden="true">pets</span><% } %></a><div class="animal-card-body"><span class="animal-status"><%= dog.status || 'actif' %></span><h3><a href="/dogs/<%= dog.id %>"><%= dog.name %></a></h3><p><%= dog.breed || 'Race non renseignée' %></p><dl><div><dt>Sexe</dt><dd><%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : 'Non renseigné' %></dd></div><div><dt>Naissance</dt><dd><%= dog.birth_date ? formatDate(dog.birth_date) : 'Non renseignée' %></dd></div></dl><a class="btn btn-secondary" href="/dogs/<%= dog.id %>">Ouvrir la fiche →</a></div></article><% }) %><% if(!dogs.length) { %><p>Aucun chien ne correspond aux filtres. <a href="/dogs">Réinitialiser la recherche</a></p><% } %></section>
+  <section class="table-block dogs-table-card" data-dog-table>
     <div class="collection-heading"><h2>Le cheptel</h2><span><%= dogs.length %> résultat<%= dogs.length > 1 ? 's' : '' %> affiché<%= dogs.length > 1 ? 's' : '' %></span></div>
     <table>
       <thead>

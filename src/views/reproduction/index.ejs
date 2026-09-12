@@ -4,7 +4,7 @@
 <main class="container reproduction-page">
   <section class="repro-header">
     <div>
-      <h1>Reproduction Management</h1>
+      <h1>Parcours reproduction</h1>
       <p>Suivez les chaleurs, saillies, gestations et mises bas attendues de votre programme d’élevage.</p>
     </div>
     <a class="repro-main-action" href="#record-mating">
@@ -13,11 +13,12 @@
     </a>
   </section>
 
-  <section class="repro-kpi-grid">
+  <nav class="workflow-path" aria-label="Étapes de reproduction"><a href="/heats">1. Chaleurs</a><a href="/matings">2. Saillies</a><a href="/pregnancies">3. Gestations</a><a href="/litters">4. Portées</a><a href="/puppies">5. Chiots</a><a href="/weights">6. Croissance</a></nav><p class="muted">Les dates de terme sont estimatives. Une saillie enregistrée ne constitue pas une confirmation de gestation.</p>
+<section class="repro-kpi-grid">
     <article class="repro-kpi repro-kpi-error">
       <span>Chaleurs récentes</span>
       <strong><%= heats.length %></strong>
-      <small>femelles suivies</small>
+      <small>derniers cycles enregistrés · 20 maximum</small>
       <i class="material-symbols-outlined">water_drop</i>
     </article>
     <article class="repro-kpi repro-kpi-secondary">
@@ -54,7 +55,7 @@
             <div class="repro-stage-card">
               <div class="repro-card-top">
                 <span class="repro-chip error"><%= heat.stage || 'Suivi chaleur' %></span>
-                <span class="material-symbols-outlined">more_horiz</span>
+                
               </div>
               <div class="repro-dog-line">
                 <span class="repro-avatar">
@@ -105,7 +106,7 @@
             <div class="repro-stage-card mating-card">
               <div class="repro-card-top">
                 <span class="repro-chip secondary">À confirmer</span>
-                <span class="material-symbols-outlined">more_horiz</span>
+                
               </div>
               <div class="repro-pairing">
                 <div>
@@ -151,11 +152,11 @@
             <div class="repro-empty-card">Aucune gestation en cours.</div>
           <% } %>
           <% pregnancies.forEach((pregnancy) => { %>
-            <% const delivery = pregnancy.expected_delivery_date ? new Date(pregnancy.expected_delivery_date) : null; const today = new Date(); const total = 63; const remaining = delivery ? Math.max(0, Math.ceil((delivery - today) / (1000 * 60 * 60 * 24))) : null; const currentDay = remaining === null ? null : Math.min(total, Math.max(1, total - remaining)); const progress = currentDay ? Math.round((currentDay / total) * 100) : 0; %>
+            <% const delivery = pregnancy.expected_delivery_date ? new Date(pregnancy.expected_delivery_date) : null; const today = new Date(); const total = 63; const remaining = delivery ? Math.ceil((delivery - today) / (1000 * 60 * 60 * 24)) : null; const currentDay = remaining === null ? null : Math.min(total, Math.max(1, total - remaining)); const progress = currentDay ? Math.round((currentDay / total) * 100) : 0; %>
             <div class="repro-stage-card">
               <div class="repro-card-top">
-                <span class="repro-chip secondary">Écho confirmée</span>
-                <span class="material-symbols-outlined">more_horiz</span>
+                <span class="repro-chip secondary">Suivi de gestation</span>
+                
               </div>
               <div class="repro-dog-line">
                 <span class="repro-avatar">
@@ -163,7 +164,7 @@
                 </span>
                 <div>
                   <strong><%= pregnancy.female_name %></strong>
-                  <small><%= remaining !== null ? 'J-' + remaining + ' avant terme' : 'Terme non renseigné' %></small>
+                  <small><%= remaining !== null ? (remaining < 0 ? 'Terme estimé dépassé de ' + Math.abs(remaining) + ' jour(s)' : 'J-' + remaining + ' avant le terme estimé') : 'Terme non renseigné' %></small>
                 </div>
               </div>
               <div class="repro-progress">
@@ -188,8 +189,8 @@
           <% imminent.forEach((pregnancy) => { %>
             <div class="repro-stage-card imminent-card">
               <div class="repro-card-top">
-                <span class="repro-chip primary pulse">Imminent</span>
-                <span class="material-symbols-outlined">more_horiz</span>
+                <span class="repro-chip primary">Imminent</span>
+                
               </div>
               <div class="repro-dog-line">
                 <span class="repro-avatar danger">

@@ -166,3 +166,53 @@ body.sidebar-compact .sidebar .application-logo { width: 48px; height: 48px; }
 body.sidebar-compact .sidebar .brand-text { display: none; }
 .auth-canine-brand:has(.auth-application-logo) { display: flex; justify-content: center; }
 .auth-application-logo { display: block; width: 156px; height: 156px; max-width: 100%; object-fit: contain; border-radius: 24px; }
+/* Product workspaces: reusable navigation, collection and timeline components. */
+.app-interface [hidden] { display: none !important; }
+.daily-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px; margin-bottom:28px; }
+.daily-workspace .card { padding:24px; }
+.daily-followup h2 { margin:8px 0 20px; }
+.work-shortcut { display:flex; align-items:center; gap:16px; padding:16px 0; border-top:1px solid #e1e5da; color:#294536; text-decoration:none; }
+.work-shortcut>span:nth-child(2) { flex:1; }
+.work-shortcut strong,.work-shortcut small { display:block; }
+.work-shortcut small { margin-top:4px; color:#61705b; }
+.app-interface .daily-sales { grid-template-columns:minmax(0,1fr); }
+.collection-tools { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:24px 0; }
+.view-switch { display:flex; padding:4px; background:#e8eddf; border-radius:10px; }
+.view-switch button { padding:10px 16px; border:0; background:transparent; color:#304a36; border-radius:7px; cursor:pointer; }
+.view-switch button[aria-pressed=true] { background:#fff; box-shadow:0 2px 5px #20352012; }
+.animal-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; margin-bottom:24px; }
+.animal-card { overflow:hidden; background:white; border:1px solid #dfe4d7; border-radius:16px; }
+.animal-photo { display:flex; align-items:center; justify-content:center; height:200px; background:#e8ecdf; color:#78906e; }
+.animal-photo img { width:100%; height:100%; object-fit:cover; }
+.animal-photo>.material-symbols-outlined { font-size:58px; }
+.animal-card-body { padding:22px; }
+.animal-card h3 { font-size:23px; margin:12px 0 6px; }
+.animal-card h3 a { color:#293f30; text-decoration:none; }
+.animal-status { display:inline-block; padding:5px 10px; border-radius:20px; background:#edf1e6; font-size:11px; color:#4b6041; }
+.animal-card dl { display:flex; gap:24px; margin:20px 0; }
+.animal-card dt { color:#65765b; font-size:11px; }
+.animal-card dd { margin:5px 0; font-size:13px; }
+.profile-sections,.workflow-path { display:flex; gap:8px; overflow-x:auto; padding:12px 0; margin:20px 0; }
+.profile-sections { position:sticky; top:0; z-index:5; background:#f6f5f0; }
+.profile-sections a,.workflow-path a { flex-shrink:0; padding:12px 16px; color:#304935; background:#fff; border:1px solid #dae1d0; border-radius:9px; text-decoration:none; font-size:13px; }
+.profile-sections a:hover,.workflow-path a:hover { background:#e9eedf; }
+.dog-profile-page [id] { scroll-margin-top:90px; }
+.app-interface .dog-profile-card { background:#fff; border:1px solid #dfe4d7; border-radius:16px; box-shadow:none; }
+.dog-journal { padding:26px; margin:24px 0; }
+.care-timeline { list-style:none; margin:24px 0; padding:0; }
+.care-timeline li { display:grid; grid-template-columns:110px 1fr; gap:20px; padding:0 0 24px 18px; border-left:2px solid #c9d6bd; }
+.care-timeline time { font-size:12px; color:#64795a; }
+.care-timeline p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.command-trigger kbd { font-size:10px; padding-left:12px; }
+.command-dialog { width:min(580px,calc(100% - 32px)); max-height:80vh; border:1px solid #dfe4d7; padding:24px; border-radius:18px; color:#293f30; background:#fbfcf7; box-shadow:0 24px 80px #14261b44; }
+.command-dialog::backdrop { background:#182d2566; }
+.command-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.command-dialog input { width:100%; margin:10px 0 18px; }
+.command-results { display:grid; gap:5px; }
+.command-results a { display:flex; gap:12px; align-items:center; padding:12px; border-radius:8px; text-decoration:none; color:#304935; }
+.command-results a:hover { background:#e7eedc; }
+.app-interface .mobile-bottom-nav button { border:0; background:transparent; font:inherit; cursor:pointer; }
+.app-interface .quick-action-menu { max-height:65vh; overflow-y:auto; }
+@media(max-width:1100px) { .animal-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:700px) { .daily-workspace,.animal-grid { grid-template-columns:minmax(0,1fr); } .daily-workspace .card { padding:18px; } .profile-sections { top:76px; } .care-timeline li { grid-template-columns:1fr; gap:8px; } .command-trigger kbd { display:none; } .animal-photo { height:240px; } }
+@media(prefers-reduced-motion:no-preference) { .animal-card,.work-shortcut,.command-results a { transition:background 160ms ease,border-color 160ms ease; } .animal-card:hover { border-color:#91a581; } }
