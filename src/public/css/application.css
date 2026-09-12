@@ -155,3 +155,14 @@ body.sidebar-compact .atelier-monogram { display: none; }
 }
 .app-interface .dogs-filter-panel { display: block !important; }
 .app-interface .dogs-filter-form { max-width: none; }
+
+/* Official identity supplied by the application owner, displayed without cropping. */
+.app-interface .sidebar .brand { gap: 10px; }
+.application-logo { display: block; flex: 0 0 auto; width: 64px; height: 64px; object-fit: contain; border-radius: 12px; }
+.app-interface .sidebar .brand strong { font-size: 22px !important; }
+.app-interface .sidebar .brand small { white-space: normal !important; }
+.app-interface .mobile-brand .application-logo { width: 52px; height: 52px; }
+body.sidebar-compact .sidebar .application-logo { width: 48px; height: 48px; }
+body.sidebar-compact .sidebar .brand-text { display: none; }
+.auth-canine-brand:has(.auth-application-logo) { display: flex; justify-content: center; }
+.auth-application-logo { display: block; width: 156px; height: 156px; max-width: 100%; object-fit: contain; border-radius: 24px; }
