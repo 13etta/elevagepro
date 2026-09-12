@@ -3,7 +3,7 @@
 
 <main class="container dog-profile-page">
   <div class="dog-profile-toolbar">
-    <a class="dog-profile-back" href="/dogs"><span class="material-symbols-outlined">arrow_back</span> Dog profile</a>
+    <a class="dog-profile-back" href="/dogs"><span class="material-symbols-outlined">arrow_back</span> Mes chiens</a>
     <div class="dog-profile-actions">
       <a class="btn btn-secondary" href="/dogs"><span class="material-symbols-outlined">arrow_back</span> Retour</a>
       <a class="btn btn-primary" href="/dogs/<%= dog.id %>/edit"><span class="material-symbols-outlined">edit</span> Modifier</a>
@@ -33,13 +33,14 @@
     <% } %>
   </section>
 
-  <section class="dog-profile-grid dog-profile-grid-main">
+  <nav class="profile-sections" aria-label="Rubriques de la fiche"><a href="#dog-overview">Vue générale</a><a href="#dog-health">Santé</a><a href="#dog-reproduction">Reproduction</a><a href="#dog-identity">Identité & parents</a><a href="#dog-reminders">Rappels</a><a href="#dog-journal">Journal</a></nav>
+<section class="dog-profile-grid dog-profile-grid-main" id="dog-overview">
     <article class="dog-profile-card">
       <div class="dog-profile-card-head">
-        <h2>Immersion & Suivi</h2>
+        <h2>Qualité de la fiche</h2>
       </div>
       <div class="dog-profile-progress-row">
-        <strong>Progress</strong>
+        <strong>Informations renseignées</strong>
         <span><%= completeness.percent %>%</span>
       </div>
       <div class="dog-profile-progress"><span style="width: <%= completeness.percent %>%;"></span></div>
@@ -57,7 +58,7 @@
       <p><%= dog.notes || 'Aucune observation renseignée. Ajoutez ici les éléments utiles : acquisition, caractère, aptitudes, comportement, recommandations ou restrictions.' %></p>
     </article>
 
-    <article class="dog-profile-card dog-profile-health-card">
+    <article class="dog-profile-card dog-profile-health-card" id="dog-health">
       <div class="dog-profile-card-head">
         <h2>Santé</h2>
       </div>
@@ -66,7 +67,7 @@
       <% } else { %>
         <div class="dog-profile-mini-table">
           <div class="dog-profile-mini-row dog-profile-mini-head"><span>Date</span><span>Acte</span></div>
-          <% soins.slice(0, 4).forEach((soin) => { %>
+          <% soins.forEach((soin) => { %>
             <div class="dog-profile-mini-row">
               <span><%= formatDate(soin.event_date) %></span>
               <span><%= soin.label %><small><%= soin.next_due ? 'Échéance: ' + formatDate(soin.next_due) : '' %></small></span>
@@ -77,7 +78,7 @@
       <a class="dog-profile-card-button" href="/soins">Ajouter un soin</a>
     </article>
 
-    <article class="dog-profile-card dog-profile-repro-card">
+    <article class="dog-profile-card dog-profile-repro-card" id="dog-reproduction">
       <div class="dog-profile-card-head">
         <h2>Reproduction</h2>
       </div>
@@ -85,12 +86,12 @@
       <% if (!litters.length) { %>
         <div class="dog-profile-mini-table muted-table">
           <div class="dog-profile-mini-row dog-profile-mini-head"><span>Portée</span><span>Issus</span></div>
-          <p class="dog-profile-empty centered">Non portée actuellement</p>
+          <p class="dog-profile-empty centered">Aucune portée renseignée</p>
         </div>
       <% } else { %>
         <div class="dog-profile-mini-table">
           <div class="dog-profile-mini-row dog-profile-mini-head"><span>Date</span><span>Chiots</span></div>
-          <% litters.slice(0, 3).forEach((litter) => { %>
+          <% litters.forEach((litter) => { %>
             <div class="dog-profile-mini-row"><span><%= formatDate(litter.birth_date) %></span><span><%= litter.puppies_count_total || '-' %></span></div>
           <% }) %>
         </div>
@@ -100,12 +101,12 @@
       <% if (!puppies.length) { %>
         <div class="dog-profile-mini-table muted-table">
           <div class="dog-profile-mini-row dog-profile-mini-head"><span>Portée</span><span>Statut</span></div>
-          <p class="dog-profile-empty centered">Non portée actuellement</p>
+          <p class="dog-profile-empty centered">Aucune portée renseignée</p>
         </div>
       <% } else { %>
         <div class="dog-profile-mini-table">
           <div class="dog-profile-mini-row dog-profile-mini-head"><span>Nom</span><span>Statut</span></div>
-          <% puppies.slice(0, 4).forEach((puppy) => { %>
+          <% puppies.forEach((puppy) => { %>
             <a class="dog-profile-mini-row link-row" href="/puppies/<%= puppy.id %>"><span><%= puppy.name || 'Chiot sans nom' %></span><span><%= puppy.status || '-' %></span></a>
           <% }) %>
         </div>
@@ -114,7 +115,7 @@
   </section>
 
   <section class="dog-profile-grid dog-profile-grid-secondary">
-    <article class="dog-profile-card">
+    <article class="dog-profile-card" id="dog-identity">
       <div class="dog-profile-card-head">
         <span>Identité</span>
         <h2>Informations générales</h2>
@@ -130,7 +131,7 @@
       </dl>
     </article>
 
-    <article class="dog-profile-card">
+    <article class="dog-profile-card" id="dog-reminders">
       <div class="dog-profile-card-head">
         <span>Prioritaire</span>
         <h2>Rappels à venir</h2>
@@ -139,7 +140,7 @@
         <p class="dog-profile-empty">Aucun rappel actif.</p>
       <% } else { %>
         <div class="dog-profile-reminders">
-          <% reminders.slice(0, 6).forEach((reminder) => { %>
+          <% reminders.forEach((reminder) => { %>
             <a href="/reminders" class="dog-profile-reminder">
               <span class="material-symbols-outlined">notifications_active</span>
               <strong><%= reminder.title %></strong>
@@ -150,6 +151,7 @@
       <% } %>
     </article>
   </section>
+<section class="card dog-journal" id="dog-journal"><span class="section-kicker">Historique récent</span><h2>Journal des soins</h2><p class="muted">Les <%= soins.length %> derniers soins chargés dans cette fiche. Consultez le module Santé pour l’historique complet.</p><ol class="care-timeline"><% soins.forEach((event) => { %><li><time><%= formatDate(event.event_date) %></time><div><strong><%= event.label || event.type %></strong><p><%= event.notes || 'Aucune observation complémentaire.' %></p><% if(event.next_due) { %><small>Prochaine échéance : <%= formatDate(event.next_due) %></small><% } %></div></li><% }) %></ol><% if(!soins.length) { %><p>Aucun soin enregistré pour ce chien.</p><% } %><a class="btn btn-secondary" href="/soins">Ouvrir le suivi sanitaire</a></section>
 </main>
 
 <%- include('../partials/foot') %>

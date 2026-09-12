@@ -4,14 +4,18 @@
 <nav class="mobile-bottom-nav" aria-label="Navigation mobile principale">
   <a class="mobile-bottom-link <%= currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard"><span class="material-symbols-outlined">dashboard</span>Accueil</a>
   <a class="mobile-bottom-link <%= currentPath.startsWith('/dogs') ? 'active' : '' %>" href="/dogs"><span class="material-symbols-outlined">pets</span>Chiens</a>
-  <a class="mobile-bottom-link <%= currentPath.startsWith('/puppies') ? 'active' : '' %>" href="/puppies"><span class="material-symbols-outlined">cruelty_free</span>Chiots</a>
-  <a class="mobile-bottom-link <%= currentPath.startsWith('/soins') ? 'active' : '' %>" href="/soins"><span class="material-symbols-outlined">medical_services</span>Soins</a>
+  <a class="mobile-bottom-link <%= currentPath.startsWith('/reproduction') ? 'active' : '' %>" href="/reproduction"><span class="material-symbols-outlined">hub</span>Reproduction</a>
   <a class="mobile-bottom-link <%= currentPath.startsWith('/calendar') ? 'active' : '' %>" href="/calendar"><span class="material-symbols-outlined">calendar_month</span>Calendrier</a>
+<button class="mobile-bottom-link" type="button" data-mobile-more aria-controls="main-sidebar" aria-expanded="false"><span class="material-symbols-outlined">menu</span>Plus</button>
 </nav>
 
 <div class="quick-action" data-quick-action>
   <button class="quick-action-button" type="button" data-quick-action-toggle aria-label="Ouvrir les actions rapides" aria-expanded="false"><span class="material-symbols-outlined">add</span></button>
   <div class="quick-action-menu">
+    <a class="quick-action-link" href="/weights">Enregistrer un poids</a>
+    <a class="quick-action-link" href="/heats/new">Déclarer une chaleur</a>
+    <a class="quick-action-link" href="/matings/new">Créer une saillie</a>
+    <a class="quick-action-link" href="/litters/new">Créer une portée</a>
     <a class="quick-action-link" href="/dogs/new"><span class="material-symbols-outlined">pets</span>Ajouter un chien</a>
     <a class="quick-action-link" href="/puppies/new"><span class="material-symbols-outlined">cruelty_free</span>Ajouter un chiot</a>
     <a class="quick-action-link" href="/soins"><span class="material-symbols-outlined">medical_services</span>Ajouter un soin</a>
@@ -20,6 +24,7 @@
   </div>
 </div>
 
+<dialog class="command-dialog" data-command-dialog aria-labelledby="command-title"><div class="command-heading"><h2 id="command-title">Aller à…</h2><button type="button" class="btn btn-secondary" data-command-close>Fermer</button></div><label for="command-query">Rechercher un module</label><input id="command-query" type="search" placeholder="Chiens, soins, reproduction…" autocomplete="off"><nav class="command-results" aria-label="Modules"><% modules.forEach((module) => { %><a href="<%= module.href %>"><span class="material-symbols-outlined" aria-hidden="true"><%= module.icon %></span><%= __(module.labelKey) %></a><% }) %></nav><p data-command-empty hidden>Aucun module trouvé.</p></dialog>
 <script src="/js/main.js" defer></script>
 <script src="/js/premium-ui.js" defer></script>
 <% } %>
