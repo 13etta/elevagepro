@@ -1,85 +1,157 @@
-/* Shared application finish. Public breeder websites keep their own identity. */
-.app-interface { --stitch-bg: #f4f5f2; --stitch-ink: #202c29; --stitch-muted: #596760; --stitch-bronze: #345b4c; --stitch-bronze-2: #254538; --stitch-line: #d8dfd9; --stitch-line-soft: #e4e8e2; }
-.app-interface .sidebar { background: #182c25 !important; box-shadow: none !important; }
-.app-interface .sidebar .brand small, .app-interface .nav-group-title { color: #aebfb5 !important; }
-.app-interface .nav-link { color: #c2cfc6 !important; font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0 !important; }
-.app-interface .nav-link.active { background: #304c3f !important; color: #fff !important; box-shadow: inset 3px 0 #cbb889 !important; }
+/* ElevagePro — Atelier. Shared private application design system.
+   Legacy theme rules use !important; overrides stay scoped to the application. */
+.app-interface {
+  --atelier-paper: #f6f5f0;
+  --atelier-ink: #243d36;
+  --atelier-muted: #64706a;
+  --atelier-line: #dedfd6;
+  --atelier-gold: #c1a679;
+  --stitch-bg: var(--atelier-paper);
+  --stitch-ink: var(--atelier-ink);
+  --stitch-muted: var(--atelier-muted);
+  --stitch-bronze: #294e41;
+  --stitch-bronze-2: #1c3c31;
+  --stitch-line: var(--atelier-line);
+  --stitch-line-soft: #eaece5;
+  background: var(--atelier-paper) !important;
+  color: var(--atelier-ink);
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.app-interface .app-shell { background: var(--atelier-paper) !important; }
+.app-interface .container { max-width: 1560px; padding: 32px 40px 48px; }
+.app-interface .sidebar { background: #203c33 !important; box-shadow: none !important; border-right: 0 !important; }
+.app-interface .sidebar .brand { display: flex !important; align-items: center; gap: 12px; padding-bottom: 24px !important; }
+.atelier-monogram { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 48px; border: 1px solid #789084; border-radius: 24px 24px 9px 9px; color: #e8dbc0; font: italic 36px Georgia, serif; }
+.app-interface .sidebar .brand strong { font-size: 25px !important; font-weight: 700 !important; letter-spacing: -.06em !important; }
+.app-interface .sidebar .brand small { font-size: 9px !important; letter-spacing: .08em !important; color: #b6c7ba !important; margin-top: 2px !important; }
+.app-interface .nav-group-title { color: #b5c6b9 !important; font-size: 10px !important; letter-spacing: .12em !important; font-weight: 500 !important; }
+.app-interface .nav-link { color: #d0dcd3 !important; font-size: 13px !important; font-weight: 500 !important; letter-spacing: 0 !important; border-radius: 8px !important; transition: background .16s ease; }
+.app-interface .nav-link:hover { background: #304e41 !important; }
+.app-interface .nav-link.active { background: #e4e9da !important; color: #203c33 !important; box-shadow: none !important; font-weight: 700 !important; }
 .app-interface .nav-link.active::before { display: none !important; }
-.app-interface .topbar { background: #fff; border-bottom: 1px solid #e4e8e2; box-shadow: none; }
-.app-interface .page-hero h1 { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 750; letter-spacing: -.045em; }
-.app-interface .page-hero p { line-height: 1.6; }
-.app-interface .btn { border-radius: 9px; min-height: 42px; font-weight: 650; box-shadow: none; }
-.app-interface .btn-primary { background: #345b4c; color: #fff; border-color: #345b4c; }
-.app-interface .btn-primary:hover { background: #254538; }
-.app-interface .btn-secondary { background: #fff; border: 1px solid #d8dfd9; color: #30473b; }
-.app-interface .section-title h2 { font-size: 1.2rem; font-weight: 750; letter-spacing: -.02em; }
-.app-interface .card, .app-interface .table-block { border-radius: 14px; box-shadow: 0 3px 12px #23392c05; }
+.app-interface .nav-link.active .nav-icon { color: #203c33 !important; }
+.app-interface .nav-icon { color: #b6c7ba !important; }
+.app-interface .sidebar-footer { background: transparent !important; box-shadow: none !important; border-top: 1px solid #476054 !important; }
+.app-interface .sidebar-footer :is(a,button) { color: #d0dcd3 !important; }
+.app-interface .topbar { min-height: 76px; background: var(--atelier-paper) !important; border-bottom: 1px solid var(--atelier-line); box-shadow: none !important; gap: 24px; padding: 16px 40px; }
+.workspace-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: #6d796f; white-space: nowrap; }
+.app-interface .topbar-search { background: #efefe8 !important; border: 1px solid #dedfd6 !important; border-radius: 9px; max-width: 380px; box-shadow: none; }
+.app-interface .topbar-search input { background: transparent !important; }
+.app-interface .user-avatar { background: #294e41 !important; color: #fff !important; box-shadow: none !important; border: 3px solid #e2e5da; }
+.app-interface .icon-action { background: transparent; color: #52665b; box-shadow: none; }
+.app-interface .topbar-divider { display: none; }
+.app-interface .page-hero { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 28px; }
+.app-interface .page-hero h1 { font-size: clamp(2rem, 3vw, 3rem); font-weight: 650; letter-spacing: -.055em; color: var(--atelier-ink); line-height: 1.12; }
+.app-interface .page-hero p { color: var(--atelier-muted); line-height: 1.6; max-width: 650px; }
+.app-interface .eyebrow { font-size: 10px !important; font-weight: 700; letter-spacing: .16em !important; margin-bottom: 14px !important; color: #69786b !important; }
+.app-interface .btn, .app-interface .topbar-btn { border-radius: 8px !important; min-height: 42px; padding: 10px 16px; font-weight: 650; font-size: 13px; box-shadow: none !important; transition: background .16s ease, border-color .16s ease; }
+.app-interface .btn-primary, .app-interface .topbar-btn-primary { background: #294e41 !important; color: #fff !important; border: 1px solid #294e41 !important; }
+.app-interface .btn-primary:hover { background: #1c3c31 !important; }
+.app-interface .btn-secondary { background: #fff !important; border: 1px solid #d6dccf !important; color: #354e41 !important; }
+.app-interface .btn-secondary:hover { background: #eff2e9 !important; border-color: #98ad9b !important; }
+.app-interface .btn-danger { background: #fff5f2; border: 1px solid #e7c6bd; color: #933f30; }
+.app-interface .section-title h2, .collection-heading h2 { font-size: 20px; font-weight: 650; letter-spacing: -.035em; color: var(--atelier-ink); }
+.app-interface .section-kicker { font-size: 10px; letter-spacing: .13em; color: #72816f; text-transform: uppercase; }
+.app-interface .card, .app-interface .table-block { background: #fff; border: 1px solid var(--atelier-line); border-radius: 16px; box-shadow: 0 4px 16px #22392b04; }
 .app-interface .table-block { overflow-x: auto; }
-.app-interface thead { background: #f0f3ee; }
-.app-interface th { background: #f0f3ee; color: #536357; font-size: .72rem; letter-spacing: .06em; padding: 14px 20px; }
-.app-interface td { padding: 17px 20px; font-size: .9rem; }
-.app-interface tbody tr:hover { background: #f8faf6; }
-.app-interface input, .app-interface select, .app-interface textarea { border-radius: 8px; }
-.app-interface :is(a,button,input,select,textarea,summary):focus-visible { outline: 3px solid #b68635 !important; outline-offset: 3px; }
+.app-interface th { background: #f5f6ef !important; color: #60705f !important; font-size: 10px; letter-spacing: .09em; padding: 14px 20px; font-weight: 650; }
+.app-interface td { padding: 18px 20px; font-size: 14px; border-bottom-color: #eef0e9; }
+.app-interface tbody tr:hover { background: #f8faf4; }
+.app-interface input:not([type=checkbox]):not([type=radio]), .app-interface select, .app-interface textarea { border: 1px solid #d7ddcf; border-radius: 8px; background: #fdfefa; color: #293e32; min-height: 44px; box-shadow: none; }
+.app-interface label { color: #52604f; font-size: 12px; font-weight: 650; }
+.app-interface :is(a,button,input,select,textarea,summary):focus-visible { outline: 3px solid #a17c3e !important; outline-offset: 3px; }
 .skip-link { position: fixed; left: 16px; top: -100px; z-index: 10000; background: #fff; color: #203a2a; padding: 12px 20px; border-radius: 8px; }
 .skip-link:focus { top: 12px; }
-.dashboard-stitch .dashboard-titlebar { align-items: center; margin-bottom: 24px; }
-.dashboard-stitch .dashboard-titlebar .eyebrow { font-size: .7rem; letter-spacing: .14em; margin-bottom: 6px; }
-.dashboard-stitch .stitch-kpis { gap: 14px; margin-bottom: 24px; }
-.dashboard-stitch .kpi-card { min-height: 126px; padding: 21px; border: 1px solid #e1e6dd; border-radius: 12px; box-shadow: none; }
-.dashboard-stitch .kpi-card > span { color: #59675c; font-size: .8rem; letter-spacing: 0; font-weight: 600; margin-bottom: 19px; }
-.dashboard-stitch .kpi-card > strong { color: #203c2c; font-size: clamp(1.7rem, 2.3vw, 2.3rem); line-height: 1.1; font-weight: 750; letter-spacing: -.04em; }
-.dashboard-stitch .kpi-warning { border-top: 3px solid #b68635; }
-.dashboard-stitch .kpi-revenue { background: #edf3e9; }
-.dashboard-stitch .dashboard-columns { gap: 22px; margin-bottom: 24px; }
-.dashboard-stitch .mini-bar-chart { min-height: 240px; padding: 25px 25px 20px; gap: 18px; }
-.dashboard-stitch .mini-bar-track { height: 150px; border: 0; background: #f3f5ef; border-radius: 6px; }
-.dashboard-stitch .mini-bar-fill { min-height: 0; background: #6c8c69; border-radius: 5px 5px 0 0; }
-.dashboard-stitch .mini-bar-item strong { color: #40533e; font-size: .76rem; font-weight: 650; }
-.dashboard-stitch .stitch-chart-card { min-height: 0; }
-.dashboard-stitch .alert-item { border-radius: 9px; }
-.dashboard-stitch .module-card { min-height: 128px; box-shadow: none; }
-.dashboard-stitch .module-card:hover { transform: none; border-color: #6c8c69; }
-@media(max-width:1280px) { .dashboard-stitch .stitch-kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-@media(max-width:900px) { .dashboard-stitch .dashboard-columns { grid-template-columns: minmax(0,1fr); } .dashboard-stitch .hero-actions { flex-wrap: wrap; } }
-@media(max-width:600px) {
- .dashboard-stitch .stitch-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
- .dashboard-stitch .kpi-card { padding: 16px; min-height: 112px; }
- .dashboard-stitch .dashboard-titlebar { display: block; }
- .dashboard-stitch .hero-actions { margin-top: 16px; display: flex; gap: 8px; }
- .dashboard-stitch .hero-actions .btn { flex: 1 1 auto; font-size: .78rem; }
- .dashboard-stitch .mini-bar-chart { grid-template-columns: repeat(6,minmax(50px,1fr)); gap: 9px; padding: 20px 14px; overflow-x: auto; }
- .app-interface td, .app-interface th { padding: 13px 15px; }
-}
-@media(prefers-reduced-motion:reduce) { .app-interface *, .app-interface *::before, .app-interface *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
-/* Resolve the older page theme's explicit overrides without changing public sites. */
-.app-interface .page-hero { background: transparent !important; border: 0 !important; box-shadow: none !important; }
-.app-interface .btn-primary, .app-interface .topbar-btn-primary { background: #345b4c !important; border-color: #345b4c !important; }
-.app-interface .btn, .app-interface .topbar-btn { border-radius: 9px !important; }
-.app-interface .sidebar-footer { background: transparent !important; box-shadow: none !important; border-top: 1px solid #3a5043 !important; }
+/* Dashboard: one overview, one priority queue, then detail. */
+.app-interface .dashboard-titlebar { align-items: end; padding: 10px 0 28px !important; margin-bottom: 24px; border-bottom: 1px solid var(--atelier-line) !important; }
+.app-interface .dashboard-titlebar h1 { font-size: clamp(2.4rem, 3.3vw, 3.8rem); }
+.dashboard-titlebar h1 em { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; color: #587362; letter-spacing: -.045em; }
+.app-interface .dashboard-titlebar .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 345px; }
+.app-interface .dashboard-stitch .stitch-kpis { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 0 !important; margin-bottom: 28px; background: #fff; border: 1px solid var(--atelier-line); border-radius: 16px; overflow: hidden; }
+.app-interface .dashboard-stitch .kpi-card { display: flex; flex-direction: column; gap: 0; text-decoration: none; min-width: 0; min-height: 156px !important; padding: 22px 18px !important; border: 0 !important; border-right: 1px solid #e7eade !important; border-radius: 0 !important; background: #fff !important; box-shadow: none !important; transition: background .16s ease; }
 .app-interface .kpi-card::before, .app-interface .kpi-card::after { display: none !important; }
-.app-interface .dashboard-stitch .stitch-kpis { gap: 14px !important; }
-.app-interface .dashboard-stitch .kpi-card { min-height: 124px !important; padding: 20px !important; box-shadow: none !important; background: #fff !important; border: 1px solid #e1e6dd !important; }
-.app-interface .dashboard-stitch .kpi-card > span { color: #59675c !important; font-size: .8rem !important; font-weight: 600 !important; letter-spacing: 0 !important; margin-bottom: 14px !important; }
-.app-interface .dashboard-stitch .kpi-card > strong { color: #203c2c !important; font-size: clamp(1.7rem,2.3vw,2.3rem) !important; line-height: 1.1 !important; font-weight: 750 !important; }
-.app-interface .dashboard-stitch .kpi-warning { border-top: 3px solid #b68635 !important; }
-.app-interface .dashboard-stitch .kpi-revenue { background: #edf3e9 !important; }
-.app-interface .dashboard-stitch .mini-bar-chart { min-height: 240px !important; }
-.app-interface .dashboard-stitch .mini-bar-fill { background: #6c8c69 !important; min-height: 0 !important; }
-.app-interface .dashboard-stitch .mini-bar-item strong { color: #40533e !important; }
-.app-interface th { background: #f0f3ee !important; color: #536357 !important; }
-@media(max-width:900px) { .app-interface .dashboard-stitch .stitch-main-grid { grid-template-columns: minmax(0,1fr) !important; } }
-@media(max-width:600px) { .app-interface .dashboard-stitch .kpi-card { padding: 16px !important; min-height: 112px !important; } }
-.app-interface .dashboard-stitch .stitch-alert-strip { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
-.app-interface .dashboard-stitch .business-alert { width: auto !important; min-width: 0 !important; }
-@media(max-width:600px) {
- .app-interface .dashboard-stitch .stitch-alert-strip { grid-template-columns: minmax(0,1fr) !important; gap: 10px !important; }
- .app-interface .mobile-appbar { height: 76px !important; min-height: 76px !important; padding: 10px 16px !important; }
- .app-interface .mobile-brand strong { font-size: 24px !important; }
- .app-interface .mobile-brand small { font-size: 9px !important; }
- .app-interface .app-shell { padding-top: 82px !important; }
-}
+.app-interface .dashboard-stitch .kpi-card:hover { background: #f0f4e9 !important; transform: none; }
+.app-interface .dashboard-stitch .kpi-card > span { color: #626f5e !important; font-size: 11px !important; font-weight: 600 !important; letter-spacing: 0 !important; margin-bottom: 12px !important; }
+.app-interface .dashboard-stitch .kpi-card > strong { color: #294536 !important; font-size: clamp(1.7rem, 2.1vw, 2.5rem) !important; line-height: 1.1 !important; font-weight: 600 !important; letter-spacing: -.05em; white-space: nowrap; }
+.app-interface .dashboard-stitch .kpi-revenue { background: #e9eedf !important; border-right: 0 !important; }
+.kpi-destination { display: flex; justify-content: space-between; margin-top: 18px; font-size: 10px; color: #6b7b61; }
+.app-interface .dashboard-stitch .dashboard-columns { gap: 24px; margin-bottom: 24px; }
+.app-interface .dashboard-stitch .stitch-main-grid { grid-template-columns: minmax(0,1.55fr) minmax(300px,1fr); }
+.app-interface .dashboard-stitch .stitch-chart-card { min-height: 0; }
+.app-interface .dashboard-stitch .mini-bar-chart { min-height: 240px !important; padding: 24px; gap: 18px; }
+.app-interface .dashboard-stitch .mini-bar-track { height: 160px; border: 0; background: #f2f4ec; border-radius: 5px; }
+.app-interface .dashboard-stitch .mini-bar-fill { min-height: 0 !important; background: #54775e !important; border-radius: 5px 5px 0 0; }
+.app-interface .dashboard-stitch .mini-bar-item strong { color: #4a6045 !important; font-size: 11px; font-weight: 600; }
+.app-interface .dashboard-stitch .stitch-alert-card { background: #edf1e5; border-color: #dbe2d1; }
+.app-interface .dashboard-stitch .alert-item { border-radius: 9px; background: #fff; border: 1px solid #dfe5d6; }
 .app-interface .dashboard-stitch .dashboard-priority-zone { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
 .app-interface .dashboard-priority-zone table { min-width: 0 !important; table-layout: fixed; }
-.app-interface .dashboard-priority-zone td, .app-interface .dashboard-priority-zone th { overflow-wrap: anywhere; white-space: normal !important; }
-@media(max-width:900px) { .app-interface .dashboard-stitch .dashboard-priority-zone { grid-template-columns: minmax(0,1fr) !important; } }
+.app-interface .dashboard-priority-zone :is(td,th) { overflow-wrap: anywhere; white-space: normal !important; }
+.app-interface .dashboard-stitch .module-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.app-interface .dashboard-stitch .module-card { min-height: 148px; padding: 22px; border: 1px solid var(--atelier-line); border-radius: 12px; background: transparent; box-shadow: none; }
+.app-interface .dashboard-stitch .module-card:hover { background: #fff; border-color: #8a9e80; transform: none; }
+.app-interface .module-icon { background: #e8eddf !important; color: #4b6544 !important; border-radius: 10px; }
+.app-interface .module-card strong { color: #2e4838; }
+/* Collection screens: filters remain visible and secondary actions stay quiet. */
+.app-interface .dogs-filter-panel { background: #eeefe7; border: 1px solid var(--atelier-line); border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: none; }
+.dogs-filter-form { display: flex; align-items: end; flex-wrap: wrap; gap: 14px; width: 100%; }
+.dogs-filter-form .form-group { flex: 1 1 125px; margin: 0; }
+.dogs-filter-form .form-group:first-child { flex: 2 1 220px; }
+.filter-reset { padding: 13px 4px; color: #56684e; font-size: 12px; text-decoration: underline; }
+.collection-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px; }
+.collection-heading h2 { margin: 0; }
+.collection-heading > span { font-size: 12px; color: #64725b; }
+.app-interface .dog-avatar.small { width: 44px; height: 44px; border-radius: 12px; background: #e9eedf; }
+.app-interface .dogs-table-card .table-actions { min-width: 250px; }
+.app-interface .dogs-table-card .table-actions .btn-danger { background: transparent !important; color: #984933 !important; border-color: transparent !important; }
+body.sidebar-compact .atelier-monogram { display: none; }
+@media(max-width:1280px) {
+  .app-interface .container { padding: 28px; }
+  .app-interface .dashboard-stitch .stitch-kpis { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .app-interface .dashboard-stitch .kpi-card { border-bottom: 1px solid #e7eade !important; }
+  .app-interface .dashboard-stitch .module-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .workspace-label { display: none; }
+}
+@media(max-width:1000px) {
+  .app-interface .dashboard-stitch .stitch-main-grid, .app-interface .dashboard-stitch .dashboard-priority-zone { grid-template-columns: minmax(0,1fr) !important; }
+  .app-interface .dashboard-titlebar { display: block; }
+  .app-interface .dashboard-titlebar .hero-actions { margin-top: 22px; justify-content: flex-start; max-width: none; }
+}
+@media(max-width:600px) {
+  .app-interface .container { padding: 24px 16px 110px; }
+  .app-interface .mobile-appbar { height: 76px !important; min-height: 76px !important; padding: 10px 16px !important; background: #203c33 !important; }
+  .app-interface .mobile-brand strong { font-size: 24px !important; }
+  .app-interface .mobile-brand small { font-size: 9px !important; }
+  .app-interface .app-shell { padding-top: 82px !important; }
+  .app-interface .dashboard-titlebar h1 { font-size: 36px; }
+  .app-interface .dashboard-titlebar .hero-actions .btn { flex: 1 1 auto; }
+  .app-interface .dashboard-stitch .stitch-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-interface .dashboard-stitch .kpi-card { padding: 18px !important; min-height: 140px !important; }
+  .app-interface .dashboard-stitch .mini-bar-chart { grid-template-columns: repeat(6,minmax(40px,1fr)); gap: 8px; padding: 20px 12px; overflow-x: auto; }
+  .app-interface .dashboard-stitch .module-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-interface .dashboard-stitch .module-card { padding: 16px; }
+  .app-interface :is(td,th) { padding: 14px; }
+  .app-interface .dogs-filter-panel { padding: 16px; }
+  .app-interface .dogs-titlebar > .btn { margin-top: 12px; }
+  .collection-heading { align-items: flex-start; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .app-interface *, .app-interface *::before, .app-interface *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Keep work surfaces still and immediately readable. */
+.app-interface :is(.page-hero,.card,.table-block,.module-card)::before, .app-interface .module-card::after, .app-interface .nav-link::after, .app-interface .btn::after { display: none !important; }
+.app-interface :is(.card,.table-block,.module-card) { backdrop-filter: none; will-change: auto; }
+.app-interface :is(.card,.table-block):hover { transform: none; box-shadow: 0 4px 16px #22392b04; }
+.app-interface [data-reveal] { opacity: 1; transform: none; transition: none; }
+.app-interface .kpi-card:focus-visible { outline-offset: -4px; }
+@media(max-width:980px) {
+  .app-interface .mobile-appbar { align-items: center !important; background: #203c33 !important; }
+  .app-interface .mobile-brand { display: flex !important; align-items: center !important; gap: 10px; padding: 0 !important; margin: 0 !important; height: auto !important; min-height: 0 !important; border: 0 !important; }
+  .app-interface .mobile-brand strong { display: block !important; color: #fff !important; font-size: 23px !important; line-height: 28px !important; }
+  .app-interface .mobile-brand small { display: block !important; color: #bbcbbb !important; line-height: 14px !important; margin-top: 2px !important; }
+  .app-interface .mobile-brand .brand-mark { background: #e3ead8 !important; color: #294e41 !important; }
+}
+.app-interface .dogs-filter-panel { display: block !important; }
+.app-interface .dogs-filter-form { max-width: none; }

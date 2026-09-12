@@ -4,53 +4,41 @@
 <main id="main-content" tabindex="-1" class="container dashboard-stitch">
   <section class="page-hero dashboard-titlebar">
     <div>
-      <p class="eyebrow">VOTRE ÉLEVAGE, AU QUOTIDIEN</p>
-      <h1>Tableau de bord</h1>
-      <p>Vos effectifs, vos échéances et vos priorités en un coup d’œil.</p>
+      <p class="eyebrow">ELEVAGEPRO / VUE D’ENSEMBLE</p>
+      <h1>L’excellence se cultive<br><em>au quotidien.</em></h1>
+      <p>Votre élevage en perspective. Vos prochaines décisions, à portée de main.</p>
     </div>
     <div class="hero-actions">
       <a class="btn btn-secondary" href="/calendar/new"><span class="material-symbols-outlined">event</span> Ajouter une échéance</a>
-      <a class="btn btn-secondary" href="/soins"><span class="material-symbols-outlined">add_circle</span> Ajouter un soin</a>
       <a class="btn btn-primary" href="/dogs/new"><span class="material-symbols-outlined">pets</span> Nouveau chien</a>
     </div>
   </section>
 
-  <% if (typeof alerts !== 'undefined' && alerts.length) { %>
-    <section class="alert-grid stitch-alert-strip">
-      <% alerts.forEach((alert) => { %>
-        <a class="business-alert alert-<%= alert.level %>" href="<%= alert.href %>">
-          <span class="material-symbols-outlined"><%= alert.level === 'danger' ? 'warning' : alert.level === 'warning' ? 'report' : 'info' %></span>
-          <strong><%= alert.title %></strong>
-        </a>
-      <% }) %>
-    </section>
-  <% } %>
-
   <section class="dashboard-kpi-grid stitch-kpis">
-    <article class="kpi-card">
+    <a class="kpi-card" href="/dogs">
       <span>Chiens actifs</span>
       <strong><%= kpis.activeDogs %></strong>
-    </article>
-    <article class="kpi-card">
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card" href="/litters">
       <span>Portées en cours</span>
       <strong><%= kpis.activeLitters %></strong>
-    </article>
-    <article class="kpi-card">
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card" href="/puppies">
       <span>Chiots disponibles</span>
       <strong><%= kpis.availablePuppies %></strong>
-    </article>
-    <article class="kpi-card kpi-warning">
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card kpi-warning" href="/reminders">
       <span>Rappels de soins</span>
       <strong><%= kpis.upcomingReminders %></strong>
-    </article>
-    <article class="kpi-card">
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card" href="/sales">
       <span>Ventes en attente</span>
       <strong><%= kpis.incompleteSales %></strong>
-    </article>
-    <article class="kpi-card kpi-revenue">
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
+    <a class="kpi-card kpi-revenue" href="/profitability">
       <span>Revenu mensuel</span>
       <strong><%= formatCurrency(kpis.currentMonthSales) %></strong>
-    </article>
+    <small class="kpi-destination">Consulter <span aria-hidden="true">↗</span></small></a>
   </section>
 
   <section class="dashboard-columns stitch-main-grid">
@@ -81,11 +69,11 @@
     <article class="card stitch-alert-card">
       <div class="section-title compact alert-heading">
         <span class="material-symbols-outlined">warning</span>
-        <h2>À traiter</h2>
+        <h2>Vos priorités</h2>
       </div>
       <div class="alert-list">
         <% if (alerts && alerts.length) { %>
-          <% alerts.slice(0, 5).forEach((alert) => { %>
+          <% alerts.forEach((alert) => { %>
             <a href="<%= alert.href %>" class="alert-item alert-<%= alert.level %>">
               <span class="material-symbols-outlined"><%= alert.level === 'danger' ? 'vaccines' : alert.level === 'warning' ? 'hourglass_top' : 'description' %></span>
               <strong><%= alert.title %></strong>
@@ -104,7 +92,7 @@
           <p class="muted">Aucune alerte active.</p>
         <% } %>
       </div>
-      <a class="btn btn-secondary full-width" href="/reminders">Voir tout (<%= kpis.upcomingReminders %>)</a>
+      <a class="btn btn-secondary full-width" href="/reminders">Consulter les rappels (<%= kpis.upcomingReminders %>)</a>
     </article>
   </section>
 
@@ -186,14 +174,14 @@
 
   <section class="module-cockpit">
     <div class="section-title">
-      <span class="section-kicker">Modules</span>
-      <h2>Accès rapides</h2>
+      <span class="section-kicker">Votre espace de travail</span>
+      <h2>Chaque métier, à sa place.</h2>
     </div>
 
     <div class="module-grid">
       <% modules.filter((module) => module.key !== 'dashboard').forEach((module) => { %>
         <a class="module-card accent-<%= module.accent %>" href="<%= module.href %>">
-          <span class="module-icon"><%= module.icon %></span>
+          <span class="module-icon material-symbols-outlined" aria-hidden="true"><%= module.icon %></span>
           <strong><%= __(module.labelKey) %></strong>
           <p><%= __(module.descriptionKey) %></p>
         </a>

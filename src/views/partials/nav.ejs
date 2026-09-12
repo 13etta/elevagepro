@@ -4,7 +4,7 @@
     <span class="brand-mark">EP</span>
     <span>
       <strong>ElevagePro</strong>
-      <small>Gestion d'élevage canin</small>
+      <small>L’espace des éleveurs</small>
     </span>
   </a>
   <button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-sidebar" aria-expanded="false">
@@ -19,9 +19,10 @@
 
 <aside class="sidebar" id="main-sidebar">
   <a class="brand" href="/dashboard" aria-label="ElevagePro">
+    <span class="atelier-monogram" aria-hidden="true">é.</span>
     <span class="brand-text">
       <strong>ElevagePro</strong>
-      <small>Gestion d'élevage canin</small>
+      <small>L’espace des éleveurs</small>
     </span>
   </a>
 
@@ -36,7 +37,7 @@
         <section class="nav-group">
           <p class="nav-group-title"><%= __(group.labelKey) %></p>
           <% groupModules.forEach((module) => { %>
-            <a class="nav-link <%= currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'active' : '' %>" href="<%= module.href %>" title="<%= __(module.labelKey) %>">
+            <a class="nav-link <%= currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'active' : '' %>" href="<%= module.href %>" title="<%= __(module.labelKey) %>" <%- currentPath === module.href || currentPath.startsWith(module.href + '/') ? 'aria-current="page"' : '' %>>
               <span class="nav-icon material-symbols-outlined"><%= module.icon %></span>
               <span class="nav-label"><%= __(module.labelKey) %></span>
             </a>
@@ -58,18 +59,19 @@
 
 <div class="app-shell" id="app-content" tabindex="-1">
   <header class="topbar">
+    <span class="workspace-label">ESPACE ÉLEVEUR</span>
     <form class="topbar-search" action="/dogs" method="GET" role="search">
       <span class="material-symbols-outlined">search</span>
       <input type="search" name="q" placeholder="Rechercher un chien…" aria-label="Recherche">
     </form>
 
     <div class="topbar-actions">
-      <a class="topbar-btn topbar-btn-light" href="/sales"><span class="material-symbols-outlined">description</span>Documents</a>
-      <a class="topbar-btn topbar-btn-primary" href="/dogs/new"><span class="material-symbols-outlined">add</span>Ajouter un chien</a>
+
+
       <span class="topbar-divider"></span>
       <a class="icon-action" href="/calendar" aria-label="Calendrier"><span class="material-symbols-outlined">calendar_month</span></a>
       <a class="icon-action" href="/reminders" aria-label="Rappels"><span class="material-symbols-outlined">notifications</span></a>
-      <a class="icon-action" href="/settings" aria-label="Paramètres"><span class="material-symbols-outlined">settings</span></a>
+
       <a class="user-avatar" href="/settings" aria-label="Profil"><span><%= user && user.full_name ? user.full_name.charAt(0).toUpperCase() : 'E' %></span></a>
     </div>
   </header>

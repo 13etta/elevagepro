@@ -21,20 +21,4 @@
     if (event.key === 'Escape') setQuickAction(false);
   });
 
-  const revealTargets = document.querySelectorAll('.kpi-card,.module-card,.table-block,.card,.business-alert,.page-hero');
-  revealTargets.forEach((element) => element.setAttribute('data-reveal', ''));
-
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: 0.08 });
-
-    revealTargets.forEach((element) => observer.observe(element));
-  } else {
-    revealTargets.forEach((element) => element.classList.add('is-visible'));
-  }
 })();
