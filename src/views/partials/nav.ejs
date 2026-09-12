@@ -7,6 +7,7 @@
       <small>L’espace des éleveurs</small>
     </span>
   </a>
+  <nav class="horizon-navigation" aria-label="Espaces principaux"><a href="/dashboard" <%- currentPath === '/dashboard' ? 'aria-current="page"' : '' %>>Aujourd’hui</a><a href="/dogs" <%- currentPath.startsWith('/dogs') ? 'aria-current="page"' : '' %>>Le cheptel</a><a href="/reproduction" <%- currentPath.startsWith('/reproduction') ? 'aria-current="page"' : '' %>>Reproduction</a><a href="/calendar" <%- currentPath.startsWith('/calendar') ? 'aria-current="page"' : '' %>>Agenda</a></nav>
   <button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-sidebar" aria-expanded="false">
     <span></span>
     <span></span>
