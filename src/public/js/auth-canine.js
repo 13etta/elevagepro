@@ -1,4 +1,29 @@
 (() => {
+  const landing = document.querySelector('[data-login-landing]');
+  if (landing) {
+    const video = landing.querySelector('[data-login-video]');
+    const videoToggle = landing.querySelector('[data-video-toggle]');
+    const passwordToggle = landing.querySelector('[data-toggle-password]');
+
+    video?.addEventListener('error', () => video.classList.add('is-hidden'));
+    videoToggle?.addEventListener('click', () => {
+      if (!video) return;
+      const shouldPlay = video.paused;
+      if (shouldPlay) video.play().catch(() => video.classList.add('is-hidden'));
+      else video.pause();
+      videoToggle.querySelector('.material-symbols-outlined').textContent = shouldPlay ? 'pause' : 'play_arrow';
+      videoToggle.setAttribute('aria-label', shouldPlay ? 'Mettre la vidéo en pause' : 'Lire la vidéo');
+    });
+    passwordToggle?.addEventListener('click', () => {
+      const input = document.getElementById(passwordToggle.dataset.togglePassword);
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      passwordToggle.querySelector('.material-symbols-outlined').textContent = show ? 'visibility_off' : 'visibility';
+      passwordToggle.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+    });
+  }
+
   const visual = document.querySelector('.auth-canine-visual');
   if (!visual) return;
 
@@ -105,3 +130,4 @@
     setImage(images[currentIndex]);
   }, 9000);
 })();
+
