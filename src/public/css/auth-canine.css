@@ -510,6 +510,7 @@
 /* Login landing — immersive, sober and motion-led */
 .login-landing {
   --login-ink: #f4f1e8; --login-green: #b9d6a3;
+  width: 100%; max-width: none; flex: 1 0 100%; align-self: stretch;
   min-height: 100vh; min-height: 100svh; display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(420px, .75fr);
   overflow: hidden; background: #07110c; color: var(--login-ink);
