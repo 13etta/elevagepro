@@ -1,78 +1,88 @@
 <%- include('../partials/head') %>
 
-<main class="auth-canine-shell auth-canine-login">
-  <section class="auth-canine-visual auth-canine-video-visual" aria-label="Chien d’arrêt au travail sur le terrain">
-    <video
-      class="auth-canine-video"
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="auto"
-      poster="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1800&q=82"
-      aria-hidden="true"
-    >
-      <source src="/videos/auth-chien-arret.mp4" type="video/mp4">
-      <source src="/videos/auth-chien-arret.webm" type="video/webm">
+<main class="login-landing" data-login-landing>
+  <section class="login-landing-media" aria-label="ElevagePro, la gestion d’élevage au quotidien">
+    <video class="login-landing-video" autoplay muted loop playsinline preload="metadata"
+      poster="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=2000&q=88"
+      data-login-video aria-hidden="true">
+      <source src="https://www.pexels.com/download/video/3693587/" type="video/mp4">
     </video>
-    <div class="auth-canine-visual-overlay">
-      <p class="auth-canine-kicker">Gestion d'élevage canin</p>
-      <h2>Un cockpit clair pour piloter votre sélection, vos portées et votre suivi sanitaire.</h2>
-      <p>Conçu pour les éleveurs qui veulent une gestion propre, professionnelle et orientée terrain.</p>
+    <div class="login-landing-grain" aria-hidden="true"></div>
+    <div class="login-landing-orb login-landing-orb-one" aria-hidden="true"></div>
+    <div class="login-landing-orb login-landing-orb-two" aria-hidden="true"></div>
+
+    <header class="login-landing-topbar">
+      <a class="login-landing-wordmark" href="/auth/login" aria-label="ElevagePro, accueil">
+        <img src="/images/elevagepro-logo.png" alt="" width="48" height="48">
+        <span>ElevagePro</span>
+      </a>
+      <div class="login-landing-live"><i aria-hidden="true"></i> Espace éleveur sécurisé</div>
+    </header>
+
+    <div class="login-landing-story">
+      <p class="login-landing-kicker"><span></span> Le terrain rencontre la précision</p>
+      <h1>Pilotez votre élevage<br><em>avec une longueur d’avance.</em></h1>
+      <p class="login-landing-lead">Chiens, santé, reproduction, portées et rentabilité réunis dans un espace pensé pour votre métier.</p>
+      <div class="login-landing-chips" aria-label="Fonctions principales">
+        <span><b>01</b> Suivi sanitaire</span>
+        <span><b>02</b> Reproduction</span>
+        <span><b>03</b> Pilotage</span>
+      </div>
     </div>
+
+    <button class="login-video-control" type="button" data-video-toggle aria-label="Mettre la vidéo en pause">
+      <span class="material-symbols-outlined" aria-hidden="true">pause</span>
+    </button>
   </section>
 
-  <section class="auth-canine-panel">
-    <div class="auth-canine-card">
-      <a class="auth-canine-brand" href="/auth/login" aria-label="ElevagePro">
-        <img class="auth-application-logo" src="/images/elevagepro-logo.png" alt="ElevagePro" width="156" height="156">
-      </a>
-
-      <header class="auth-canine-header">
-        <h1>Connexion éleveur</h1>
-        <p>Accédez à votre tableau de bord professionnel.</p>
-      </header>
+  <section class="login-landing-access" aria-label="Connexion à ElevagePro">
+    <div class="login-access-glow" aria-hidden="true"></div>
+    <div class="login-access-card">
+      <div class="login-access-heading">
+        <span class="login-access-step">Votre espace professionnel</span>
+        <h2>Heureux de vous revoir.</h2>
+        <p>Retrouvez votre élevage là où vous l’avez laissé.</p>
+      </div>
 
       <% if (error) { %>
-        <div class="auth-canine-alert"><%= error %></div>
+        <div class="auth-canine-alert" role="alert"><%= error %></div>
       <% } %>
 
-      <form method="post" action="/auth/login" class="auth-canine-form">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <form method="post" action="/auth/login" class="login-access-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-        <div class="auth-canine-field">
-          <label for="email">Email</label>
-          <input id="email" type="email" name="email" autocomplete="email" required />
-        </div>
+        <label class="login-access-field" for="email">
+          <span>Email professionnel</span>
+          <span class="login-access-input">
+            <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+            <input id="email" type="email" name="email" autocomplete="email" placeholder="vous@votreelevage.fr" required autofocus>
+          </span>
+        </label>
 
-        <div class="auth-canine-field">
-          <div class="auth-canine-label-row">
-            <label for="password">Mot de passe</label>
-            <button type="button" class="auth-canine-show-password" data-toggle-password="password">Afficher</button>
-          </div>
-          <input id="password" type="password" name="password" autocomplete="current-password" required minlength="8" />
-        </div>
+        <label class="login-access-field" for="password">
+          <span class="login-access-label"><span>Mot de passe</span><a href="/auth/forgot-password">Mot de passe oublié ?</a></span>
+          <span class="login-access-input">
+            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+            <input id="password" type="password" name="password" autocomplete="current-password" placeholder="Votre mot de passe" required minlength="8">
+            <button type="button" class="login-password-toggle" data-toggle-password="password" aria-label="Afficher le mot de passe">
+              <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+            </button>
+          </span>
+        </label>
 
-        <button type="submit" class="auth-canine-submit">Se connecter</button>
+        <button type="submit" class="login-access-submit">
+          <span>Ouvrir mon tableau de bord</span>
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </button>
       </form>
 
-      <p class="auth-canine-switch"><a href="/auth/forgot-password">Mot de passe oublié ?</a></p>
-      <p class="auth-canine-switch">Nouveau ? <a href="/auth/register">Créer mon compte</a></p>
+      <div class="login-access-divider"><span>Première visite ?</span></div>
+      <a class="login-access-create" href="/auth/register">Créer mon espace éleveur <span class="material-symbols-outlined" aria-hidden="true">north_east</span></a>
+      <p class="login-access-trust"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Données isolées et accès protégé</p>
     </div>
   </section>
 </main>
 
 <script src="/js/auth-canine.js" defer></script>
-<script>
-  document.querySelectorAll('[data-toggle-password]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const input = document.getElementById(button.dataset.togglePassword);
-      if (!input) return;
-      const hidden = input.type === 'password';
-      input.type = hidden ? 'text' : 'password';
-      button.textContent = hidden ? 'Masquer' : 'Afficher';
-    });
-  });
-</script>
-
 <%- include('../partials/foot') %>
+
