@@ -20,6 +20,20 @@
 
   <% if (activeSettingsTab === 'application') { %>
     <section class="settings-grid">
+      <article class="card settings-card" id="mon-profil">
+        <div class="section-title">
+          <h2>Mon profil</h2>
+          <p class="muted">Votre prénom personnalise l’accueil de votre compte.</p>
+        </div>
+        <form action="/account/profile" method="POST" class="stacked-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="form-grid">
+            <div class="form-group"><label for="profile-first-name">Prénom</label><input id="profile-first-name" name="first_name" autocomplete="given-name" value="<%= user.first_name || '' %>" maxlength="120" required></div>
+            <div class="form-group"><label for="profile-last-name">Nom</label><input id="profile-last-name" name="last_name" autocomplete="family-name" value="<%= user.last_name || '' %>" maxlength="120" required></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Enregistrer mon profil</button>
+        </form>
+      </article>
       <article class="card settings-card">
         <div class="section-title">
           <span class="section-kicker">Application & Vitrine</span>
@@ -71,8 +85,8 @@
     <section class="card settings-card settings-logo-card">
       <div class="section-title">
         <span class="section-kicker">Site vitrine</span>
-        <h2>Générateur de site public</h2>
-        <p class="muted">Modifiez le site à gauche : l’aperçu à droite se met à jour immédiatement. Les données affichées viennent de l’ERP.</p>
+        <h2>Un site à l’image de votre élevage</h2>
+        <p class="muted">Votre univers, vos photos, votre histoire. Personnalisez chaque détail et visualisez le résultat avant de l’enregistrer.</p>
       </div>
 
       <div class="website-live-builder">
@@ -90,14 +104,15 @@
                   <label class="template-option <%= websiteSettings.template === tpl ? 'selected' : '' %>">
                     <input type="radio" name="template" value="<%= tpl %>" <%= websiteSettings.template === tpl ? 'checked' : '' %>>
                     <strong><%= templateLabels[tpl] || tpl %></strong>
-                    <span><%= tpl %></span>
+                    <span class="template-swatch swatch-<%= tpl %>" aria-hidden="true"><i></i><i></i><i></i></span>
                   </label>
                 <% }) %>
               </div>
             </div>
 
             <div class="card" style="box-shadow:none; background:var(--surface-2);">
-              <div class="section-title compact"><span class="section-kicker">Accueil</span><h3>Hero de page</h3></div>
+              <div class="section-title compact"><span class="section-kicker">Accueil</span><h3>La première impression</h3></div>
+              <div class="form-group"><label>Petite accroche</label><input name="heroEyebrow" value="<%= websiteSettings.heroEyebrow %>"></div>
               <div class="form-group"><label>Titre principal</label><input name="heroTitle" value="<%= websiteSettings.heroTitle || '' %>"></div>
               <div class="form-group"><label>Texte d’introduction</label><textarea name="heroSubtitle" rows="4"><%= websiteSettings.heroSubtitle || '' %></textarea></div>
               <div class="form-group"><label>Slogan d’en-tête</label><input name="siteSlogan" value="<%= websiteSettings.siteSlogan || '' %>"></div>
@@ -108,8 +123,8 @@
             <div class="card" style="box-shadow:none; background:var(--surface-2);">
               <div class="section-title compact"><span class="section-kicker">Couleurs</span><h3>Palette complète</h3></div>
               <div class="form-grid">
-                <div class="form-group"><label>Vert principal</label><input type="color" name="primaryColor" value="<%= websiteSettings.primaryColor || '#29422c' %>"></div>
-                <div class="form-group"><label>Doré / sable</label><input type="color" name="secondaryColor" value="<%= websiteSettings.secondaryColor || '#bda66f' %>"></div>
+                <div class="form-group"><label>Couleur principale</label><input type="color" name="primaryColor" value="<%= websiteSettings.primaryColor || '#29422c' %>"></div>
+                <div class="form-group"><label>Couleur secondaire</label><input type="color" name="secondaryColor" value="<%= websiteSettings.secondaryColor || '#bda66f' %>"></div>
                 <div class="form-group"><label>Accent</label><input type="color" name="accentColor" value="<%= websiteSettings.accentColor || '#f4efe2' %>"></div>
                 <div class="form-group"><label>Fond</label><input type="color" name="backgroundColor" value="<%= websiteSettings.backgroundColor || '#f6f1e8' %>"></div>
                 <div class="form-group"><label>Texte</label><input type="color" name="textColor" value="<%= websiteSettings.textColor || '#24301f' %>"></div>
@@ -129,7 +144,7 @@
             </div>
 
             <div class="card" style="box-shadow:none; background:var(--surface-2);">
-              <div class="section-title compact"><span class="section-kicker">Bande annonce</span><h3>Message sous le hero</h3></div>
+              <div class="section-title compact"><span class="section-kicker">Bande annonce</span><h3>Message d’accueil</h3></div>
               <div class="form-group"><label>Annonce</label><input name="contactStripTitle" value="<%= websiteSettings.contactStripTitle || '' %>"></div>
               <div class="form-group"><label>Lien / sous-texte</label><input name="contactStripText" value="<%= websiteSettings.contactStripText || '' %>"></div>
               <div class="form-grid"><div class="form-group"><label>Bouton principal</label><input name="primaryCtaLabel" value="<%= websiteSettings.primaryCtaLabel || '' %>"></div><div class="form-group"><label>Bouton secondaire</label><input name="secondaryCtaLabel" value="<%= websiteSettings.secondaryCtaLabel || '' %>"></div></div>
@@ -182,12 +197,25 @@
             </div>
 
             <div class="card" style="box-shadow:none; background:var(--surface-2);">
-              <div class="section-title compact"><span class="section-kicker">Contact</span><h3>Bloc engagement</h3></div>
+              <div class="section-title compact"><span class="section-kicker">Contact</span><h3>Parlons de votre projet</h3></div>
+              <p class="muted">Seules ces coordonnées seront visibles sur votre site. L’email de votre compte reste privé.</p>
+              <div class="form-group"><label for="public-email">Email public</label><input id="public-email" type="email" name="publicEmail" value="<%= websiteSettings.publicEmail %>" placeholder="contact@votre-elevage.fr"></div>
+              <div class="form-group"><label for="public-phone">Téléphone public</label><input id="public-phone" type="tel" name="phone" maxlength="30" value="<%= websiteSettings.phone %>"></div>
               <div class="form-group"><label>Titre du panneau contact</label><input name="contactPanelTitle" value="<%= websiteSettings.contactPanelTitle || '' %>"></div>
               <div class="form-group"><label>Texte du panneau contact</label><textarea name="contactPanelText" rows="4"><%= websiteSettings.contactPanelText || '' %></textarea></div>
               <div class="form-group"><label>Texte du footer</label><textarea name="footerText" rows="4"><%= websiteSettings.footerText || '' %></textarea></div>
             </div>
 
+            <div class="settings-panel">
+              <div class="section-title compact"><span class="section-kicker">Personnalisation</span><h3>Mise en page & titres</h3></div>
+              <div class="form-group"><label for="hero-layout">Composition de l’accueil</label><select id="hero-layout" name="heroLayout"><option value="editorial" <%= websiteSettings.heroLayout === 'editorial' ? 'selected' : '' %>>Éditoriale — texte à gauche</option><option value="centered" <%= websiteSettings.heroLayout === 'centered' ? 'selected' : '' %>>Immersive — texte centré</option></select></div>
+              <div class="form-group"><label for="heading-font">Typographie des titres</label><select id="heading-font" name="headingFont"><option value="serif" <%= websiteSettings.headingFont === 'serif' ? 'selected' : '' %>>Élégante — avec empattements</option><option value="sans" <%= websiteSettings.headingFont === 'sans' ? 'selected' : '' %>>Contemporaine — sans empattements</option></select></div>
+              <div class="form-group"><label for="image-position">Cadrage de la photo d’accueil</label><select id="image-position" name="imagePosition"><% [['center','Centre'],['top','Haut'],['bottom','Bas'],['left','Gauche'],['right','Droite']].forEach(([value,label]) => { %><option value="<%= value %>" <%= websiteSettings.imagePosition === value ? 'selected' : '' %>><%= label %></option><% }) %></select></div>
+              <div class="form-group"><label>Titre des chiens</label><input name="dogsTitle" value="<%= websiteSettings.dogsTitle %>"></div>
+<div class="form-group"><label>Titre des chiots</label><input name="puppiesTitle" value="<%= websiteSettings.puppiesTitle %>"></div>
+<div class="form-group"><label>Titre des portées</label><input name="littersTitle" value="<%= websiteSettings.littersTitle %>"></div>
+<div class="form-group"><label>Titre de la galerie</label><input name="galleryTitle" value="<%= websiteSettings.galleryTitle %>"></div>
+            </div>
             <div class="settings-panel">
               <div class="section-title compact"><span class="section-kicker">Galerie</span><h3>Photos générales du site</h3></div>
               <div class="form-group"><label>Ajouter des photos</label><input type="file" name="gallery_images" accept="image/png, image/jpeg, image/webp" multiple></div>
@@ -200,17 +228,17 @@
               <% } %>
             </div>
 
-            <button type="submit" class="btn btn-primary">Enregistrer le site vitrine</button>
+            <div class="website-save-bar"><span id="website-save-status" role="status">Aperçu de vos réglages</span><button type="submit" class="btn btn-primary">Enregistrer le site vitrine</button></div>
           </form>
         </div>
 
         <aside class="website-live-preview" aria-label="Aperçu du site vitrine">
           <header>
-            <span>Aperçu temps réel</span>
-            <% if (typeof publicSiteUrl !== 'undefined') { %><a href="<%= publicSiteUrl %>" target="_blank">Ouvrir</a><% } %>
+            <span>Aperçu en direct</span><div class="website-device-switch" role="group" aria-label="Format de l’aperçu"><button type="button" data-preview-device="desktop" aria-pressed="true">Ordinateur</button><button type="button" data-preview-device="mobile" aria-pressed="false">Mobile</button></div>
+            <% if (typeof publicSiteUrl !== 'undefined') { %><a href="/site/preview" target="_blank" rel="noopener">Ouvrir</a><% } %>
           </header>
           <div class="website-preview-frame-wrap">
-            <iframe id="website-preview-frame" src="<%= publicSiteUrl %>" title="Aperçu du site vitrine"></iframe>
+            <iframe id="website-preview-frame" src="/site/preview" title="Aperçu du site vitrine"></iframe>
           </div>
         </aside>
       </div>

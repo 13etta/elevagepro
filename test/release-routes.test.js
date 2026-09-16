@@ -29,10 +29,37 @@ test('authenticated business pages and export run against the migrated schema', 
   const login = await fetch(base+'/auth/login',{redirect:'manual',method:'POST',headers:{cookie:beforeCookie,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({_csrf:token,email:user.email,password:'smoke-password-123'})});
   assert.equal(login.status,302);
   const cookie = login.headers.getSetCookie().find(c=>c.startsWith('sid=')).split(';')[0];
-  for(const route of ['/dogs/'+dog.id,'/reproduction','/heats/new','/matings/new','/litters/new','/dashboard','/dogs','/dogs/new','/soins','/reminders','/health-tests','/heats','/matings','/pregnancies','/litters','/puppies','/sales','/sales/new','/profitability','/structure','/calendar','/settings','/billing','/account/export','/site/preview']) {
+  for(const route of ['/dogs/'+dog.id,'/reproduction','/heats/new','/matings/new','/litters/new','/dashboard','/dogs','/dogs/new','/soins','/reminders','/health-tests','/heats','/matings','/pregnancies','/litters','/puppies','/sales','/sales/new','/profitability','/structure','/calendar','/settings','/settings?tab=vitrine','/billing','/account/export','/site/preview']) {
     const response = await fetch(base+route,{redirect:'manual',headers:{cookie}});
     const body = await response.text();
     assert.ok([200,302].includes(response.status),route+': '+response.status+' '+body.slice(0,150));
   }
+  // The website editor must round-trip settings without publishing a draft or touching another breeder.
+  const other = await require('../src/services/auth.service').createBreederWithAdmin({kennelName:'Other breeder',fullName:'Other',email:'other@example.test',password:'smoke-password-456',primaryBreed:'Test'});
+  const originalOther = (await client.query('SELECT website_settings FROM breeder WHERE id=$1',[other.breeder_id])).rows[0].website_settings;
+  const settingsPage = await fetch(base+'/settings?tab=vitrine',{headers:{cookie}});
+  const csrf = (await settingsPage.text()).match(/name="_csrf" value="([^"]+)"/)[1];
+  const form = new FormData();
+  Object.entries({_csrf:csrf,heroTitle:'Notre élevage personnalisé',heroLayout:'centered',headingFont:'sans',imagePosition:'right',publicEmail:'public@example.test',showIntro:'on',showContact:'on',breeder_id:other.breeder_id}).forEach(([key,value])=>form.append(key,value));
+  const saved = await fetch(base+'/settings/website',{method:'POST',headers:{cookie},body:form,redirect:'manual'});
+  assert.equal(saved.status,302);
+  const stored = (await client.query('SELECT website_settings FROM breeder WHERE id=$1',[user.breeder_id])).rows[0].website_settings;
+  assert.equal(stored.heroTitle,'Notre élevage personnalisé');
+  assert.equal(stored.heroLayout,'centered');
+  assert.equal(stored.publicEmail,'public@example.test');
+  assert.equal(stored.isPublished,false);
+  assert.deepEqual((await client.query('SELECT website_settings FROM breeder WHERE id=$1',[other.breeder_id])).rows[0].website_settings,originalOther);
+  assert.equal((await fetch(base+'/site/'+user.breeder_id)).status,404);
+  assert.equal((await fetch(base+'/site/'+other.breeder_id,{headers:{cookie}})).status,404);
+  const preview = await fetch(base+'/site/preview',{headers:{cookie}});
+  assert.equal(preview.status,200);
+  assert.equal(preview.headers.get('x-robots-tag'),'noindex, nofollow');
+  assert.match(await preview.text(),/Notre élevage personnalisé/);
+  assert.equal((await fetch(base+'/site/preview',{redirect:'manual'})).status,302);
+  form.append('isPublished','on');
+  assert.equal((await fetch(base+'/settings/website',{method:'POST',headers:{cookie},body:form,redirect:'manual'})).status,302);
+  const published=await fetch(base+'/site/'+user.breeder_id);
+  assert.equal(published.status,200);
+  assert.match(await published.text(),/mailto:public@example.test/);
   assert.deepEqual(errors,[]);
 });

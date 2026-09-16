@@ -25,7 +25,7 @@ test('authentication regenerates and saves a session without carrying the old CS
 });
 
 test('public website requires explicit address publication and never renders internal notes', async () => {
-  const settings=defaultWebsiteSettings();
+  const settings={...defaultWebsiteSettings(),publicEmail:'contact@example.test'};
   const data={title:'Test',breeder:{company_name:'Élevage test',address:'ADRESSE PRIVEE TEST',email:'contact@example.test'},websiteSettings:settings,publicServices:buildServices(settings),dogsByBreed:{Test:[{name:'Test',sex:'male',breed:'Test',notes:'NOTE CONFIDENTIELLE TEST'}]},puppiesByBreed:{},littersByBreed:{},formatDate:()=>'-'};
   const template=path.resolve(__dirname,'../src/views/website/public-site.ejs');
   const html=await ejs.renderFile(template,data);

@@ -21,7 +21,7 @@ function groupByBreed(items) {
     if (!groups[breed]) groups[breed] = [];
     groups[breed].push(item);
     return groups;
-  }, {});
+  }, Object.create(null));
 }
 
 
@@ -34,7 +34,7 @@ async function renderPublic(req, res) {
 
     const breederRes = await pool.query(
       `
-        SELECT *
+        SELECT id, slug, company_name, name, logo_url, address, website_settings
         FROM breeder
         WHERE slug = $1 OR id::text = $1
         LIMIT 1
@@ -50,6 +50,8 @@ async function renderPublic(req, res) {
     }
 
     const breeder = breederRes.rows[0];
+    res.set('Cache-Control', 'private, no-store');
+    if (req.preview) res.set('X-Robots-Tag', 'noindex, nofollow');
     const websiteSettings = mergeWebsiteSettings(breeder.website_settings);
     if (websiteSettings.isPublished === false && !(req.preview && req.session.user.breeder_id === breeder.id)) return res.status(404).render('errors/404', { title: 'Élevage introuvable', user: null });
 
@@ -68,7 +70,9 @@ async function renderPublic(req, res) {
 
     const puppies = await pool.query(
       `
-        SELECT p.*, l.birth_date, mother.name AS mother_name, mother.breed AS mother_breed
+        SELECT p.id, p.litter_id, p.name, p.sex, p.color, p.status, p.sale_price, to_jsonb(p)->>'photo_url' AS photo_url,
+               COALESCE(p.birth_date, l.birth_date) AS birth_date,
+               mother.name AS mother_name, mother.breed AS mother_breed
         FROM puppies p
         LEFT JOIN litters l ON p.litter_id = l.id AND l.breeder_id = p.breeder_id
         LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = p.breeder_id
@@ -82,7 +86,7 @@ async function renderPublic(req, res) {
 
     const litters = await pool.query(
       `
-        SELECT l.*, mother.name AS mother_name, mother.breed AS mother_breed
+        SELECT l.id, l.birth_date, l.puppies_count_total, mother.name AS mother_name, mother.breed AS mother_breed
         FROM litters l
         LEFT JOIN dogs mother ON l.mother_id = mother.id AND mother.breeder_id = l.breeder_id
         WHERE l.breeder_id = $1

@@ -28,7 +28,8 @@
   const puppyBreedEntries = Object.entries(puppiesByBreed || {});
   const litterBreedEntries = Object.entries(littersByBreed || {});
 %>
-<body class="domain-forest-site template-<%= websiteSettings.template || 'heritage' %>" style="--forest-primary:<%= websiteSettings.primaryColor || '#29422c' %>;--forest-secondary:<%= websiteSettings.secondaryColor || '#bda66f' %>;--forest-accent:<%= websiteSettings.accentColor || '#f4efe2' %>;--forest-bg:<%= websiteSettings.backgroundColor || '#f6f1e8' %>;--forest-text:<%= websiteSettings.textColor || '#24301f' %>;">
+<body data-layout="<%= websiteSettings.heroLayout %>" data-font="<%= websiteSettings.headingFont %>" class="domain-forest-site template-<%= websiteSettings.template || 'heritage' %>" style="--primary-ink:<%= websiteSettings.primaryInk %>;--accent-ink:<%= websiteSettings.accentInk %>;--hero-position:<%= websiteSettings.imagePosition %>;--forest-primary:<%= websiteSettings.primaryColor || '#29422c' %>;--forest-secondary:<%= websiteSettings.secondaryColor || '#bda66f' %>;--forest-accent:<%= websiteSettings.accentColor || '#f4efe2' %>;--forest-bg:<%= websiteSettings.backgroundColor || '#f6f1e8' %>;--forest-text:<%= websiteSettings.textColor || '#24301f' %>;">
+  <a class="forest-skip" href="#main-content">Aller au contenu</a>
   <header class="forest-header">
     <a href="#accueil" class="forest-logo" aria-label="<%= siteTitle %>">
       <% if (logoUrl) { %>
@@ -39,11 +40,18 @@
       <strong><%= siteTitle %></strong>
       <small class="forest-site-slogan" style="<%= websiteSettings.siteSlogan ? '' : 'display:none' %>"><%= websiteSettings.siteSlogan || '' %></small>
     </a>
+    <nav class="forest-nav" aria-label="Navigation principale">
+      <% [['showIntro', 'intro', 'Notre élevage'], ['showDogs', 'selection', 'Nos chiens'], ['showPuppies', 'chiots', 'Nos chiots'], ['showGallery', 'galerie', 'La galerie'], ['showContact', 'contact', 'Rencontrons-nous']].forEach(([key, anchor, label]) => { %>
+        <a href="#<%= anchor %>" data-nav-setting="<%= key %>" style="<%= websiteSettings[key] ? '' : 'display:none' %>"><%= label %></a>
+      <% }) %>
+    </nav>
   </header>
 
-  <main>
-    <section id="accueil" class="forest-hero" <% if (heroImage) { %>style="background-image:linear-gradient(90deg,rgba(0,0,0,.52),rgba(0,0,0,.18)),url('<%= heroImage %>')"<% } %>>
+  <main id="main-content">
+    <section id="accueil" class="forest-hero" >
+      <img class="forest-hero-photo" src="<%= heroImage || serviceFallbackImages.breeding %>" alt="" fetchpriority="high">
       <div class="forest-hero-inner">
+        <span class="forest-eyebrow"><%= websiteSettings.heroEyebrow %></span>
         <h1><%= websiteSettings.heroTitle || 'Élevage et Dressage de prestige' %></h1>
         <p><%= websiteSettings.heroSubtitle || 'Excellence canine au cœur de la nature.' %></p>
         <div class="forest-actions">
@@ -51,11 +59,12 @@
           <a href="#contact" data-cta="secondary" class="secondary" style="<%= websiteSettings.showContact ? '' : 'display:none' %>"><%= websiteSettings.secondaryCtaLabel || 'Contactez-nous' %></a>
         </div>
       </div>
+      <span class="forest-hero-caption"><%= siteTitle %> <span aria-hidden="true">—</span> <%= websiteSettings.siteSlogan %></span>
     </section>
 
     <section class="forest-newsbar">
       <strong><%= websiteSettings.contactStripTitle || 'La saison est ouverte : contactez l’élevage pour les disponibilités.' %></strong>
-      <a href="#contact"><%= websiteSettings.contactStripText || 'En savoir plus' %></a>
+      <span class="forest-news-copy"><%= websiteSettings.contactStripText || '' %></span>
     </section>
 
     <section id="intro" class="forest-section forest-intro" style="<%= websiteSettings.showIntro ? '' : 'display:none' %>">
@@ -74,7 +83,7 @@
       <% if (serviceList.length) { %>
         <% serviceList.forEach((service, index) => { const image = service.imageUrl || serviceFallbackImages[service.key] || serviceFallbackImages.breeding; %>
           <article class="forest-service <%= index % 2 === 1 ? 'reverse' : '' %>" data-service-key="<%= service.key %>" style="<%= service.enabled !== false ? '' : 'display:none' %>">
-            <div class="forest-service-image"><img src="<%= image %>" alt="<%= service.title %>"></div>
+            <div class="forest-service-image"><img data-fallback-src="<%= serviceFallbackImages[service.key] %>" loading="lazy" src="<%= image %>" alt="<%= service.title %>"></div>
             <div class="forest-service-copy">
               <h2><%= service.title %></h2>
               <p><%= service.text %></p>
@@ -90,7 +99,7 @@
     <section id="selection" class="forest-section forest-selection" style="<%= websiteSettings.showDogs ? '' : 'display:none' %>">
         <div class="forest-section-title">
           <span>Sélection</span>
-          <h2>Chiens adultes classés par race</h2>
+          <h2><%= websiteSettings.dogsTitle %></h2>
         </div>
         <% if (dogBreedEntries.length) { dogBreedEntries.forEach(([breed, breedDogs]) => { %>
           <div class="forest-breed-block">
@@ -98,7 +107,7 @@
             <div class="forest-animal-grid">
               <% breedDogs.forEach((dog) => { %>
                 <article class="forest-animal-card">
-                  <% if (dog.photo_url) { %><img src="<%= dog.photo_url %>" alt="<%= dog.name %>"><% } %>
+                  <% if (dog.photo_url) { %><img loading="lazy" src="<%= dog.photo_url %>" alt="<%= dog.name %>"><% } %>
                   <div>
                     <span><%= dog.sex === 'M' ? 'Mâle' : dog.sex === 'F' ? 'Femelle' : 'Chien' %></span>
                     <h4><%= dog.name %></h4>
@@ -114,10 +123,10 @@
         <% } %>
     </section>
 
-    <section class="forest-section forest-litters" style="<%= websiteSettings.showLitters ? '' : 'display:none' %>">
+    <section id="portees" class="forest-section forest-litters" style="<%= websiteSettings.showLitters ? '' : 'display:none' %>">
         <div class="forest-section-title">
           <span>Portées</span>
-          <h2>Portées actuelles par race</h2>
+          <h2><%= websiteSettings.littersTitle %></h2>
         </div>
         <% if (litterBreedEntries.length) { litterBreedEntries.forEach(([breed, breedLitters]) => { %>
           <div class="forest-breed-block">
@@ -143,7 +152,7 @@
     <section id="chiots" class="forest-section forest-puppies" style="<%= websiteSettings.showPuppies ? '' : 'display:none' %>">
         <div class="forest-section-title">
           <span>Disponibilités</span>
-          <h2>Chiots disponibles classés par race</h2>
+          <h2><%= websiteSettings.puppiesTitle %></h2>
         </div>
         <% if (puppyBreedEntries.length) { puppyBreedEntries.forEach(([breed, breedPuppies]) => { %>
           <div class="forest-breed-block">
@@ -151,7 +160,7 @@
             <div class="forest-puppy-grid">
               <% breedPuppies.forEach((puppy) => { const litterImages = (websiteSettings.litterGallery && websiteSettings.litterGallery[puppy.litter_id]) || []; %>
                 <article class="forest-puppy-card">
-                  <% if (litterImages[0]) { %><img src="<%= litterImages[0].url %>" alt="Chiot <%= breed %>"><% } %>
+                  <% if (puppy.photo_url || litterImages[0]) { %><img loading="lazy" src="<%= puppy.photo_url || litterImages[0].url %>" alt="<%= puppy.name || breed %>"><% } %>
                   <div>
                     <span><%= puppy.status || 'Disponible' %></span>
                     <h4><%= puppy.name || 'Chiot disponible' %></h4>
@@ -187,11 +196,11 @@
     <section id="galerie" class="forest-section forest-gallery" style="<%= websiteSettings.showGallery ? '' : 'display:none' %>">
         <div class="forest-section-title">
           <span>Galerie</span>
-          <h2>Vie de l’élevage</h2>
+          <h2><%= websiteSettings.galleryTitle %></h2>
         </div>
         <div>
           <% if (websiteSettings.gallery && websiteSettings.gallery.length) { websiteSettings.gallery.slice(0, 12).forEach((image) => { %>
-            <img src="<%= image.url %>" alt="Photo de l’élevage">
+            <a href="<%= image.url %>" class="forest-gallery-link" aria-label="Agrandir la photo de l’élevage"><img loading="lazy" src="<%= image.url %>" alt="Photo de l’élevage"></a>
           <% }) } else { %>
             <p class="forest-empty-state">La galerie sera visible dès qu’une première photo sera ajoutée.</p>
           <% } %>
@@ -203,14 +212,14 @@
           <div class="forest-contact-form">
             <h2><%= websiteSettings.contactPanelTitle || 'Contact' %></h2>
             <p>Pour connaître les disponibilités ou nous présenter votre projet, contactez directement l’élevage.</p>
-            <% if (breeder.email) { %><a class="forest-btn" href="mailto:<%= breeder.email %>">Écrire à l’élevage</a>
-            <% } else if (breeder.phone) { %><a class="forest-btn" href="tel:<%= breeder.phone %>">Appeler l’élevage</a>
-            <% } else { %><p>Les coordonnées de contact seront prochainement renseignées.</p><% } %>
+            <% if (websiteSettings.publicEmail) { %><a class="forest-btn" href="mailto:<%= websiteSettings.publicEmail %>">Écrire à l’élevage</a>
+            <% } else if (websiteSettings.phone) { %><a class="forest-btn" href="tel:<%= websiteSettings.phone %>">Appeler l’élevage</a>
+            <% } else { %><p data-contact-empty>Les coordonnées de contact seront prochainement renseignées.</p><% } %>
           </div>
           <div class="forest-contact-details">
             <p class="forest-contact-copy" style="<%= websiteSettings.contactPanelText ? '' : 'display:none' %>"><%= websiteSettings.contactPanelText || '' %></p>
-            <% if (breeder.phone) { %><p>☎ <a href="tel:<%= breeder.phone %>"><%= breeder.phone %></a></p><% } %>
-            <% if (breeder.email) { %><p>✉ <a href="mailto:<%= breeder.email %>"><%= breeder.email %></a></p><% } %>
+            <% if (websiteSettings.phone) { %><p data-public-contact>☎ <a href="tel:<%= websiteSettings.phone %>"><%= websiteSettings.phone %></a></p><% } %>
+            <% if (websiteSettings.publicEmail) { %><p data-public-contact>✉ <a href="mailto:<%= websiteSettings.publicEmail %>"><%= websiteSettings.publicEmail %></a></p><% } %>
             <% if (websiteSettings.showPublicAddress === true && breeder.address) { %><p>◆ <%= breeder.address %></p><% } %>
             <p data-contact-key="openingHours" style="<%= websiteSettings.openingHours ? '' : 'display:none' %>">◷ <span><%= websiteSettings.openingHours || '' %></span></p>
             <p data-contact-key="instagram" style="<%= websiteSettings.instagram ? '' : 'display:none' %>">Instagram : <span><%= websiteSettings.instagram || '' %></span></p>
@@ -225,5 +234,10 @@
     <p><%= websiteSettings.footerText || '' %></p>
     <span>© <%= new Date().getFullYear() %> · Propulsé par ElevagePro</span>
   </footer>
+  <dialog class="forest-lightbox" aria-label="Photo de l’élevage agrandie">
+    <button type="button" aria-label="Fermer la photo">Fermer ×</button>
+    <img alt="Photo de l’élevage agrandie">
+  </dialog>
+  <script src="/js/showcase.js" defer></script>
 </body>
 </html>

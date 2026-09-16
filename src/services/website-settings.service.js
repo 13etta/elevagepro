@@ -9,6 +9,7 @@ const websiteTemplatePalettes = {
 };
 
 const textSettingKeys = [
+  'heroEyebrow', 'dogsTitle', 'puppiesTitle', 'littersTitle', 'galleryTitle', 'publicEmail', 'phone',
   'heroTitle', 'heroSubtitle', 'siteSlogan',
   'contactStripTitle', 'contactStripText',
   'primaryCtaLabel', 'secondaryCtaLabel',
@@ -32,6 +33,12 @@ const checkboxSettingKeys = [
 
 function defaultWebsiteSettings() {
   return {
+    heroEyebrow: 'Une rencontre. Une histoire.',
+    heroLayout: 'editorial', headingFont: 'serif', imagePosition: 'center',
+    dogsTitle: 'Les compagnons de notre histoire', puppiesTitle: 'Votre histoire commence ici',
+    littersTitle: 'Les nouvelles générations', galleryTitle: 'Instants de vie à l’élevage',
+    publicEmail: '', phone: '',
+    primaryInk: '#ffffff', accentInk: '#111111',
     isPublished: true, // Preserve existing published sites; registration explicitly starts in draft.
     template: 'heritage', kennelBoxCapacity: 12,
     primaryColor: '#29422c', secondaryColor: '#bda66f', accentColor: '#f4efe2', backgroundColor: '#f6f1e8', textColor: '#24301f',
@@ -76,9 +83,30 @@ function defaultWebsiteSettings() {
 
 function mergeWebsiteSettings(settings) {
   const merged = { ...defaultWebsiteSettings(), ...(settings || {}) };
+  if (!allowedWebsiteTemplates.includes(merged.template)) merged.template = 'heritage';
+  for (const key of Object.keys(websiteTemplatePalettes.heritage)) {
+    if (!/^#[0-9a-f]{6}$/i.test(merged[key])) merged[key] = websiteTemplatePalettes[merged.template][key];
+  }
+  for (const [key, values] of Object.entries(websiteDesignOptions)) {
+    if (!values.includes(merged[key])) merged[key] = values[0];
+  }
   merged.gallery = Array.isArray(merged.gallery) ? merged.gallery : [];
   merged.litterGallery = merged.litterGallery && typeof merged.litterGallery === 'object' ? merged.litterGallery : {};
+  merged.primaryInk = contrastInk(merged.primaryColor);
+  merged.accentInk = contrastInk(merged.accentColor);
   return merged;
+}
+
+const websiteDesignOptions = {
+  heroLayout: ['editorial', 'centered'],
+  headingFont: ['serif', 'sans'],
+  imagePosition: ['center', 'top', 'bottom', 'left', 'right'],
+};
+
+function contrastInk(hex) {
+  const rgb = hex.slice(1).match(/../g).map((part) => parseInt(part, 16) / 255);
+  const linear = rgb.map((v) => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
+  return linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722 > .179 ? '#111111' : '#ffffff';
 }
 
 function normalizeBoxCapacity(value, fallback = 12) {
@@ -104,10 +132,16 @@ function buildWebsiteSettings(body = {}, currentSettings = {}) {
   };
 
   for (const key of ['primaryColor', 'secondaryColor', 'accentColor', 'backgroundColor', 'textColor']) {
-    next[key] = templateChanged ? palette[key] : textFromBody(body, current, key);
+    const submitted = textFromBody(body, current, key);
+    next[key] = templateChanged && submitted === current[key] ? palette[key] : submitted;
   }
 
   for (const key of textSettingKeys) next[key] = textFromBody(body, current, key);
+  for (const [key, values] of Object.entries(websiteDesignOptions)) {
+    if (values.includes(body[key])) next[key] = body[key];
+  }
+  next.publicEmail = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(next.publicEmail) ? next.publicEmail : '';
+  next.phone = /^[+\d\s().-]{3,30}$/.test(next.phone) ? next.phone : '';
   for (const key of checkboxSettingKeys) next[key] = body[key] === 'on';
 
   next.servicesEnabled = next.showServices;
@@ -128,13 +162,14 @@ function buildServices(settings) {
   const services = [
     { key: 'pension', enabled: settings.servicePensionEnabled, title: settings.servicePensionTitle, text: settings.servicePensionText, button: settings.servicePensionButton, imageUrl: settings.servicePensionImageUrl, anchor: '#contact' },
     { key: 'training', enabled: settings.serviceTrainingEnabled, title: settings.serviceTrainingTitle, text: settings.serviceTrainingText, button: settings.serviceTrainingButton, imageUrl: settings.serviceTrainingImageUrl, anchor: '#contact' },
-    { key: 'breeding', enabled: settings.serviceBreedingEnabled, title: settings.serviceBreedingTitle, text: settings.serviceBreedingText, button: settings.serviceBreedingButton, imageUrl: settings.serviceBreedingImageUrl, anchor: '#selection' },
+    { key: 'breeding', enabled: settings.serviceBreedingEnabled, title: settings.serviceBreedingTitle, text: settings.serviceBreedingText, button: settings.serviceBreedingButton, imageUrl: settings.serviceBreedingImageUrl, anchor: settings.showLitters ? '#portees' : settings.showPuppies ? '#chiots' : settings.showDogs ? '#selection' : settings.showIntro ? '#intro' : '#accueil' },
   ];
 
   return services;
 }
 
 module.exports = {
+  websiteDesignOptions,
   allowedWebsiteTemplates,
   websiteTemplatePalettes,
   textSettingKeys,

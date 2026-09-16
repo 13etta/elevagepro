@@ -11,6 +11,8 @@ const {
   websiteTemplatePalettes,
   textSettingKeys,
   checkboxSettingKeys,
+  websiteDesignOptions,
+  mergeWebsiteSettings,
 } = require('../src/services/website-settings.service');
 
 test('tous les textes visibles du configurateur sont enregistrés', () => {
@@ -135,6 +137,7 @@ test('chaque réglage visible possède un traitement de sauvegarde explicite', (
   const websiteForm = source.match(/<form id="website-settings-form"([\s\S]*?)<\/form>/)?.[1] || '';
   const visibleNames = Array.from(websiteForm.matchAll(/name="([^"]+)"/g), (match) => match[1]);
   const handledNames = new Set([
+    ...Object.keys(websiteDesignOptions),
     ...textSettingKeys,
     ...checkboxSettingKeys,
     'template', 'primaryColor', 'secondaryColor', 'accentColor', 'backgroundColor', 'textColor',
@@ -144,4 +147,24 @@ test('chaque réglage visible possède un traitement de sauvegarde explicite', (
   ]);
 
   assert.deepEqual(visibleNames.filter((name) => !handledNames.has(name)), []);
+});
+
+test('les couleurs et options de présentation sont limitées à des valeurs sûres', () => {
+  const settings = buildWebsiteSettings({ primaryColor: '#fff; background:url(https://invalid.test)', heroLayout: 'centered', imagePosition: 'right', headingFont: 'sans' });
+  assert.equal(settings.primaryColor, '#29422c');
+  assert.equal(settings.heroLayout, 'centered');
+  assert.equal(settings.headingFont, 'sans');
+  assert.equal(settings.imagePosition, 'right');
+  assert.equal(mergeWebsiteSettings({ heroLayout: '" onclick="alert(1)' }).heroLayout, 'editorial');
+});
+
+test('la vitrine publie seulement les coordonnées explicitement configurées et échappe les textes', async () => {
+  const settings = mergeWebsiteSettings({ heroTitle: '<script>alert(1)</script>', publicEmail: 'public@example.test' });
+  const html = await ejs.renderFile(path.resolve(__dirname, '../src/views/website/public-site.ejs'), {
+    title: 'Test', breeder: { email: 'private@example.test', phone: '0123456789', address: 'Adresse privée' },
+    websiteSettings: settings, publicServices: buildServices(settings), dogsByBreed: {}, puppiesByBreed: {}, littersByBreed: {}, formatDate: () => '-',
+  });
+  assert.match(html, /mailto:public@example.test/);
+  assert.doesNotMatch(html, /private@example.test|0123456789|Adresse privée|<script>alert/);
+  assert.match(html, /&lt;script&gt;/);
 });

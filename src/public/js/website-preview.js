@@ -3,6 +3,15 @@
   const frame = document.querySelector('#website-preview-frame');
   if (!form || !frame) return;
 
+  const objectUrls = new Map();
+  const fileUrl = (file) => {
+    if (!objectUrls.has(file)) objectUrls.set(file, URL.createObjectURL(file));
+    return objectUrls.get(file);
+  };
+  window.addEventListener('pagehide', () => { objectUrls.forEach((url) => URL.revokeObjectURL(url)); objectUrls.clear(); });
+  let savedHero = '';
+  let savedGallery = [];
+  const savedServiceImages = {};
   const get = (name) => form.elements[name];
   const value = (name) => get(name)?.value || '';
   const checked = (name) => Boolean(get(name)?.checked);
@@ -45,9 +54,9 @@
 
   const setHeroImage = (doc, url) => {
     if (!url) return;
-    const hero = doc.querySelector('.forest-hero');
+    const hero = doc.querySelector('.forest-hero-photo');
     if (!hero) return;
-    hero.style.backgroundImage = `linear-gradient(90deg,rgba(0,0,0,.52),rgba(0,0,0,.18)),url('${url}')`;
+    hero.src = url;
   };
 
   const updateService = (doc, key, enabledName, titleName, textName, buttonName, imageName) => {
@@ -61,12 +70,17 @@
     const fileInput = get(imageName);
     const file = fileInput?.files?.[0];
     const img = service.querySelector('img');
-    if (file && img) img.src = URL.createObjectURL(file);
+    if (img) {
+      savedServiceImages[key] ||= img.src;
+      img.src = file ? fileUrl(file) : checked('clear_' + imageName) ? img.dataset.fallbackSrc || fallbackPhoto : savedServiceImages[key];
+    }
   };
 
-  const setTextInNode = (root, selector, text) => {
-    const node = root.querySelector(selector);
-    if (node) node.textContent = text;
+  const fallbackPhoto = 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1200&q=80';
+
+  const contrastInk = (hex) => {
+    const linear = hex.slice(1).match(/../g).map((part) => parseInt(part, 16) / 255).map((v) => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
+    return linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722 > .179 ? '#111111' : '#ffffff';
   };
 
   const applyPreview = () => withDoc((doc) => {
@@ -83,9 +97,19 @@
     setText(doc, '[data-cta="primary"]', value('primaryCtaLabel') || 'Nos services');
     setText(doc, '[data-cta="secondary"]', value('secondaryCtaLabel') || 'Contactez-nous');
     setText(doc, '.forest-newsbar strong', value('contactStripTitle') || 'La saison est ouverte : contactez l’élevage pour les disponibilités.');
-    setText(doc, '.forest-newsbar a', value('contactStripText') || 'En savoir plus');
+    setText(doc, '.forest-news-copy', value('contactStripText'));
 
     const root = doc.body;
+    root.style.setProperty('--primary-ink', contrastInk(value('primaryColor')));
+    root.style.setProperty('--accent-ink', contrastInk(value('accentColor')));
+    root.dataset.layout = value('heroLayout');
+    root.dataset.font = value('headingFont');
+    root.style.setProperty('--hero-position', value('imagePosition'));
+    setText(doc, '.forest-eyebrow', value('heroEyebrow'));
+    [['dogsTitle','#selection'],['puppiesTitle','#chiots'],['littersTitle','#portees'],['galleryTitle','#galerie']].forEach(([key, selector]) => setText(doc, selector + ' .forest-section-title h2', value(key)));
+    doc.querySelectorAll('[data-nav-setting]').forEach((link) => { link.style.display = checked(link.dataset.navSetting) ? '' : 'none'; });
+    form.querySelectorAll('.template-option').forEach((option) => option.classList.toggle('selected', option.querySelector('input').checked));
+
     root.style.setProperty('--forest-primary', value('primaryColor') || '#29422c');
     root.style.setProperty('--forest-secondary', value('secondaryColor') || '#bda66f');
     root.style.setProperty('--forest-accent', value('accentColor') || '#f4efe2');
@@ -96,7 +120,28 @@
     root.classList.add(`template-${selectedTemplate}`);
 
     const heroFile = get('hero_image')?.files?.[0];
-    if (heroFile) setHeroImage(doc, URL.createObjectURL(heroFile));
+    savedHero ||= doc.querySelector('.forest-hero-photo')?.src || fallbackPhoto;
+    const removed = Array.from(form.querySelectorAll('input[name="removeGallery"]:checked')).map((input) => input.value);
+    const gallery = savedGallery.filter((image) => !removed.includes(image.url));
+    Array.from(get('gallery_images')?.files || []).forEach((file) => gallery.push({ url: fileUrl(file) }));
+    setHeroImage(doc, heroFile ? fileUrl(heroFile) : checked('clearHeroImage') ? gallery[0]?.url || fallbackPhoto : savedHero);
+    const galleryGrid = doc.querySelector('.forest-gallery > div:last-child');
+    galleryGrid.replaceChildren();
+    gallery.slice(-48).slice(0,12).forEach((image) => {
+      const link = doc.createElement('a'); link.href = image.url; link.className = 'forest-gallery-link'; link.setAttribute('aria-label', 'Agrandir la photo de l’élevage');
+      const img = doc.createElement('img'); img.src = image.url; img.alt = 'Photo de l’élevage'; img.loading = 'lazy';
+      link.append(img); galleryGrid.append(link);
+    });
+    if (!gallery.length) { const empty = doc.createElement('p'); empty.className = 'forest-empty-state'; empty.textContent = 'La galerie sera visible dès qu’une première photo sera ajoutée.'; galleryGrid.append(empty); }
+    const contact = doc.querySelector('.forest-contact-form');
+    contact.querySelectorAll('a, [data-contact-empty]').forEach((node) => node.remove());
+    const email = value('publicEmail'); const phone = value('phone');
+    if (email || phone) {
+      const link = doc.createElement('a'); link.className = 'forest-btn'; link.href = email ? 'mailto:' + email : 'tel:' + phone; link.textContent = email ? 'Écrire à l’élevage' : 'Appeler l’élevage'; contact.append(link);
+    }
+    doc.querySelectorAll('[data-public-contact]').forEach((node) => node.remove());
+    const details = doc.querySelector('.forest-contact-details');
+    [['mailto:',email],['tel:',phone]].forEach(([scheme, text]) => { if (!text) return; const p = doc.createElement('p'); p.dataset.publicContact = ''; const a = doc.createElement('a'); a.href = scheme + text; a.textContent = text; p.append(a); details.append(p); });
 
     setDisplay(doc, '#services', checked('showServices'));
     setDisplay(doc, '#intro', checked('showIntro'));
@@ -126,10 +171,17 @@
     setOptionalText(doc, '[data-contact-key="instagram"]', value('instagram'));
     setOptionalText(doc, '[data-contact-key="facebook"]', value('facebook'));
     setText(doc, '.forest-footer p', value('footerText'));
+    const breedingLink = doc.querySelector('[data-service-key="breeding"] a');
+    breedingLink.href = checked('showLitters') ? '#portees' : checked('showPuppies') ? '#chiots' : checked('showDogs') ? '#selection' : checked('showIntro') ? '#intro' : '#accueil';
     const strengths = value('strengths').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    doc.querySelectorAll('.forest-strengths article').forEach((article, index) => {
-      article.style.display = strengths[index] ? '' : 'none';
-      if (strengths[index]) setTextInNode(article, 'strong', strengths[index]);
+    const strengthsGrid = doc.querySelector('.forest-strengths > div');
+    strengthsGrid.replaceChildren();
+    strengths.slice(0,3).forEach((strength, index) => {
+      const article = doc.createElement('article');
+      const icon = doc.createElement('span'); icon.textContent = ['◷','◈','♧'][index];
+      const heading = doc.createElement('strong'); heading.textContent = strength;
+      const p = doc.createElement('p'); p.textContent = 'Une exigence quotidienne au service du chien, de la famille et de la sélection.';
+      article.append(icon, heading, p); strengthsGrid.append(article);
     });
   });
 
@@ -139,7 +191,33 @@
     raf = requestAnimationFrame(applyPreview);
   };
 
-  frame.addEventListener('load', applyPreview);
+  frame.addEventListener('load', () => {
+    savedHero = '';
+    withDoc((doc) => { savedGallery = Array.from(form.querySelectorAll('input[name="removeGallery"]'), (input) => ({ url: input.value })); });
+    applyPreview();
+  });
+  let dirty = false;
+  const markDirty = () => { dirty = true; document.querySelector('#website-save-status').textContent = 'Modifications non enregistrées'; };
+  form.addEventListener('input', markDirty);
+  form.addEventListener('change', markDirty);
+  form.addEventListener('submit', () => { dirty = false; });
+  window.addEventListener('beforeunload', (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
+  document.querySelectorAll('[data-preview-device]').forEach((button) => button.addEventListener('click', () => {
+    document.querySelector('.website-preview-frame-wrap').dataset.device = button.dataset.previewDevice;
+    document.querySelectorAll('[data-preview-device]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+  }));
+  // Native disclosure panels remain usable with keyboard and without a framework.
+  Array.from(form.children).filter((node) => node.matches('.card, .settings-panel')).forEach((panel, index) => {
+    const title = panel.querySelector('.section-title');
+    if (!title) return;
+    const details = document.createElement('details'); details.className = 'website-editor-panel'; details.open = index === 0;
+    const summary = document.createElement('summary'); summary.textContent = title.querySelector('h3').textContent;
+    panel.before(details); details.append(summary, panel); title.hidden = true;
+  });
+  form.querySelectorAll('.form-group').forEach((group, index) => {
+    const label = group.querySelector('label'); const input = group.querySelector('input, textarea, select');
+    if (label && input) { input.id ||= 'website-field-' + index; label.htmlFor = input.id; }
+  });
   form.addEventListener('input', schedule);
   form.addEventListener('change', schedule);
   form.querySelectorAll('input[name="template"]').forEach((input) => {
