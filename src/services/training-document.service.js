@@ -2,6 +2,7 @@ const PDFDocument = require('pdfkit');
 const {header,section,paragraph,simpleTable,signatures,addFooter,dateFr,money} = require('./documents/pdf.helpers');
 const titles={quote:'Devis de dressage',contract:'Contrat de dressage','deposit-invoice':'Facture d’acompte',invoice:'Facture de dressage',credit:'Avoir de remboursement'};
 function render(doc,data) {
+  if (data.kind === 'quote' || data.kind === 'contract') return require('./training-quote-pdf.service').render(doc, data);
   const {job,breeder,total,kind,number,payments}=data;
   const details=job.details||{};
   header(doc,breeder,{buyer_name:[details.client_first_name,job.client_name].filter(Boolean).join(' '),buyer_address:job.client_address,buyer_email:job.client_email,buyer_phone:job.client_phone},{title:titles[kind],subtitle:`N° ${number} — ${dateFr(kind==='quote'?job.quote_date||data.issued_on:data.issued_on)} — Référence ${job.quote_number}`,sellerLabel:'Prestataire',buyerLabel:'Client'});
@@ -37,9 +38,22 @@ function render(doc,data) {
 }
 async function generate(data) {
   return new Promise((resolve,reject)=>{
-    const doc = new PDFDocument({size:'A4',margin:50,bufferPages:true,info:{Title:titles[data.kind],Author:data.breeder.company_name || 'ElevagePro'}});
+    const quote = data.kind === 'quote' || data.kind === 'contract';
+    const options = {size:quote ? 'LETTER' : 'A4',margins:quote ? {top:47,bottom:60,left:52,right:52} : {top:50,bottom:50,left:50,right:50},bufferPages:true,info:{Title:titles[data.kind],Author:data.breeder.company_name || 'ElevagePro'}};
+    const doc = new PDFDocument(options);
     const chunks=[];doc.on('data',c=>chunks.push(c));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);
-    try {render(doc,data);doc.end();}catch(error){reject(error);}
+    try {
+      if (quote) {
+        // A measurement pass keeps annex references correct when long notes add pages.
+        const probe = new PDFDocument(options);
+        probe.on('data', () => {}); probe.on('error', reject);
+        const layout = render(probe, data);
+        probe.end();
+        render(doc, {...data, ...layout});
+      } else render(doc, data);
+      doc.end();
+    } catch(error) { reject(error); }
   });
 }
 module.exports={generate,render};
+

@@ -1,6 +1,7 @@
 const service = require('../services/training.service');
 const db = require('../db');
 const documents = require('../services/training-document.service');
+const trainingTerms = require('../services/training-terms.service');
 const wrap = work => async (req,res,next) => { try { return await work(req,res); } catch(error) { if(error.status) return res.status(error.status).send(error.message); return next(error); } };
 const breederId = req => req.session.user.breeder_id;
 exports.list = wrap(async (req,res) => {
@@ -15,7 +16,10 @@ exports.form = wrap(async(req,res) => {
   const breeder=(await db.query('SELECT * FROM breeder WHERE id=$1',[breederId(req)])).rows[0];
   if(!job.quote_date) job.quote_date=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'});
   if(!job.valid_until){ const d=new Date(job.quote_date);d.setUTCDate(d.getUTCDate()+30);job.valid_until=d.toISOString().slice(0,10); }
-  return res.render('training/new',{title:job.id?'Modifier le devis':'Ajouter un dressage',job,breeder});
+  if (!job.id && !job.terms) job.terms = trainingTerms.defaultTerms;
+  return res.render('training/new',{title:job.id?'Modifier le devis':'Ajouter un dressage',job,breeder,
+    termsGroups: trainingTerms.variableGroups, defaultTerms: trainingTerms.defaultTerms,
+    termsVariables: trainingTerms.variablesFor(job, breeder)});
 });
 exports.update = wrap(async(req,res) => { await service.update(breederId(req),req.params.id,req.body); return res.redirect('/training/'+req.params.id+(req.body.next==='print'?'/quote.pdf':'')); });
 exports.create = wrap(async(req,res) => { const job = await service.create(breederId(req),req.body); return res.redirect('/training/'+job.id+(req.body.next==='print'?'/quote.pdf':'')); });
@@ -35,3 +39,4 @@ exports.printQuote = wrap(async(req,res) => {
   res.type('application/pdf');res.set('Content-Disposition',`inline; filename="${data.number}.pdf"`);
   return res.send(pdf);
 });
+

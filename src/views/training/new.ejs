@@ -1,4 +1,5 @@
 <%- include('../partials/head') %>
+<link rel="stylesheet" href="/css/training.css">
 <%- include('../partials/nav') %>
 <% const detail=job.details||{}; const inputDate=v=>!v?'':v instanceof Date?v.toISOString().slice(0,10):String(v).slice(0,10); %>
 <main class="container training-page">
@@ -26,6 +27,44 @@
 <h2>Prix et règlement</h2><div class="training-form-grid"><label>Prix total TTC (€)<input type="number" name="price" value="<%= job.price_cents==null?'':(job.price_cents/100).toFixed(2) %>" min="0.01" step="0.01" required></label><label>Acompte exigé (€)<input type="number" name="deposit" value="<%= job.deposit_cents==null?'':(job.deposit_cents/100).toFixed(2) %>" min="0" step="0.01" required></label><label>Taux de TVA (%)<input type="number" name="vat_rate" value="<%= job.vat_rate||0 %>" min="0" max="100" step="0.01" required></label></div>
 <p data-training-totals aria-live="polite"></p><label>Mention fiscale applicable<textarea name="tax_note" maxlength="2000"><%= job.tax_note||'' %></textarea></label><label>Modalités et échéances de paiement<textarea name="payment_terms" maxlength="4000" placeholder="Échéance de l’acompte, date du solde, moyens de paiement acceptés"><%= detail.payment_terms||'' %></textarea></label>
 <h2>Informations d’accueil du chien</h2><label>Santé et précautions<textarea name="health_notes" maxlength="4000" placeholder="Traitements, allergies, vaccins, précautions connues"><%= detail.health_notes||'' %></textarea></label><label>Alimentation et ration<textarea name="feeding_notes" maxlength="4000"><%= detail.feeding_notes||'' %></textarea></label><label>Vétérinaire habituel et coordonnées<input name="veterinarian" maxlength="255" value="<%= detail.veterinarian||'' %>"></label>
-<h2>Conditions de la prestation</h2><label>Conditions convenues et CGV<textarea name="terms" maxlength="12000" rows="10" required><%= job.terms||'' %></textarea></label><label>Observations complémentaires<textarea name="notes" maxlength="12000" rows="4"><%= job.notes||'' %></textarea></label>
+<section class="training-conditions" aria-labelledby="training-conditions-title">
+  <h2 id="training-conditions-title">Conditions de la prestation</h2>
+  <p>Les CGV du devis de référence sont préremplies. Les valeurs en bronze reprennent les données du dossier et les précisions ci-dessous.</p>
+  <div class="training-conditions-fields">
+    <% const quoteVariables = detail.quote_variables || {}; %>
+    <% termsGroups.forEach(group => { %>
+      <details class="training-conditions-group">
+        <summary><%= group.title %></summary>
+        <div class="training-form-grid">
+          <% group.fields.forEach(([key,label,type]) => { %>
+            <div class="form-group"><label for="cgv-<%= key %>"><%= label %></label>
+              <input id="cgv-<%= key %>" class="training-bronze-field" name="cgv_<%= key %>" type="<%= type || 'text' %>" value="<%= quoteVariables[key] || '' %>" <%= type === 'number' ? 'min=0 step=0.01' : '' %> maxlength="2000">
+            </div>
+          <% }); %>
+        </div>
+      </details>
+    <% }); %>
+  </div>
+  <details class="training-conditions-group training-terms-editor">
+    <summary>Modifier les conditions convenues et CGV</summary>
+    <div class="form-group">
+    <label for="training-terms">Conditions convenues et CGV</label>
+    <p class="muted">Le texte reste modifiable. Les repères entre doubles accolades sont remplacés par les valeurs du dossier à l’impression.</p>
+    <textarea id="training-terms" name="terms" maxlength="12000" rows="16" required data-terms-editor><%= job.terms || '' %></textarea>
+    <button type="button" class="btn btn-secondary" data-terms-reset>Reprendre les CGV du modèle</button>
+    <textarea hidden data-terms-default><%= defaultTerms %></textarea>
+    </div>
+  </details>
+  <details class="training-conditions-group" open>
+    <summary>Aperçu des CGV avec les variables du dossier</summary>
+    <p class="muted" data-terms-missing aria-live="polite"></p>
+    <div class="training-terms-preview" data-terms-preview data-variables="<%= JSON.stringify(termsVariables) %>"></div>
+  </details>
+  <div class="form-group training-observations">
+    <label for="training-notes">Observations complémentaires</label>
+    <textarea id="training-notes" name="notes" maxlength="12000" rows="4"><%= job.notes || '' %></textarea>
+  </div>
+</section>
 <div class="actions"><button class="btn btn-primary" name="next" value="print">Enregistrer et ouvrir le devis à imprimer</button><button class="btn btn-secondary" name="next" value="save">Enregistrer le dossier</button></div>
-</form></main><script src="/js/training-quote.js" defer></script><%- include('../partials/foot') %>
+</form></main><script src="/js/training-quote.js" defer></script><script src="/js/training-terms.js" defer></script><%- include('../partials/foot') %>
+

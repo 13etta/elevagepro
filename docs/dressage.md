@@ -24,10 +24,15 @@ Le bouton « Ajouter un dressage » ouvre le formulaire complet : propriétaire,
 
 Devis et contrats dressage, facture d’acompte, facture finale et avoir utilisent les mêmes composants PDF que les documents de vente de chiens et chiots. Un devis de vente est ajouté au menu Documents des ventes existantes. Cette action ne remplace pas une vente définitive par une proposition commerciale : utiliser une réservation pour un dossier non finalisé.
 
-Le fichier Word `Des_Hautes_Quetes_Devis_Dressage (1).docx` transmis dans la conversation n’a pas pu être récupéré. La charte PDF actuelle est donc conservée et mutualisée ; la reproduction exacte du modèle, de son logo et de ses CGV reste à terminer lorsque ce fichier est accessible. Ne pas présenter cette version comme conforme à ce modèle.
+Le modèle Word `Des_Hautes_Quetes_Devis_Dressage (1).docx` est intégré sous forme de texte et de variables dans `src/services/training-quote-template.json`. Le devis reprend ses cinq parties : devis, prise en charge et acceptation, programme détaillé, CGV, rétractation et données personnelles. Les titres restent noirs et les valeurs variables sont rendues en bronze `#75552B`. La typographie PDF utilise Times, disponible sur Render et Docker, à la place de Cambria ; le logo du document Word n’est pas intégré comme logo commun à tous les élevages.
+
+Le formulaire préremplit les CGV pour un nouveau dossier, conserve les textes déjà saisis et permet de reprendre explicitement le modèle. Les champs bronze complémentaires sont enregistrés dans `training_jobs.details.quote_variables`, sans nouvelle migration. Les données du client, du chien, du devis et du professionnel proviennent du dossier et de l’élevage de session. Assurance, médiateur et autres renseignements absents restent à compléter ; aucune convention, garantie ou signature n’est inventée. L’aperçu utilise uniquement des nœuds de texte pour les valeurs saisies.
+
+Les CGV et les observations complémentaires sont séparées. Les devis et contrats utilisent les annexes du modèle ; les factures et avoirs conservent leur rendu existant. Les références aux annexes sont recalculées lorsque des textes longs ajoutent des pages. Les cases de consentement et les signatures ne sont jamais cochées ou signées automatiquement.
 
 La TVA et les CGV doivent être renseignées selon les conditions réelles du prestataire. Aucun tarif ni régime fiscal n’est imposé pour le dressage. Les mentions fiscales historiques des documents de vente restent celles de l’application existante.
 
 ## Validation
 
 Tests sur PostgreSQL isolé avec PGlite : devis, modification du brouillon, accord, acompte partiel, confirmation et agenda, répétition de paiement, dépassement du solde, clôture, instantanés de facture, remboursements et avoirs séparés, références entre élevages, refus Data API. Tests HTTP authentifiés des écrans dressage et refus des mutations sans CSRF.
+

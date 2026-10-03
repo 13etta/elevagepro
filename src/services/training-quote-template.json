@@ -1,0 +1,373 @@
+{
+  "source": "Des_Hautes_Quetes_Devis_Dressage (1).docx",
+  "version": "2026-10-02",
+  "bronze": "#75552B",
+  "pages": [
+    {
+      "title": "Devis de dressage canin",
+      "blocks": [
+        {
+          "index": 2,
+          "kind": "paragraph",
+          "text": "{{trade_name}}  •  Prestations destinées aux particuliers"
+        },
+        {
+          "index": 4,
+          "kind": "paragraph",
+          "text": "Devis gratuit n° {{quote_number}}   •   Émis le {{quote_date}}   •   Valable jusqu’au {{valid_until}}"
+        },
+        {
+          "index": 5,
+          "kind": "heading",
+          "text": "Le professionnel et le client"
+        },
+        {
+          "index": 6,
+          "kind": "paragraph",
+          "text": "Professionnel : {{company_name}} • Enseigne : {{trade_name}}\nStatut : {{legal_status}} • Capital si société : {{capital}}\nSIRET : {{siret}} • Immatriculation : {{registration}}\nÉtablissement : {{address}} • Siège si différent : {{head_office}}\nTéléphone : {{phone}} • Email : {{email}} • TVA intracommunautaire : {{vat_number}}"
+        },
+        {
+          "index": 7,
+          "kind": "paragraph",
+          "text": "Client : {{client_full_name}}\nAdresse : {{client_address}}\nTéléphone : {{client_phone}} • Email : {{client_email}}"
+        },
+        {
+          "index": 8,
+          "kind": "heading",
+          "text": "Le chien et le programme convenu"
+        },
+        {
+          "index": 9,
+          "kind": "paragraph",
+          "text": "Nom : {{dog_name}} • Race : {{dog_breed}} • Sexe : {{dog_sex}} • Né le : {{dog_birth_date}}\nIdentification I-CAD : {{dog_chip}} • LOF si utile : {{dog_lof}}\nObjectifs et niveau initial : {{training_objectives}}"
+        },
+        {
+          "index": 10,
+          "kind": "paragraph",
+          "text": "Lieu(x) : {{training_location}} • Début : {{start_date}} • Fin au plus tard : {{end_date}}\nVolume : {{session_volume}} • Planning : {{planning}}"
+        },
+        {
+          "index": 12,
+          "kind": "paragraph",
+          "text": "Total HT : {{total_ht}} €    •    TVA par taux : {{vat_summary}}    •    TOTAL TTC : {{total_ttc}} €"
+        },
+        {
+          "index": 13,
+          "kind": "paragraph",
+          "text": "Régime à retenir : ☐ TVA applicable   ☐ Franchise en base : TVA non applicable, art. 293 B du CGI.\nEn franchise, inscrire « N/A » en TVA ; le total à payer est égal au total HT."
+        },
+        {
+          "index": 14,
+          "kind": "paragraph",
+          "text": "Acompte convenu : {{deposit_percent}} % soit {{deposit_amount}} € • Échéance : {{deposit_due}}\nSolde : {{balance_amount}} € • Échéance : {{balance_due}} • Paiement : {{payment_methods}}"
+        },
+        {
+          "index": 15,
+          "kind": "paragraph",
+          "text": "Conditions particulières page 2, programme page 3, CGV page 4 et rétractation page 5 : ces annexes font partie du devis."
+        }
+      ]
+    },
+    {
+      "title": "Prise en charge et acceptation",
+      "blocks": [
+        {
+          "index": 18,
+          "kind": "paragraph",
+          "text": "Conditions particulières rattachées au devis n° {{quote_number}}"
+        },
+        {
+          "index": 19,
+          "kind": "heading",
+          "text": "Organisation et frais annexes"
+        },
+        {
+          "index": 20,
+          "kind": "paragraph",
+          "text": "Hébergement : ☐ non ☐ oui, du {{boarding_start}} au {{boarding_end}}\nAlimentation : {{feeding_notes}}\nTravail prévu : {{work_organization}}\nRemise du chien et bilan de fin : {{handover_location}}"
+        },
+        {
+          "index": 21,
+          "kind": "paragraph",
+          "text": "Oiseaux / accès terrain : {{birds_cost}}\nTransport : {{transport_cost}}\nEngagements TAN ou field, déplacement du conducteur : {{competition_cost}}\nAutres frais prévisibles : {{other_cost}}"
+        },
+        {
+          "index": 22,
+          "kind": "paragraph",
+          "text": "Les frais prévisibles retenus sont intégrés au total page 1. Tout supplément ou prolongation exige un accord écrit préalable sur son contenu et son prix, sauf soins urgents autorisés ci-dessous."
+        },
+        {
+          "index": 23,
+          "kind": "heading",
+          "text": "Santé et sécurité du chien"
+        },
+        {
+          "index": 24,
+          "kind": "paragraph",
+          "text": "Santé, allergies, traitements prescrits, restrictions : {{health_notes}}\nVaccinations et antiparasitaires requis pour le séjour : {{vaccination_requirements}}\nComportement, morsure, fugue, peur du coup de feu : {{behavior_notes}}\nVétérinaire habituel et téléphone : {{veterinarian}}\nContact d’urgence autorisé par le client : {{emergency_contact}}\nDocuments et effets remis : {{supplied_items}}"
+        },
+        {
+          "index": 25,
+          "kind": "heading",
+          "text": "Autorisation de soins vétérinaires urgents"
+        },
+        {
+          "index": 26,
+          "kind": "paragraph",
+          "text": "Le client autorise le professionnel à contacter un vétérinaire et à y transporter le chien en cas d’urgence. Le client ou son contact d’urgence sera appelé dès que possible. Si aucun n’est joignable, les examens et soins urgents peuvent être engagés dans la limite de {{emergency_limit}} € TTC. Au-delà, seuls les actes que le vétérinaire juge immédiatement indispensables à la sauvegarde de l’animal peuvent être engagés sans nouvel accord. Les soins non urgents nécessitent l’accord du client. Aucune autorisation générale d’euthanasie n’est donnée."
+        },
+        {
+          "index": 27,
+          "kind": "paragraph",
+          "text": "Les frais justifiés sont supportés par le client, sous réserve de la responsabilité éventuelle du professionnel. Accord spécifique du client, date et signature : {{signature_blank}}"
+        },
+        {
+          "index": 28,
+          "kind": "heading",
+          "text": "Acceptation du devis et de ses annexes"
+        },
+        {
+          "index": 29,
+          "kind": "paragraph",
+          "text": "Mode de conclusion : ☐ dans l’établissement ☐ à distance ☐ hors établissement\nDate et lieu de conclusion : {{conclusion_date_place}} • Exemplaire remis : ☐ papier ☐ PDF par email"
+        },
+        {
+          "index": 30,
+          "kind": "paragraph",
+          "text": "Je reconnais avoir reçu avant mon engagement les cinq pages du devis, dont le programme détaillé, les CGV et les informations de rétractation. J’accepte les prestations, leur prix et les conditions de prise en charge. Les objectifs de dressage relèvent d’une obligation de moyens ; aucune réussite au TAN, aucun classement en field ni niveau acquis dans un délai déterminé n’est garanti."
+        },
+        {
+          "index": 31,
+          "kind": "paragraph",
+          "text": "Bon pour accord"
+        },
+        {
+          "index": 32,
+          "kind": "paragraph",
+          "text": "Client : {{client_full_name}}                                           Professionnel : {{professional_signatory}}\nFait à {{signature_place}}, le {{signature_date}}                              Fait à {{signature_place}}, le {{signature_date}}\nSignature :                                                 Signature :"
+        },
+        {
+          "index": 33,
+          "kind": "paragraph",
+          "text": "Si un démarrage avant la fin du délai de rétractation est demandé, remplir séparément la rubrique page 5. La signature ci-dessus ne vaut pas cette demande."
+        }
+      ]
+    },
+    {
+      "title": "Programme de travail détaillé",
+      "blocks": [
+        {
+          "index": 36,
+          "kind": "paragraph",
+          "text": "Annexe contractuelle au devis n° {{quote_number}} • Ne conserver que les prestations retenues page 1"
+        },
+        {
+          "index": 37,
+          "kind": "paragraph",
+          "text": "Le niveau initial est constaté lors de la première séance et communiqué au client. Les exercices sont adaptés à la santé, à la maturité et aux réactions du chien ; leur résultat est décrit dans le bilan final, sans garantie de performance."
+        },
+        {
+          "index": 38,
+          "kind": "heading",
+          "text": "Débourrage"
+        },
+        {
+          "index": 39,
+          "kind": "paragraph",
+          "text": "Durée et cadence : {{break_in_schedule}}."
+        },
+        {
+          "index": 40,
+          "kind": "paragraph",
+          "text": "Exercices retenus : {{break_in_exercises}}. Décrire l’ordre de progression, le nombre de séances consacré à chaque axe et les moyens utilisés : {{break_in_equipment}}."
+        },
+        {
+          "index": 41,
+          "kind": "paragraph",
+          "text": "Objectif vérifiable à l’issue du séjour : {{break_in_objective}}. Le professionnel remet un bilan des exercices réalisés, des réactions observées et des suites conseillées."
+        },
+        {
+          "index": 42,
+          "kind": "heading",
+          "text": "Mise en présence"
+        },
+        {
+          "index": 43,
+          "kind": "paragraph",
+          "text": "Animaux et dispositif : {{birds_setup}}. Nombre indicatif de séquences : {{birds_sequences}}, incluses dans {{birds_package}}."
+        },
+        {
+          "index": 44,
+          "kind": "paragraph",
+          "text": "Cadre : {{birds_safety}}. Objectif : observer l’intérêt du chien, sa prise d’émanation, sa réaction à l’envol et, selon son niveau, amorcer l’arrêt. Aucun contact forcé ni exposition prolongée en cas de stress."
+        },
+        {
+          "index": 45,
+          "kind": "paragraph",
+          "text": "Les oiseaux, le terrain ou les conditions peuvent manquer ou être inadaptés ; le professionnel informe le client, propose une séance de remplacement ou un report. Si la partie convenue ne peut être exécutée, son prix est régularisé par accord écrit ou selon les droits légaux du client."
+        },
+        {
+          "index": 46,
+          "kind": "heading",
+          "text": "Pension travail et préparation aux épreuves"
+        },
+        {
+          "index": 47,
+          "kind": "paragraph",
+          "text": "Séjour : {{boarding_program}}. Travail : {{boarding_work}}. Les frais, exclusions et horaires de remise sont précisés page 2."
+        },
+        {
+          "index": 48,
+          "kind": "paragraph",
+          "text": "Préparation TAN / field, si retenue : {{competition_program}}. L’inscription, le transport et la présentation en épreuve sont {{competition_included}}. Aucune validation ni qualification n’est garantie."
+        },
+        {
+          "index": 49,
+          "kind": "heading",
+          "text": "Suivi et critères d’arrêt"
+        },
+        {
+          "index": 50,
+          "kind": "paragraph",
+          "text": "Un point d’étape est transmis au client {{progress_updates}} et un bilan est remis en fin de séjour {{final_report}}. Un exercice est arrêté ou adapté si le chien montre douleur, fatigue, stress marqué, chaleur excessive ou risque de fugue ou de blessure. Le traitement d’une interruption du séjour figure dans les CGV page 4."
+        }
+      ]
+    },
+    {
+      "title": "Conditions générales de vente",
+      "blocks": [
+        {
+          "index": 53,
+          "kind": "paragraph",
+          "text": "Annexe au devis n° {{quote_number}} • Version du 2 octobre 2026"
+        },
+        {
+          "index": 54,
+          "kind": "paragraph",
+          "text": "1  Contrat et prix  Ces conditions s’appliquent aux clients consommateurs. Le devis accepté et ses annexes constituent le contrat. Les conditions particulières prévalent, sous réserve des droits impératifs du consommateur. Le prix TTC et la durée sont ceux du devis ; aucune reconduction ni prolongation automatique. Toute modification du programme ou du prix fait l’objet d’un accord écrit."
+        },
+        {
+          "index": 55,
+          "kind": "paragraph",
+          "text": "2  Paiement  Le versement initial expressément qualifié d’acompte engage les deux parties ; il est imputé sur le prix. Les échéances figurent au devis. Pour un contrat hors établissement, aucun paiement ni contrepartie, notamment chèque, n’est reçu avant l’expiration du délai légal de sept jours, sauf exception légale applicable. Une facture ou note est remise au client. Aucune indemnité forfaitaire de recouvrement de 40 € réservée aux relations entre professionnels n’est appliquée."
+        },
+        {
+          "index": 56,
+          "kind": "paragraph",
+          "text": "3  Exécution et moyens  Le programme est adapté à l’âge, à la santé, aux aptitudes et à l’évolution du chien, dans le respect de son bien-être et de la réglementation des terrains et activités cynégétiques. Le professionnel met en œuvre les diligences et moyens convenus et informe le client des difficultés. L’obligation de moyens et l’absence de garantie de résultat n’exonèrent pas le professionnel de ses fautes ni de ses engagements. Une préparation n’inclut une inscription ou présentation en épreuve que si le devis le précise."
+        },
+        {
+          "index": 57,
+          "kind": "paragraph",
+          "text": "4  Obligations du client  Le client déclare les informations sanitaires et comportementales utiles, remet les documents et traitements prescrits, respecte les conditions sanitaires convenues et reste joignable. Le professionnel peut suspendre un exercice présentant un risque concret pour l’animal ou les personnes. Il informe aussitôt le client et convient d’une adaptation, d’un report ou d’une fin de prise en charge. Les prestations non exécutées sont régularisées selon l’article 7."
+        },
+        {
+          "index": 58,
+          "kind": "paragraph",
+          "text": "5  Responsabilité et soins  Chaque partie répond de ses manquements dans les conditions légales. La garde et la responsabilité du fait de l’animal sont appréciées selon la situation effective, notamment au regard de l’article 1243 du Code civil. Aucune décharge générale ne couvre accident, fugue, maladie ou décès. Les soins urgents suivent l’autorisation page 2. Assurance RC professionnelle : {{insurance}}."
+        },
+        {
+          "index": 59,
+          "kind": "paragraph",
+          "text": "6  Annulation et report  Hors rétractation, la partie qui souhaite annuler ou reporter le séjour prévient l’autre par écrit dès que possible. Un report exige des dates et conditions acceptées par les deux parties ; il ne crée aucun supplément sans accord écrit. Si le séjour est annulé avant l’entrée du chien, l’acompte est restitué sous déduction, le cas échéant, d’un préjudice direct, réel et justifié selon le droit commun. Il n’est pas conservé automatiquement. Si le professionnel annule, il restitue les sommes correspondant aux prestations non réalisées, sans exclure les autres droits du client. Aucun avoir n’est imposé."
+        },
+        {
+          "index": 60,
+          "kind": "paragraph",
+          "text": "7  Interruption et difficulté avec le chien  En cas de maladie, blessure, stress marqué, agressivité ou risque de fuite, le professionnel suspend l’exercice concerné, sécurise le chien et contacte rapidement le client ; les soins urgents suivent l’autorisation page 2. Les parties conviennent par écrit d’une adaptation, d’un report ou d’une fin anticipée et de la date de reprise du chien. Le client qui retire le chien prématurément prévient le professionnel. Un décompte écrit distingue pension et travail effectivement fournis, sommes avancées et éventuels frais justifiés ; les prestations non fournies sont régularisées. Aucun supplément ou prolongation n’est imposé sans accord. La météo dangereuse ou l’indisponibilité du terrain donne lieu à une solution, un report ou la régularisation du travail non fait. En cas d’inexécution du professionnel, le client conserve les recours des articles L.216-6 et L.216-7 du Code de la consommation. La force majeure relève de l’article 1218 du Code civil."
+        },
+        {
+          "index": 61,
+          "kind": "paragraph",
+          "text": "8  Réclamations et médiation  Adresser toute réclamation écrite aux coordonnées du professionnel page 1. Après une réclamation préalable restée sans solution, le client peut saisir gratuitement le médiateur compétent, dans l’année suivant cette réclamation : {{mediator_name}}, {{mediator_address}}, {{mediator_website}}. Le recours à la médiation est facultatif ; le client conserve le droit de saisir les juridictions compétentes. Droit français applicable, sous réserve des protections impératives applicables au consommateur."
+        },
+        {
+          "index": 62,
+          "kind": "paragraph",
+          "text": "Le droit de rétractation, le démarrage anticipé et les données personnelles sont détaillés page 5."
+        }
+      ]
+    },
+    {
+      "title": "Rétractation et données personnelles",
+      "blocks": [
+        {
+          "index": 65,
+          "kind": "paragraph",
+          "text": "Annexe au devis n° {{quote_number}} • À conserver avec le contrat"
+        },
+        {
+          "index": 66,
+          "kind": "heading",
+          "text": "9  Droit de rétractation"
+        },
+        {
+          "index": 67,
+          "kind": "paragraph",
+          "text": "Pour une conclusion à distance ou hors établissement, le client dispose de quatorze jours à compter de la conclusion, sans motif à fournir. Le jour de conclusion n’est pas compté ; une échéance tombant un samedi, dimanche ou jour férié ou chômé est reportée au premier jour ouvrable suivant. Pour ce modèle, ce droit est accordé à ces contrats même si une exception liée à une activité datée pouvait être discutée. En établissement, aucun droit légal général de rétractation n’est prévu."
+        },
+        {
+          "index": 68,
+          "kind": "paragraph",
+          "text": "Avant l’échéance, adresser le formulaire ci-dessous ou une déclaration claire par courrier ou email aux coordonnées page 1, en conservant une preuve d’envoi. Si le contrat est conclu sur une interface en ligne, sa fonctionnalité gratuite de rétractation est aussi accessible : {{withdrawal_link}}. Les sommes versées sont remboursées sous quatorze jours à compter de la notification, avec le même moyen de paiement sauf accord exprès sans frais."
+        },
+        {
+          "index": 69,
+          "kind": "paragraph",
+          "text": "Si l’exécution a commencé sur demande expresse, seule la part proportionnelle du service fourni jusqu’à la notification est due, sous réserve de l’information légale et du recueil de cette demande. À défaut, aucune somme n’est due pour ce service. Le droit n’est perdu avant son terme qu’après exécution complète, avec accord préalable exprès et reconnaissance de cette perte. Sans demande ci-dessous, le démarrage attend l’expiration du délai."
+        },
+        {
+          "index": 70,
+          "kind": "paragraph",
+          "text": "Demande facultative distincte à remplir uniquement pour un démarrage anticipé"
+        },
+        {
+          "index": 71,
+          "kind": "paragraph",
+          "text": "☐ Je demande expressément le début des prestations le {{early_start_date}}, avant la fin des quatorze jours.\n☐ Je reconnais perdre mon droit de rétractation lorsque le contrat aura été entièrement exécuté.\nNom : {{client_full_name}} • Date : {{signature_date}} • Signature spécifique : {{signature_blank}}"
+        },
+        {
+          "index": 72,
+          "kind": "heading",
+          "text": "10  Données personnelles"
+        },
+        {
+          "index": 73,
+          "kind": "paragraph",
+          "text": "Le professionnel identifié page 1 traite les données nécessaires au devis et à la prise en charge (mesures précontractuelles et contrat), à la facturation (obligations légales) et à la défense de ses droits (intérêt légitime). Sans les données nécessaires, la prestation ne peut être organisée. Accès limité au personnel habilité et, selon le besoin, aux prestataires administratifs, au vétérinaire et à l’assureur. Conservation pendant la relation, puis archivage restreint des preuves contractuelles pendant cinq ans, sous réserve des délais légaux particuliers ; pièces comptables dix ans. Les devis non acceptés sont supprimés après un an, sauf litige."
+        },
+        {
+          "index": 74,
+          "kind": "paragraph",
+          "text": "Le client peut exercer, selon leur applicabilité, ses droits d’accès, rectification, effacement, limitation, opposition et portabilité à {{privacy_email}}, et saisir la CNIL sur cnil.fr. Aucune prospection ni diffusion d’images du client n’est autorisée par ce devis."
+        },
+        {
+          "index": 75,
+          "kind": "heading",
+          "text": "Formulaire de rétractation"
+        },
+        {
+          "index": 76,
+          "kind": "paragraph",
+          "text": "À compléter et renvoyer uniquement si vous souhaitez vous rétracter du contrat."
+        },
+        {
+          "index": 77,
+          "kind": "paragraph",
+          "text": "À l’attention de {{company_name}}, {{trade_name}}\nAdresse : {{address}} • Email : {{email}}"
+        },
+        {
+          "index": 78,
+          "kind": "paragraph",
+          "text": "Je/Nous (*) vous notifie/notifions (*) par la présente ma/notre (*) rétractation du contrat pour la prestation de services ci-dessous :\nPrestation et devis : {{service_reference}}\nCommandé le : {{conclusion_date}} • Nom du/des consommateur(s) : {{client_full_name}}\nAdresse du/des consommateur(s) : {{client_address}}\nDate : {{withdrawal_date_blank}} • Signature (uniquement pour un envoi papier) : {{signature_blank}}"
+        },
+        {
+          "index": 79,
+          "kind": "paragraph",
+          "text": "(*) Rayez la mention inutile. Formulaire adapté à une prestation de services, annexe à l’article R.221-1 du Code de la consommation."
+        }
+      ]
+    }
+  ]
+}
+

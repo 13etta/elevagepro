@@ -1,5 +1,6 @@
 const { randomUUID } = require('node:crypto');
 const db = require('../db');
+const trainingTerms = require('./training-terms.service');
 function fail(message, status = 400) { throw Object.assign(new Error(message), { status }); }
 function cents(value) {
   const raw = String(value ?? '').trim().replace(',', '.');
@@ -30,6 +31,7 @@ function fields(input) {
   details.dog_sex=text(input.dog_sex,10);
   if(details.dog_sex && !['M','F'].includes(details.dog_sex)) fail('Sexe du chien invalide.');
   details.dog_birth_date=input.dog_birth_date?date(input.dog_birth_date):null;
+  details.quote_variables = trainingTerms.parseVariables(input);
   if(details.dog_birth_date && details.dog_birth_date>f.quote_date) fail('La naissance du chien ne peut pas être future.');
   f.details=details;
   f.start_date = date(input.start_date); f.end_date = date(input.end_date);
@@ -183,3 +185,4 @@ async function documentData(breederId,id,kind,paymentId) {
   });
 }
 module.exports = {cents,fields,sessionDates,create,update,accept,payment,close,detail,documentData};
+
