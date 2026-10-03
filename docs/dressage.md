@@ -18,6 +18,10 @@ Les nouveaux écrans utilisent les protections de session et CSRF existantes. Le
 
 ## Documents
 
+Le bouton « Ajouter un dressage » ouvre le formulaire complet : propriétaire, identité du chien, objectifs, accueil et prestations incluses, dates et jours de séance, prix TTC, acompte, TVA, validité du devis, modalités de paiement, santé, alimentation et CGV. Les coordonnées du prestataire proviennent de son profil. Le formulaire affiche le calcul HT, TVA et solde et conserve tous les champs à la modification d’un brouillon.
+
+« Enregistrer et ouvrir le devis à imprimer » crée le dossier puis ouvre son PDF dans le navigateur. Le dossier dispose aussi d’un lien d’impression ; rouvrir ce PDF ne crée pas de nouveau dossier. La commande d’impression du lecteur PDF ou Ctrl+P permet de lancer l’impression.
+
 Devis et contrats dressage, facture d’acompte, facture finale et avoir utilisent les mêmes composants PDF que les documents de vente de chiens et chiots. Un devis de vente est ajouté au menu Documents des ventes existantes. Cette action ne remplace pas une vente définitive par une proposition commerciale : utiliser une réservation pour un dossier non finalisé.
 
 Le fichier Word `Des_Hautes_Quetes_Devis_Dressage (1).docx` transmis dans la conversation n’a pas pu être récupéré. La charte PDF actuelle est donc conservée et mutualisée ; la reproduction exacte du modèle, de son logo et de ses CGV reste à terminer lorsque ce fichier est accessible. Ne pas présenter cette version comme conforme à ce modèle.

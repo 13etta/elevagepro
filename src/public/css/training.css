@@ -7,3 +7,5 @@
 .training-page .actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .training-page .table-block { overflow-x: auto; }
 .training-page .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); }
+.training-page .training-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+@media(max-width:640px){.training-page .training-form-grid{grid-template-columns:1fr;}}

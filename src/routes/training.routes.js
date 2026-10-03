@@ -8,6 +8,7 @@ router.get('/',controller.list);
 router.get('/new',controller.form);
 router.post('/',controller.create);
 router.get('/:id',controller.show);
+router.get('/:id/quote.pdf',controller.printQuote);
 router.get('/:id/edit',controller.form);
 router.post('/:id/edit',controller.update);
 router.post('/:id/accept',controller.accept);
