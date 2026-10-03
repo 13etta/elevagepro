@@ -22,7 +22,7 @@ function renderInvoice(doc, breeder, sale, animal) {
   });
 
   section(doc, 'Objet');
-  paragraph(doc, `Facturation relative à la cession ou réservation de l’animal ${animalName(animal)}, identifié sous le numéro ${animalChip(animal)}.`);
+  paragraph(doc, `Facturation relative à la cession ou réservation de l’animal ${animalName(animal)}, identifié sous le numéro ${animalChip(animal)}.`, { variables: [animalName(animal), animalChip(animal)] });
 
   section(doc, 'Détail financier');
   const total = Number(sale.price || 0);
@@ -252,3 +252,4 @@ module.exports = {
   information: renderInformationDocument,
   'fiche-depart': renderDepartureSheet,
 };
+

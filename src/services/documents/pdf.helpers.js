@@ -1,19 +1,5 @@
-const COLORS = {
-  ink: '#182033',
-  muted: '#667085',
-  line: '#D0D5DD',
-  soft: '#F4F7FB',
-  accent: '#B88746',
-  danger: '#B42318',
-};
-
-const PAGE = {
-  left: 50,
-  right: 545,
-  top: 42,
-  bottom: 790,
-  width: 495,
-};
+const COLORS = { ink: '#000000', muted: '#666666', line: '#D5D5D5', soft: '#EEECE8', accent: '#75552B', danger: '#B42318' };
+const PAGE = { left: 52, right: 560, top: 47, bottom: 732, width: 508 };
 
 function clean(value, fallback = '-') {
   const text = String(value || '').trim();
@@ -73,194 +59,179 @@ function animalSex(animal) {
   return sexLabel(animal.sex || animal.animal_sex);
 }
 
+
+function geometry(doc) {
+  const { margins, width, height } = doc.page;
+  return { left: margins.left, width: width - margins.left - margins.right, bottom: height - margins.bottom };
+}
 function docInit(doc) {
-  doc.info.Title = 'Document ElevagePro';
-  doc.font('Helvetica');
-  doc.fillColor(COLORS.ink);
+  doc.font('Times-Roman').fontSize(10.5).fillColor(COLORS.ink);
 }
-
 function addFooter(doc) {
-  const y = 806;
-  const previousY = doc.y;
-  const previousX = doc.x;
-  const previousBottom = doc.page.margins.bottom;
-  doc.page.margins.bottom = 0;
-  doc.save();
-  doc.strokeColor(COLORS.line).lineWidth(0.5).moveTo(PAGE.left, y - 12).lineTo(PAGE.right, y - 12).stroke();
-  doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7);
-  doc.text('Document généré par ElevagePro - à vérifier et compléter selon le dossier réel.', PAGE.left, y, { width: PAGE.width, align: 'center' });
-  doc.restore();
-  doc.page.margins.bottom = previousBottom;
-  doc.y = previousY;
-  doc.x = previousX;
-}
-
-function addPageIfNeeded(doc, height = 90) {
-  if (doc.y + height <= PAGE.bottom) return;
-  addFooter(doc);
-  doc.addPage();
-  doc.y = PAGE.top;
-}
-
-function title(doc, main, subtitle) {
-  doc.fillColor(COLORS.accent).font('Helvetica-Bold').fontSize(9).text('ELEVAGEPRO DOCUMENTS', PAGE.left, doc.y);
-  doc.moveDown(0.6);
-  doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(19).text(String(main || '').toUpperCase(), PAGE.left, doc.y, { width: PAGE.width });
-  if (subtitle) {
-    doc.moveDown(0.25);
-    doc.fillColor(COLORS.muted).font('Helvetica').fontSize(9).text(subtitle, { width: PAGE.width });
+  // Run once after rendering: include pages PDFKit creates for long paragraphs.
+  const range = doc.bufferedPageRange(), original = { x: doc.x, y: doc.y };
+  for (let index = range.start; index < range.start + range.count; index++) {
+    doc.switchToPage(index);
+    const g = geometry(doc), bottom = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+    doc.font('Times-Roman').fontSize(8).fillColor(COLORS.muted)
+      .text(`${doc._documentReference || 'ElevagePro'} · ${index + 1} / ${range.count}`,
+        g.left, doc.page.height - 35, { width: g.width, align: 'right', lineBreak: false });
+    doc.page.margins.bottom = bottom;
   }
-  doc.moveDown(1.2);
+  doc.switchToPage(range.start + range.count - 1);
+  doc.x = original.x; doc.y = original.y;
+  docInit(doc);
 }
-
+function addPageIfNeeded(doc, height = 90) {
+  if (doc.y + height <= geometry(doc).bottom) return;
+  doc.addPage();
+  docInit(doc);
+}
+function title(doc, main, subtitle) {
+  const g = geometry(doc);
+  doc.font('Times-Bold').fontSize(25).fillColor(COLORS.ink)
+    .text(String(main || ''), g.left, doc.y, { width: g.width });
+  doc.moveDown(0.35);
+  if (subtitle) paragraph(doc, subtitle, { color: COLORS.accent, size: 10, after: 0.5 });
+}
 function line(doc) {
-  doc.strokeColor(COLORS.line).lineWidth(0.7).moveTo(PAGE.left, doc.y).lineTo(PAGE.right, doc.y).stroke();
-  doc.moveDown(0.8);
+  const g = geometry(doc);
+  doc.strokeColor(COLORS.line).lineWidth(0.5).moveTo(g.left, doc.y).lineTo(g.left + g.width, doc.y).stroke();
+  doc.y += 8;
 }
-
 function kv(doc, label, value, x, y, width = 220) {
-  doc.fillColor(COLORS.muted).font('Helvetica-Bold').fontSize(7).text(String(label).toUpperCase(), x, y, { width });
-  doc.fillColor(COLORS.ink).font('Helvetica').fontSize(9).text(clean(value), x, y + 11, { width });
+  doc.font('Times-Roman').fontSize(10.5).fillColor(COLORS.ink)
+    .text(`${label} : `, x, y, { width, continued: true })
+    .fillColor(COLORS.accent).text(clean(value));
 }
-
-function box(doc, x, y, width, height, label, lines = []) {
-  doc.save();
-  doc.roundedRect(x, y, width, height, 8).fillAndStroke(COLORS.soft, COLORS.line);
-  doc.fillColor(COLORS.accent).font('Helvetica-Bold').fontSize(8).text(String(label).toUpperCase(), x + 12, y + 10, { width: width - 24 });
-  doc.fillColor(COLORS.ink).font('Helvetica').fontSize(8.5);
-  let cy = y + 28;
-  lines.filter(Boolean).forEach((lineText) => {
-    doc.text(String(lineText), x + 12, cy, { width: width - 24 });
-    cy += 12;
-  });
-  doc.restore();
-}
-
 function header(doc, breeder, sale, options = {}) {
   docInit(doc);
-  const sellerLines = [
+  doc._variableValues = [sale.buyer_name, sale.payment_method, dateFr(sale.sale_date),
+    money(sale.price), money(sale.deposit_amount || 0),
+    money(Math.max(Number(sale.price || 0) - Number(sale.deposit_amount || 0), 0))].filter(Boolean);
+  doc._documentReference = invoiceNumber(sale);
+  title(doc, options.title, options.subtitle);
+  section(doc, 'Le professionnel et le client');
+  const seller = [
     clean(breeder.company_name || breeder.name, 'Élevage'),
     breeder.affix_name ? `Affixe : ${breeder.affix_name}` : null,
     breeder.siret ? `SIRET : ${breeder.siret}` : null,
     breeder.producer_number ? `N° producteur : ${breeder.producer_number}` : null,
-    breeder.address || null,
-  ];
-  const buyerLines = [
-    clean(sale.buyer_name, 'Acquéreur non renseigné'),
-    sale.buyer_address || null,
-    sale.buyer_email || null,
-    sale.buyer_phone || null,
-  ];
-
-  box(doc, PAGE.left, 38, 238, 96, options.sellerLabel || 'Éleveur / cédant', sellerLines);
-  box(doc, 307, 38, 238, 96, options.buyerLabel || 'Acquéreur', buyerLines);
-  doc.y = 154;
-  title(doc, options.title, options.subtitle);
+    breeder.address, breeder.email, breeder.phone,
+  ].filter(Boolean);
+  const buyer = [clean(sale.buyer_name, 'Acquéreur non renseigné'), sale.buyer_address, sale.buyer_email, sale.buyer_phone].filter(Boolean);
+  paragraph(doc, `${options.sellerLabel || 'Éleveur / cédant'} : ${seller.join(' · ')}`, { color: COLORS.accent, after: 0.35 });
+  paragraph(doc, `${options.buyerLabel || 'Acquéreur'} : ${buyer.join(' · ')}`, { color: COLORS.accent, after: 0.5 });
 }
-
 function section(doc, label) {
-  addPageIfNeeded(doc, 70);
-  doc.fillColor(COLORS.accent).font('Helvetica-Bold').fontSize(10).text(String(label).toUpperCase(), PAGE.left, doc.y);
-  doc.moveDown(0.25);
-  doc.strokeColor(COLORS.line).lineWidth(0.5).moveTo(PAGE.left, doc.y).lineTo(PAGE.right, doc.y).stroke();
-  doc.moveDown(0.55);
-  doc.fillColor(COLORS.ink).font('Helvetica').fontSize(9);
-}
-
-function paragraph(doc, textValue, options = {}) {
-  addPageIfNeeded(doc, options.minHeight || 50);
-  doc.fillColor(options.color || COLORS.ink).font(options.font || 'Helvetica').fontSize(options.size || 9);
-  doc.text(String(textValue || ''), PAGE.left, doc.y, { width: PAGE.width, align: options.align || 'justify', lineGap: options.lineGap || 2 });
-  doc.moveDown(options.after ?? 0.7);
-}
-
-function bulletList(doc, items) {
-  items.filter(Boolean).forEach((item) => {
-    addPageIfNeeded(doc, 30);
-    doc.fillColor(COLORS.ink).font('Helvetica').fontSize(9).text(`- ${item}`, PAGE.left + 10, doc.y, { width: PAGE.width - 10, lineGap: 1 });
-    doc.moveDown(0.35);
-  });
+  addPageIfNeeded(doc, 65);
+  const g = geometry(doc);
+  doc.font('Times-Bold').fontSize(13).fillColor(COLORS.ink)
+    .text(String(label), g.left, doc.y, { width: g.width });
   doc.moveDown(0.3);
+  docInit(doc);
 }
-
+function paragraph(doc, value, options = {}) {
+  addPageIfNeeded(doc, options.minHeight || 35);
+  const g = geometry(doc);
+  const fonts = { 'Helvetica-Oblique': 'Times-Italic', 'Helvetica-Bold': 'Times-Bold', Helvetica: 'Times-Roman' };
+  doc.fillColor(options.color || COLORS.ink).font(fonts[options.font] || options.font || 'Times-Roman').fontSize(options.size || 10.5);
+  const text = String(value || '');
+  const values = [...new Set([...(doc._variableValues || []), ...(options.variables || [])])].filter(value => value !== '-').sort((a, b) => b.length - a.length);
+  const escaped = values.map(value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const parts = !options.color && escaped.length ? text.split(new RegExp('(' + escaped.join('|') + ')', 'g')).filter(Boolean) : [text];
+  parts.forEach((part, index) => {
+    doc.fillColor(options.color || (values.includes(part) ? COLORS.accent : COLORS.ink));
+    const config = { width: g.width, align: options.align || 'left', lineGap: options.lineGap ?? 2, continued: index < parts.length - 1 };
+    if (index === 0) doc.text(part, g.left, doc.y, config);
+    else doc.text(part, config);
+  });
+  doc.moveDown(options.after ?? 0.5);
+}
+function bulletList(doc, items) {
+  const g = geometry(doc);
+  doc.font('Times-Roman').fontSize(10.5);
+  const height = items.filter(Boolean).reduce((sum, item) => sum + doc.heightOfString(`- ${item}`, { width: g.width, lineGap: 2 }) + 4, 0);
+  if (height < g.bottom - doc.page.margins.top) addPageIfNeeded(doc, height + 8);
+  items.filter(Boolean).forEach(item => paragraph(doc, `- ${item}`, { after: 0.25 }));
+  doc.y += 4;
+}
 function animalIdentityTable(doc, animal) {
+  doc._variableValues = [...(doc._variableValues || []), animalName(animal), animalChip(animal)];
   section(doc, 'Identification de l’animal');
-  const startY = doc.y;
-  const rowH = 24;
-  const rows = [
-    ['Nom', animalName(animal), 'Race', animalBreed(animal)],
-    ['Sexe', animalSex(animal), 'Identification', animalChip(animal)],
-    ['Robe', clean(animal.color || animal.animal_color), 'Catégorie', animal.animal_type === 'dog' ? 'Chien adulte' : 'Chiot / jeune'],
-  ];
-  rows.forEach((row, index) => {
-    const y = startY + index * rowH;
-    doc.rect(PAGE.left, y, PAGE.width, rowH).strokeColor(COLORS.line).stroke();
-    kv(doc, row[0], row[1], PAGE.left + 8, y + 5, 220);
-    kv(doc, row[2], row[3], PAGE.left + 260, y + 5, 220);
-  });
-  doc.y = startY + rows.length * rowH + 14;
+  doc._variableValues.push(animalBreed(animal), animalSex(animal), clean(animal.color || animal.animal_color), animal.animal_type === 'dog' ? 'Chien adulte' : 'Chiot / jeune');
+  paragraph(doc, `Nom : ${animalName(animal)} · Race : ${animalBreed(animal)} · Sexe : ${animalSex(animal)}`, { after: 0.25 });
+  paragraph(doc, `Identification : ${animalChip(animal)} · Robe : ${clean(animal.color || animal.animal_color)}`, { after: 0.25 });
+  paragraph(doc, `Catégorie : ${animal.animal_type === 'dog' ? 'Chien adulte' : 'Chiot / jeune'}`, { after: 0.5 });
 }
-
 function signatures(doc, labels = ['Le cédant / éleveur', 'L’acquéreur']) {
-  addPageIfNeeded(doc, 135);
-  doc.moveDown(1.2);
-  const y = doc.y;
-  doc.roundedRect(PAGE.left, y, 220, 100, 8).strokeColor(COLORS.line).stroke();
-  doc.roundedRect(325, y, 220, 100, 8).strokeColor(COLORS.line).stroke();
-  doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(9).text(labels[0], PAGE.left + 12, y + 12, { width: 196 });
-  doc.text(labels[1], 337, y + 12, { width: 196 });
-  doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7).text('Date, mention et signature', PAGE.left + 12, y + 32, { width: 196 });
-  doc.text('Date, mention et signature', 337, y + 32, { width: 196 });
-  doc.y = y + 120;
-}
-
-function simpleTable(doc, headers, rows, widths) {
-  function rowHeight(row,bold) {
-    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8);
-    return Math.max(28,...row.map((v,i)=>doc.heightOfString(clean(v),{width:widths[i]-12})+16));
-  }
-  function draw(row,bold) {
-    const h=rowHeight(row,bold), y=doc.y;
-    if(bold) doc.fillColor(COLORS.soft).rect(PAGE.left,y,PAGE.width,h).fill();
-    let x=PAGE.left;
-    row.forEach((v,i)=>{
-      doc.strokeColor(COLORS.line).rect(x,y,widths[i],h).stroke();
-      doc.fillColor(COLORS.ink).text(clean(v),x+6,y+8,{width:widths[i]-12});x+=widths[i];
-    });
-    doc.y=y+h;
-  }
-  addPageIfNeeded(doc,rowHeight(headers,true)+rowHeight(rows[0]||[],false));
-  draw(headers,true);
-  rows.forEach(row=>{
-    const h=rowHeight(row,false);
-    if(doc.y+h>PAGE.bottom) {addPageIfNeeded(doc,h);draw(headers,true);}
-    draw(row,false);
+  addPageIfNeeded(doc, 105);
+  const g = geometry(doc), y = doc.y + 8, gap = 24, width = (g.width - gap) / 2;
+  labels.forEach((label, i) => {
+    const x = g.left + i * (width + gap);
+    doc.font('Times-Bold').fontSize(10.5).fillColor(COLORS.ink).text(label, x, y, { width });
+    doc.font('Times-Roman').fontSize(9).text('Date, mention et signature', x, y + 20, { width });
+    doc.strokeColor(COLORS.line).moveTo(x, y + 78).lineTo(x + width, y + 78).stroke();
   });
-  doc.y+=10;
+  doc.y = y + 92;
 }
+function simpleTable(doc, headers, rows, requestedWidths) {
+  const g = geometry(doc), total = requestedWidths.reduce((sum, width) => sum + width, 0);
+  const widths = requestedWidths.map(width => width / total * g.width);
+  const heightOf = (row, bold) => {
+    doc.font(bold ? 'Times-Bold' : 'Times-Roman').fontSize(10);
+    return Math.max(26, ...row.map((value, i) => doc.heightOfString(clean(value), { width: widths[i] - 14, lineGap: 2 }) + 14));
+  };
+  const draw = (row, bold) => {
+    const height = heightOf(row, bold), y = doc.y;
+    if (bold) doc.fillColor(COLORS.soft).rect(g.left, y, g.width, height).fill();
+    let x = g.left;
+    row.forEach((value, i) => {
+      doc.strokeColor(COLORS.line).lineWidth(0.5).rect(x, y, widths[i], height).stroke();
+      doc.fillColor(bold ? COLORS.ink : COLORS.accent)
+        .text(clean(value), x + 7, y + 7, { width: widths[i] - 14, lineGap: 2 });
+      x += widths[i];
+    });
+    doc.y = y + height;
+  };
+  // Split oversized cells into lines so a single long value cannot cross a table border.
+  const splitCell = (value, width) => {
+    doc.font('Times-Roman').fontSize(10);
+    const lines = []; let line = '';
+    for (const token of clean(value).split(/(\s+)/)) {
+      for (const char of token) {
+        if (char === '\n') { lines.push(line); line = ''; continue; }
+        if (doc.widthOfString(line + char) > width && line) { lines.push(line.trimEnd()); line = ''; }
+        line += char;
+      }
+    }
+    lines.push(line.trimEnd());
+    return lines;
+  };
+  const headerHeight = heightOf(headers, true);
+  addPageIfNeeded(doc, headerHeight + 30);
+  draw(headers, true);
+  for (const row of rows) {
+    const height = heightOf(row, false);
+    if (height <= geometry(doc).bottom - doc.page.margins.top - headerHeight) {
+      if (doc.y + height > geometry(doc).bottom) { doc.addPage(); draw(headers, true); }
+      draw(row, false);
+    } else {
+      const lines = row.map((value, i) => splitCell(value, widths[i] - 14));
+      let offset = 0;
+      const count = Math.max(...lines.map(cell => cell.length));
+      while (offset < count) {
+        if (doc.y + 45 > geometry(doc).bottom) { doc.addPage(); draw(headers, true); }
+        const capacity = Math.max(1, Math.floor((geometry(doc).bottom - doc.y - 16) / 15));
+        const part = lines.map(cell => cell.slice(offset, offset + capacity).join('\n'));
+        draw(part, false); offset += capacity;
+      }
+    }
+  }
+  doc.y += 10;
+}
+module.exports = { COLORS, PAGE, clean, money, dateFr, sexLabel, safeName, invoiceNumber,
+  animalName, animalChip, animalBreed, animalSex, docInit, addFooter, addPageIfNeeded,
+  header, title, line, section, paragraph, bulletList, kv, animalIdentityTable, signatures, simpleTable };
 
-module.exports = {
-  COLORS,
-  PAGE,
-  clean,
-  money,
-  dateFr,
-  sexLabel,
-  safeName,
-  invoiceNumber,
-  animalName,
-  animalChip,
-  animalBreed,
-  animalSex,
-  docInit,
-  addFooter,
-  addPageIfNeeded,
-  header,
-  line,
-  section,
-  paragraph,
-  bulletList,
-  animalIdentityTable,
-  signatures,
-  simpleTable,
-};

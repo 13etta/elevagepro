@@ -45,6 +45,7 @@ test('profile settings and bronze training variables round-trip through authenti
   assert.match(trainingBody,/cgv_mediator_name/);
   assert.match(trainingBody,/Aucune décharge générale/);
   assert.match(trainingBody,/data-terms-preview/);
+  assert.match(trainingBody, /href="\/training" aria-current="page">Dressage<\/a><a href="\/calendar"/);
   assert.equal((await fetch(base+'/training/new',{redirect:'manual'})).status,302);
   const trainingCsrf = trainingBody.match(/name="_csrf" value="([^"]+)"/)[1];
   const trainingInput = {
@@ -68,6 +69,19 @@ test('profile settings and bronze training variables round-trip through authenti
   assert.equal(trainingPdf.status,200);
   assert.match(trainingPdf.headers.get('content-type'),/application\/pdf/);
   assert.equal(Buffer.from(await trainingPdf.arrayBuffer()).subarray(0,4).toString(),'%PDF');
+  const sale = (await client.query("INSERT INTO sales (breeder_id,dog_id,buyer_name,price,sale_date,is_reservation,deposit_amount) VALUES ($1,$2,'Client PDF',1500,'2026-10-03',true,300) RETURNING id", [user.breeder_id,dog.id])).rows[0];
+  for (const type of ['devis','information','fiche-depart','reservation','recu-acompte','facture']) {
+    const url = base+'/sales/'+sale.id+'/document/'+type;
+    assert.equal((await fetch(url,{redirect:'manual'})).status,302);
+    const response = await fetch(url,{headers:{cookie}});
+    assert.equal(response.status,200,type);
+    assert.match(response.headers.get('content-type'),/application\/pdf/);
+    assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0,4).toString(),'%PDF');
+  }
+  const other = await require('../src/services/auth.service').createBreederWithAdmin({kennelName:'Other',fullName:'Other owner',email:'other@example.test',password:'other-password-123',primaryBreed:'Test'});
+  const otherDog = (await client.query("INSERT INTO dogs (breeder_id,name,sex,status) VALUES ($1,'Other dog','F','actif') RETURNING id",[other.breeder_id])).rows[0];
+  const otherSale = (await client.query("INSERT INTO sales (breeder_id,dog_id,buyer_name,price,sale_date) VALUES ($1,$2,'Other buyer',1500,'2026-10-03') RETURNING id",[other.breeder_id,otherDog.id])).rows[0];
+  assert.equal((await fetch(base+'/sales/'+otherSale.id+'/document/devis',{headers:{cookie}})).status,404);
   assert.deepEqual(errors,[]);
 });
 

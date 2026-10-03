@@ -46,8 +46,8 @@ exports.generateDocument = async (docType, breeder, sale, animal) => {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
-        size: 'A4',
-        margin: 50,
+        size: 'LETTER',
+        margins: { top: 47, bottom: 60, left: 52, right: 52 },
         bufferPages: true,
         info: {
           Title: template.label,
@@ -58,6 +58,7 @@ exports.generateDocument = async (docType, breeder, sale, animal) => {
 
       const buffers = [];
       doc.on('data', buffers.push.bind(buffers));
+      doc.on('error', reject);
       doc.on('end', () => resolve(Buffer.concat(buffers)));
 
       renderer(doc, breeder || {}, sale || {}, animal || {});
@@ -67,3 +68,4 @@ exports.generateDocument = async (docType, breeder, sale, animal) => {
     }
   });
 };
+

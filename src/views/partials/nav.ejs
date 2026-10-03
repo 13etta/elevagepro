@@ -7,7 +7,7 @@
       <small>L’espace des éleveurs</small>
     </span>
   </a>
-  <nav class="horizon-navigation" aria-label="Espaces principaux"><a href="/dashboard" <%- currentPath === '/dashboard' ? 'aria-current="page"' : '' %>>Aujourd’hui</a><a href="/dogs" <%- currentPath.startsWith('/dogs') ? 'aria-current="page"' : '' %>>Le cheptel</a><a href="/reproduction" <%- currentPath.startsWith('/reproduction') ? 'aria-current="page"' : '' %>>Reproduction</a><a href="/calendar" <%- currentPath.startsWith('/calendar') ? 'aria-current="page"' : '' %>>Agenda</a></nav>
+  <nav class="horizon-navigation" aria-label="Espaces principaux"><a href="/dashboard" <%- currentPath === '/dashboard' ? 'aria-current="page"' : '' %>>Aujourd’hui</a><a href="/dogs" <%- currentPath.startsWith('/dogs') ? 'aria-current="page"' : '' %>>Le cheptel</a><a href="/reproduction" <%- currentPath.startsWith('/reproduction') ? 'aria-current="page"' : '' %>>Reproduction</a><a href="/training" <%- currentPath === '/training' || currentPath.startsWith('/training/') ? 'aria-current="page"' : '' %>>Dressage</a><a href="/calendar" <%- currentPath.startsWith('/calendar') ? 'aria-current="page"' : '' %>>Agenda</a></nav>
   <button class="nav-toggle" type="button" data-nav-toggle aria-controls="main-sidebar" aria-expanded="false">
     <span></span>
     <span></span>
@@ -86,3 +86,4 @@
   <% if (typeof accountAccess !== 'undefined' && !accountAccess) { %>
     <div class="flash-message flash-info" role="status"><span>Votre élevage est consultable en lecture seule. Un abonnement actif permet d’enregistrer des modifications.</span><% if (user && ['owner','admin'].includes(user.role)) { %> <a href="/billing">Gérer l’abonnement</a><% } %></div>
   <% } %>
+
