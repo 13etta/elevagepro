@@ -533,11 +533,30 @@ $release_step_2$;
 
 DO $release_step_3$
 BEGIN
+  IF EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20260914155807_user_given_family_names.sql' AND checksum <> '8c1b8aa73605562521262918a44a8146b9bc2da1a1ca1b5d9768787be37e40f2') THEN
+    RAISE EXCEPTION 'Migration already recorded with a different checksum: 20260914155807_user_given_family_names.sql';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20260914155807_user_given_family_names.sql') THEN
+    EXECUTE $migration_payload_3$
+-- Preserve legacy full names: their ordering does not reliably identify a given name.
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name varchar(120);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name varchar(120);
+
+$migration_payload_3$;
+    INSERT INTO app_private.schema_migrations (name, checksum)
+    VALUES ('20260914155807_user_given_family_names.sql', '8c1b8aa73605562521262918a44a8146b9bc2da1a1ca1b5d9768787be37e40f2');
+  END IF;
+END;
+$release_step_3$;
+
+
+DO $release_step_4$
+BEGIN
   IF EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20261003070000_training.sql' AND checksum <> '9b96f19308d3f030c260f12974a4192b77f2fb4285073b46dcb97947d35eddcd') THEN
     RAISE EXCEPTION 'Migration already recorded with a different checksum: 20261003070000_training.sql';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20261003070000_training.sql') THEN
-    EXECUTE $migration_payload_3$
+    EXECUTE $migration_payload_4$
 -- Dossiers clients indépendants du cheptel reproducteur.
 CREATE TABLE training_jobs (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -618,33 +637,33 @@ ALTER TABLE commercial_document_counters ENABLE ROW LEVEL SECURITY;
 -- Authentification Express et accès PostgreSQL serveur, aucune exposition Data API.
 REVOKE ALL ON training_jobs,training_payments,training_documents,commercial_document_counters FROM PUBLIC,anon,authenticated;
 
-$migration_payload_3$;
+$migration_payload_4$;
     INSERT INTO app_private.schema_migrations (name, checksum)
     VALUES ('20261003070000_training.sql', '9b96f19308d3f030c260f12974a4192b77f2fb4285073b46dcb97947d35eddcd');
   END IF;
 END;
-$release_step_3$;
+$release_step_4$;
 
 
-DO $release_step_4$
+DO $release_step_5$
 BEGIN
   IF EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20261003073000_training_quote_form.sql' AND checksum <> '7c4ec90d8d4e6f3a7692f77f8ebfc88c24d53cbfd2a4db22e2477582aa58542e') THEN
     RAISE EXCEPTION 'Migration already recorded with a different checksum: 20261003073000_training_quote_form.sql';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20261003073000_training_quote_form.sql') THEN
-    EXECUTE $migration_payload_4$
+    EXECUTE $migration_payload_5$
 ALTER TABLE training_jobs ADD COLUMN quote_date date NOT NULL DEFAULT CURRENT_DATE;
 ALTER TABLE training_jobs ADD COLUMN valid_until date;
 ALTER TABLE training_jobs ADD COLUMN details jsonb NOT NULL DEFAULT '{}';
 ALTER TABLE training_jobs ADD CONSTRAINT training_quote_validity CHECK(valid_until IS NULL OR valid_until >= quote_date);
 ALTER TABLE training_jobs ADD CONSTRAINT training_details_object CHECK(jsonb_typeof(details)='object');
 
-$migration_payload_4$;
+$migration_payload_5$;
     INSERT INTO app_private.schema_migrations (name, checksum)
     VALUES ('20261003073000_training_quote_form.sql', '7c4ec90d8d4e6f3a7692f77f8ebfc88c24d53cbfd2a4db22e2477582aa58542e');
   END IF;
 END;
-$release_step_4$;
+$release_step_5$;
 
 COMMIT;
 

@@ -11,8 +11,8 @@ test('additive upgrade preserves two breeders, applies once, blocks cross-breede
   const dogA = (await client.query("INSERT INTO dogs(breeder_id,name,sex) VALUES($1,'A','F') RETURNING id", [a])).rows[0].id;
   const dogB = (await client.query("INSERT INTO dogs(breeder_id,name,sex) VALUES($1,'B','M') RETURNING id", [b])).rows[0].id;
   const before = (await client.query('SELECT row_to_json(dogs) AS record FROM dogs ORDER BY id')).rows;
-  assert.equal((await plan(client)).length, 5);
-  assert.equal((await apply(client)).length, 5);
+  assert.equal((await plan(client)).length, 6);
+  assert.equal((await apply(client)).length, 6);
   const after = (await client.query('SELECT row_to_json(dogs) AS record FROM dogs ORDER BY id')).rows;
   assert.deepEqual(after.map(row=>({record:Object.fromEntries(Object.keys(before[0].record).map(key=>[key,row.record[key]]))})), before);
   assert.deepEqual(await plan(client), []);
@@ -28,6 +28,8 @@ test('additive upgrade preserves two breeders, applies once, blocks cross-breede
   const db = require('../src/db');
   t.mock.method(db.pool, 'connect', async () => client);
   const created = await auth.createBreederWithAdmin({ kennelName:'Test C', fullName:'Owner C', email:'owner-c@example.test', password:'A-strong-test-password', primaryBreed:'Test' });
+  const names = (await client.query('SELECT first_name,last_name FROM users WHERE id=$1 AND breeder_id=$2', [created.id, created.breeder_id])).rows[0];
+  assert.deepEqual(names, { first_name:null, last_name:null });
   assert.equal((await client.query('SELECT beta_access FROM billing_accounts WHERE breeder_id=$1', [created.breeder_id])).rows[0].beta_access, false);
   await apply(client);
   assert.equal((await client.query('SELECT beta_access FROM billing_accounts WHERE breeder_id=$1', [created.breeder_id])).rows[0].beta_access, false);
