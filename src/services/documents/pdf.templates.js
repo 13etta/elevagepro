@@ -236,6 +236,14 @@ function renderDepartureSheet(doc, breeder, sale, animal) {
 }
 
 module.exports = {
+  devis: (doc,breeder,sale,animal) => {
+    header(doc,breeder,sale,{title:'Devis de vente',subtitle:`Référence ${invoiceNumber(sale)} — ${dateFr(sale.sale_date)}`});
+    animalIdentityTable(doc,animal);
+    section(doc,'Prix et réservation');
+    simpleTable(doc,['Désignation','Montant'],[[animalName(animal),money(sale.price)],['Acompte prévu',money(sale.deposit_amount || 0)],['Solde après acompte',money(Math.max(Number(sale.price)-Number(sale.deposit_amount || 0),0))]],[345,150]);
+    if(sale.notes) {section(doc,'Conditions particulières');paragraph(doc,sale.notes);}
+    signatures(doc);addFooter(doc);
+  },
   facture: renderInvoice,
   'recu-acompte': renderDepositReceipt,
   cession: renderTransferCertificate,

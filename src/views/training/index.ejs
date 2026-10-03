@@ -1,0 +1,9 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container training-page">
+  <section class="page-hero"><div><p class="eyebrow">Prestations canines</p><h1>Dressage</h1><p>Devis, séances, acomptes et suivi des chiens confiés.</p></div><a class="btn btn-primary" href="/training/new">Nouveau devis</a></section>
+  <section class="table-block"><table><thead><tr><th>Devis</th><th>Client / chien</th><th>Prestation</th><th>Période</th><th>Statut</th><th>Encaissé / prix TTC</th></tr></thead><tbody>
+  <% const labels={draft:'Brouillon',accepted:'Accepté — acompte attendu',confirmed:'Confirmé',completed:'Terminé',cancelled:'Annulé'}; jobs.forEach(j=>{ %>
+    <tr><td><a href="/training/<%= j.id %>"><%= j.quote_number %></a></td><td><%= j.client_name %><br><%= j.dog_name %></td><td><%= j.service_label %></td><td><%= formatDate(j.start_date) %> → <%= formatDate(j.end_date) %></td><td><%= labels[j.status] %></td><td><%= (j.received/100).toFixed(2) %> / <%= (j.price_cents/100).toFixed(2) %> €</td></tr>
+  <% }); %></tbody></table><% if(!jobs.length){ %><p>Aucun dossier dressage.</p><% } %></section>
+</main><%- include('../partials/foot') %>

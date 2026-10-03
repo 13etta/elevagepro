@@ -14,6 +14,7 @@
     "forgotPassword": "Forgot password"
   },
   "nav": {
+    "training": "Dog training",
     "dashboard": "Dashboard",
     "calendar": "Calendar",
     "dogs": "Dogs",
@@ -75,6 +76,7 @@
     "missingActions": "Missing actions"
   },
   "modules": {
+    "training": { "description": "Training quotes, appointments and payments" },
     "dashboard": { "description": "Overview of key indicators, alerts and priority actions." },
     "calendar": { "description": "Plan temperament tests, field trials, shows, training sessions, appointments and entry deadlines." },
     "dogs": { "description": "Manage dog records, statuses, administrative data and individual tracking." },

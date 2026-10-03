@@ -11,8 +11,8 @@ test('additive upgrade preserves two breeders, applies once, blocks cross-breede
   const dogA = (await client.query("INSERT INTO dogs(breeder_id,name,sex) VALUES($1,'A','F') RETURNING id", [a])).rows[0].id;
   const dogB = (await client.query("INSERT INTO dogs(breeder_id,name,sex) VALUES($1,'B','M') RETURNING id", [b])).rows[0].id;
   const before = (await client.query('SELECT row_to_json(dogs) AS record FROM dogs ORDER BY id')).rows;
-  assert.equal((await plan(client)).length, 3);
-  assert.equal((await apply(client)).length, 3);
+  assert.equal((await plan(client)).length, 4);
+  assert.equal((await apply(client)).length, 4);
   const after = (await client.query('SELECT row_to_json(dogs) AS record FROM dogs ORDER BY id')).rows;
   assert.deepEqual(after.map(row=>({record:Object.fromEntries(Object.keys(before[0].record).map(key=>[key,row.record[key]]))})), before);
   assert.deepEqual(await plan(client), []);

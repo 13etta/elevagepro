@@ -1,0 +1,24 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container training-page"><section class="page-hero"><div><h1>Devis de dressage</h1><p>Le devis accepté et l’acompte encaissé déclenchent la création des séances dans l’agenda.</p></div></section>
+<form action="<%= job.id ? '/training/'+job.id+'/edit' : '/training' %>" method="post" class="form-card">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<h2>Client et chien confié</h2>
+<% for(const [name,label,required] of [['client_name','Nom du client',true],['client_email','Courriel',false],['client_phone','Téléphone',false],['dog_name','Nom du chien',true],['dog_breed','Race',false],['dog_chip','Identification',false]]) { %>
+<label><%= label %><input name="<%= name %>" type="<%= name==='client_email'?'email':'text' %>" value="<%= job[name] || '' %>" maxlength="255" <%= required?'required':'' %>></label>
+<% } %>
+<label>Adresse du client<textarea name="client_address" maxlength="2000"><%= job.client_address || '' %></textarea></label>
+<h2>Prestation et planning</h2>
+<label>Prestation<input value="<%= job.service_label || '' %>" name="service_label" maxlength="255" required placeholder="Débourrage avec pension complète"></label>
+<label>Début<input type="date" name="start_date" value="<%= job.start_date ? (job.start_date instanceof Date ? job.start_date.toISOString().slice(0,10) : String(job.start_date).slice(0,10)) : '' %>" required></label><label>Fin<input type="date" name="end_date" value="<%= job.end_date ? (job.end_date instanceof Date ? job.end_date.toISOString().slice(0,10) : String(job.end_date).slice(0,10)) : '' %>" required></label>
+<label>Heure de début<input type="time" name="start_time" value="<%= job.start_time ? String(job.start_time).slice(0,5) : '09:00' %>" required></label><label>Heure de fin<input type="time" name="end_time" value="<%= job.end_time ? String(job.end_time).slice(0,5) : '17:00' %>" required></label>
+<fieldset><legend>Jours de séance à inscrire dans l’agenda</legend><% ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'].forEach((day,i)=>{ %><label><input type="checkbox" name="weekdays" value="<%= i %>" <%= (job.weekdays ? job.weekdays.includes(i) : i>=1&&i<=5)?'checked':'' %>><%= day %></label><% }); %></fieldset>
+<h2>Prix et conditions</h2>
+<label>Prix total TTC (€)<input type="number" name="price" value="<%= job.price_cents == null ? '' : (job.price_cents/100).toFixed(2) %>" min="0.01" step="0.01" required></label>
+<label>Acompte exigé (€)<input type="number" name="deposit" value="<%= job.deposit_cents == null ? '' : (job.deposit_cents/100).toFixed(2) %>" min="0" step="0.01" required></label>
+<label>Taux de TVA (%)<input type="number" name="vat_rate" min="0" max="100" step="0.01" value="<%= job.vat_rate || 0 %>" required></label>
+<label>Mention fiscale applicable<textarea name="tax_note" maxlength="2000" placeholder="Renseigner la mention correspondant à votre régime fiscal"><%= job.tax_note || '' %></textarea></label>
+<label>Conditions de la prestation et CGV<textarea name="terms" maxlength="12000" rows="8" placeholder="Pension, objectifs, obligations, paiement, annulation, soins et conditions convenues"><%= job.terms || '' %></textarea></label>
+<label>Observations et objectifs de travail<textarea name="notes" maxlength="12000" rows="4"><%= job.notes || '' %></textarea></label>
+<button class="btn btn-primary"><%= job.id ? 'Enregistrer le devis' : 'Créer le devis' %></button> <a href="/training">Retour</a>
+</form></main><%- include('../partials/foot') %>
