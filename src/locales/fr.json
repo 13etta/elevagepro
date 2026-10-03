@@ -14,6 +14,7 @@
     "forgotPassword": "Mot de passe oublié"
   },
   "nav": {
+    "training": "Dressage",
     "dashboard": "Tableau de bord",
     "calendar": "Calendrier",
     "dogs": "Chiens",
@@ -78,6 +79,7 @@
     "missingActions": "Actions manquantes"
   },
   "modules": {
+    "training": { "description": "Devis, séances et encaissements dressage" },
     "dashboard": { "description": "Vue de synthèse des indicateurs, alertes et actions prioritaires." },
     "calendar": { "description": "Planifiez les TAN, concours, expositions, entraînements, rendez-vous et échéances d’engagement." },
     "dogs": { "description": "Gérez les fiches chiens, statuts, informations administratives et suivi individuel." },

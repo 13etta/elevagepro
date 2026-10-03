@@ -179,6 +179,7 @@ app.use('/pregnancies', pregnanciesRoutes);
 app.use('/litters', littersRoutes);
 app.use('/puppies', puppiesRoutes);
 app.use('/sales', salesRoutes);
+app.use('/training', require('./routes/training.routes'));
 app.use('/breeder', breederRoutes);
 app.use('/site', websiteRoutes);
 app.use('/weights', weightsRoutes);

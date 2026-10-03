@@ -29,6 +29,15 @@ test('authenticated business pages and export run against the migrated schema', 
   const login = await fetch(base+'/auth/login',{redirect:'manual',method:'POST',headers:{cookie:beforeCookie,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({_csrf:token,email:user.email,password:'smoke-password-123'})});
   assert.equal(login.status,302);
   const cookie = login.headers.getSetCookie().find(c=>c.startsWith('sid=')).split(';')[0];
+  const training = require('../src/services/training.service');
+  const trainingInput={client_name:'Client test',dog_name:'Chien confié',service_label:'Dressage',start_date:'2026-09-07',end_date:'2026-09-11',start_time:'09:00',end_time:'17:00',weekdays:['1','2','3','4','5'],price:'800',deposit:'240',vat_rate:'0',tax_note:'Régime fiscal renseigné',terms:'Conditions acceptées'};
+  const job=await training.create(user.breeder_id,trainingInput);
+  for(const route of ['/training','/training/new','/training/'+job.id,'/training/'+job.id+'/edit']) {
+    const page=await fetch(base+route,{headers:{cookie}});
+    assert.equal(page.status,200,route); assert.match(await page.text(),/Dressage|dressage/);
+  }
+  assert.equal((await fetch(base+'/training',{redirect:'manual'})).status,302);
+  assert.equal((await fetch(base+'/training/'+job.id+'/accept',{method:'POST',headers:{cookie,'content-type':'application/x-www-form-urlencoded'},body:'acceptance_reference=test'})).status,403);
   for(const route of ['/dogs/'+dog.id,'/reproduction','/heats/new','/matings/new','/litters/new','/dashboard','/dogs','/dogs/new','/soins','/reminders','/health-tests','/heats','/matings','/pregnancies','/litters','/puppies','/sales','/sales/new','/profitability','/structure','/calendar','/settings','/settings?tab=vitrine','/billing','/account/export','/site/preview']) {
     const response = await fetch(base+route,{redirect:'manual',headers:{cookie}});
     const body = await response.text();

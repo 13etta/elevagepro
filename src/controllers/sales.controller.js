@@ -54,14 +54,18 @@ exports.listSales = async (req, res) => {
       [breederId],
     );
 
-    const totalRevenue = sales.rows.reduce((sum, sale) => {
-      if (sale.is_reservation) return sum;
-      return sum + parseMoney(sale.price);
-    }, 0);
+    const animalRevenue = sales.rows.reduce((sum, sale) => sum + parseMoney(sale.is_reservation ? sale.deposit_amount : sale.price), 0);
+    const trainingPayments = (await pool.query(`SELECT p.*,j.dog_name,j.client_name,j.quote_number
+      FROM training_payments p JOIN training_jobs j ON j.id=p.job_id AND j.breeder_id=p.breeder_id
+      WHERE p.breeder_id=$1 ORDER BY p.paid_on DESC,p.created_at DESC`,[breederId])).rows;
+    const trainingRevenue = trainingPayments.reduce((sum,p)=>sum+(p.kind==='refund'?-1:1)*p.amount_cents/100,0);
+    const totalRevenue = animalRevenue + trainingRevenue;
 
     res.render('sales/index', {
       sales: sales.rows,
       totalRevenue: totalRevenue.toFixed(2),
+      trainingPayments,
+      trainingRevenue: trainingRevenue.toFixed(2),
     });
   } catch (error) {
     console.error('Erreur liste ventes:', error);

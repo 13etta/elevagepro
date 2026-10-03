@@ -16,6 +16,7 @@ const allModuleGroups = [
 ];
 
 const allModules = [
+  { key: 'training', labelKey: 'nav.training', descriptionKey: 'modules.training.description', href: '/training', icon: 'sports', group: 'commercial', accent: 'gold' },
   {
     key: 'dashboard',
     labelKey: 'nav.dashboard',

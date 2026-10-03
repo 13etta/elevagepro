@@ -351,6 +351,7 @@ exports.getEventForm = async (req, res) => {
       if (!isUuid(eventId)) return res.status(404).send('Événement introuvable.');
       event = await getEvent(breederId, eventId);
       if (!event) return res.status(404).send('Événement introuvable.');
+      if (event.training_job_id) return res.redirect('/training/'+event.training_job_id);
     }
 
     const selectedDogIds = (event.dog_ids || []).map(String);
@@ -419,7 +420,7 @@ exports.saveEvent = async (req, res) => {
     if (eventId) {
       const current = await client.query(
         `
-          SELECT ced.dog_id
+          SELECT ced.dog_id, e.training_job_id
           FROM calendar_events e
           LEFT JOIN calendar_event_dogs ced
             ON ced.event_id = e.id
@@ -436,6 +437,10 @@ exports.saveEvent = async (req, res) => {
       }
 
       existingDogIds = current.rows.map((row) => row.dog_id).filter(Boolean).map(String);
+      if(current.rows[0].training_job_id) {
+        await client.query('ROLLBACK');
+        return res.status(409).send('Gérez ce rendez-vous depuis le dossier dressage.');
+      }
     }
 
     if (dogIds.length) {
@@ -581,7 +586,7 @@ exports.deleteEvent = async (req, res) => {
     if (!isUuid(eventId)) return res.status(404).send('Événement introuvable.');
 
     const result = await pool.query(
-      'DELETE FROM calendar_events WHERE id = $1 AND breeder_id = $2 RETURNING id',
+      'DELETE FROM calendar_events WHERE id = $1 AND breeder_id = $2 AND training_job_id IS NULL RETURNING id',
       [eventId, breederId],
     );
 

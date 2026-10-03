@@ -81,11 +81,18 @@ function docInit(doc) {
 
 function addFooter(doc) {
   const y = 806;
+  const previousY = doc.y;
+  const previousX = doc.x;
+  const previousBottom = doc.page.margins.bottom;
+  doc.page.margins.bottom = 0;
   doc.save();
   doc.strokeColor(COLORS.line).lineWidth(0.5).moveTo(PAGE.left, y - 12).lineTo(PAGE.right, y - 12).stroke();
   doc.fillColor(COLORS.muted).font('Helvetica').fontSize(7);
   doc.text('Document généré par ElevagePro - à vérifier et compléter selon le dossier réel.', PAGE.left, y, { width: PAGE.width, align: 'center' });
   doc.restore();
+  doc.page.margins.bottom = previousBottom;
+  doc.y = previousY;
+  doc.x = previousX;
 }
 
 function addPageIfNeeded(doc, height = 90) {
@@ -145,8 +152,8 @@ function header(doc, breeder, sale, options = {}) {
     sale.buyer_phone || null,
   ];
 
-  box(doc, PAGE.left, 38, 238, 96, 'Éleveur / cédant', sellerLines);
-  box(doc, 307, 38, 238, 96, 'Acquéreur', buyerLines);
+  box(doc, PAGE.left, 38, 238, 96, options.sellerLabel || 'Éleveur / cédant', sellerLines);
+  box(doc, 307, 38, 238, 96, options.buyerLabel || 'Acquéreur', buyerLines);
   doc.y = 154;
   title(doc, options.title, options.subtitle);
 }
@@ -208,28 +215,28 @@ function signatures(doc, labels = ['Le cédant / éleveur', 'L’acquéreur']) {
 }
 
 function simpleTable(doc, headers, rows, widths) {
-  addPageIfNeeded(doc, 50 + rows.length * 22);
-  let y = doc.y;
-  let x = PAGE.left;
-  doc.fillColor(COLORS.soft).rect(PAGE.left, y, PAGE.width, 22).fill();
-  doc.strokeColor(COLORS.line).rect(PAGE.left, y, PAGE.width, 22).stroke();
-  doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(8);
-  headers.forEach((headerText, i) => {
-    doc.text(headerText, x + 6, y + 7, { width: widths[i] - 10 });
-    x += widths[i];
-  });
-  y += 22;
-  doc.font('Helvetica').fontSize(8);
-  rows.forEach((row) => {
-    x = PAGE.left;
-    doc.strokeColor(COLORS.line).rect(PAGE.left, y, PAGE.width, 28).stroke();
-    row.forEach((cell, i) => {
-      doc.fillColor(COLORS.ink).text(clean(cell), x + 6, y + 8, { width: widths[i] - 10 });
-      x += widths[i];
+  function rowHeight(row,bold) {
+    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8);
+    return Math.max(28,...row.map((v,i)=>doc.heightOfString(clean(v),{width:widths[i]-12})+16));
+  }
+  function draw(row,bold) {
+    const h=rowHeight(row,bold), y=doc.y;
+    if(bold) doc.fillColor(COLORS.soft).rect(PAGE.left,y,PAGE.width,h).fill();
+    let x=PAGE.left;
+    row.forEach((v,i)=>{
+      doc.strokeColor(COLORS.line).rect(x,y,widths[i],h).stroke();
+      doc.fillColor(COLORS.ink).text(clean(v),x+6,y+8,{width:widths[i]-12});x+=widths[i];
     });
-    y += 28;
+    doc.y=y+h;
+  }
+  addPageIfNeeded(doc,rowHeight(headers,true)+rowHeight(rows[0]||[],false));
+  draw(headers,true);
+  rows.forEach(row=>{
+    const h=rowHeight(row,false);
+    if(doc.y+h>PAGE.bottom) {addPageIfNeeded(doc,h);draw(headers,true);}
+    draw(row,false);
   });
-  doc.y = y + 10;
+  doc.y+=10;
 }
 
 module.exports = {

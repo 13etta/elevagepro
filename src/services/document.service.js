@@ -3,6 +3,7 @@ const templates = require('./documents/pdf.templates');
 const { safeName } = require('./documents/pdf.helpers');
 
 const DOCUMENT_TYPES = {
+  devis: { label: 'Devis de vente', prefix: 'devis_vente', renderer: 'devis' },
   reservation: { label: 'Contrat de réservation', prefix: 'contrat_reservation', renderer: 'reservation' },
   facture: { label: 'Facture', prefix: 'facture', renderer: 'facture' },
   'recu-acompte': { label: 'Reçu d’acompte', prefix: 'recu_acompte', renderer: 'recu-acompte' },

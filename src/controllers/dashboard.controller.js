@@ -149,7 +149,11 @@ exports.getDashboard = async (req, res) => {
       `
         SELECT
           to_char(months.month_start, 'YYYY-MM') AS month_key,
-          COALESCE(SUM(s.price), 0)::numeric AS total
+          COALESCE(SUM(s.price), 0)::numeric + COALESCE((
+            SELECT SUM(CASE WHEN p.kind='refund' THEN -p.amount_cents ELSE p.amount_cents END)::numeric / 100
+            FROM training_payments p WHERE p.breeder_id=$1
+            AND date_trunc('month',p.paid_on::timestamp)=months.month_start
+          ),0) AS total
         FROM generate_series(
           date_trunc('month', CURRENT_DATE)::timestamp - INTERVAL '5 months',
           date_trunc('month', CURRENT_DATE)::timestamp,

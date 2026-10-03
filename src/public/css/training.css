@@ -1,0 +1,9 @@
+.training-page .form-card { padding: 24px; margin: 20px 0; border: 1px solid var(--border-color, #d0d5dd); border-radius: 12px; }
+.training-page .form-card > form, .training-page form.form-card { display: grid; gap: 16px; max-width: 960px; }
+.training-page label { display: grid; gap: 6px; font-weight: 500; }
+.training-page input:not([type=checkbox]):not([type=hidden]), .training-page textarea, .training-page select { width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box; }
+.training-page fieldset { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+.training-page fieldset label { display: flex; align-items: center; }
+.training-page .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.training-page .table-block { overflow-x: auto; }
+.training-page .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); }
