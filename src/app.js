@@ -168,6 +168,8 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/billing', require('./routes/billing.routes'));
 app.use('/account', require('./routes/account.routes'));
+app.get('/profile', requireAuth, (req, res) => res.redirect('/settings?tab=application#mon-profil'));
+app.post('/profile', requireAuth, require('./middleware/csrf').verifyCsrf, require('./controllers/profile.controller').update);
 app.use('/dashboard', dashboardRoutes);
 app.use('/dogs', dogsRoutes);
 app.use('/soins', soinsRoutes);

@@ -3,7 +3,9 @@ const { requireAuth, requireOwner } = require('../middleware/auth');
 const { verifyCsrf } = require('../middleware/csrf');
 const { pool } = require('../db');
 const router = express.Router();
-router.use(requireAuth, requireOwner);
+router.use(requireAuth);
+router.post('/profile', verifyCsrf, require('../controllers/profile.controller').update);
+router.use(requireOwner);
 router.get('/export', async (req, res, next) => {
   let client;
   try {

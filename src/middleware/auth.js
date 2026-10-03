@@ -14,13 +14,13 @@ async function requireAuth(req, res, next) {
   res.set('Cache-Control','no-store');
   try {
     if (!req.authVerified) {
-      const result = await db.query(`SELECT u.id,u.breeder_id,u.email,u.full_name,u.role,u.session_version,u.is_active,
+      const result = await db.query(`SELECT u.id,u.breeder_id,u.email,u.full_name,u.first_name,u.last_name,u.role,u.session_version,u.is_active,
         b.status AS billing_status,b.beta_access,b.current_period_end
         FROM users u LEFT JOIN billing_accounts b ON b.breeder_id=u.breeder_id
         WHERE u.id=$1 AND u.breeder_id=$2`,[sessionUser.id,sessionUser.breeder_id]);
       const current = result.rows[0];
       if (!current || current.is_active === false || current.session_version !== (sessionUser.session_version || 0)) return rejectSession(req,res);
-      req.session.user = {id:current.id,breeder_id:current.breeder_id,email:current.email,full_name:current.full_name,role:current.role,session_version:current.session_version};
+      req.session.user = {id:current.id,breeder_id:current.breeder_id,email:current.email,full_name:current.full_name,first_name:current.first_name,last_name:current.last_name,role:current.role,session_version:current.session_version};
       req.accountAccess = current.beta_access === true || (['active','trialing'].includes(current.billing_status) && new Date(current.current_period_end).getTime() > Date.now());
       req.authVerified = true;
     }
