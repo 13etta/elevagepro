@@ -7,12 +7,17 @@ const MAX_BYTES = 8 * 1024 * 1024;
 const LOGO_SIZE = 131.04; // 4.62 cm, as in the supplied Word quote.
 
 async function loadLogo(breeder) {
-  if (!breeder?.logo_url || !/^[a-f0-9-]{36}$/i.test(breeder.id || '')) return null;
+  const logoUrl = breeder?.logo_url || breeder?.logo;
+  if (typeof logoUrl !== 'string' || !/^[a-f0-9-]{36}$/i.test(breeder.id || '')) return null;
   try {
     let buffer;
     const prefix = `/uploads/images/${breeder.id}/logos/`;
-    if (breeder.logo_url.startsWith(prefix)) {
-      const filename = breeder.logo_url.slice(prefix.length);
+    if (logoUrl.startsWith('data:image/png;base64,')) {
+      const encoded = logoUrl.slice('data:image/png;base64,'.length);
+      if (encoded.length > Math.ceil(MAX_BYTES / 3) * 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return null;
+      buffer = Buffer.from(encoded, 'base64');
+    } else if (logoUrl.startsWith(prefix)) {
+      const filename = logoUrl.slice(prefix.length);
       if (!/^[a-f0-9-]{36}\.(png|jpg|jpeg|webp)$/i.test(filename)) return null;
       const directory = await fs.realpath(path.join(publicRoot, 'images', breeder.id, 'logos'));
       const target = await fs.realpath(path.join(directory, filename));
@@ -22,14 +27,19 @@ async function loadLogo(breeder) {
     } else {
       // Support older Supabase uploads, never arbitrary external URLs or redirects.
       if (!process.env.SUPABASE_URL) return null;
-      const url = new URL(breeder.logo_url);
+      const url = new URL(logoUrl);
       const storage = new URL(process.env.SUPABASE_URL);
       if (url.protocol !== 'https:' || url.origin !== storage.origin || url.username || url.password) return null;
       const segments = decodeURIComponent(url.pathname).split('/').filter(Boolean);
       if (segments.slice(0, 4).join('/') !== 'storage/v1/object/public' || !segments[4]) return null;
       const key = segments.slice(5);
       if (key[0] === 'images') key.shift();
-      if (key.length !== 3 || key[0] !== breeder.id || key[1] !== 'logos' || !/^[a-f0-9-]{36}\.(png|jpg|jpeg|webp)$/i.test(key[2])) return null;
+      const scoped = key.length === 3 && key[0] === breeder.id && key[1] === 'logos'
+        && /^[a-f0-9-]{36}\.(png|jpg|jpeg|webp)$/i.test(key[2]);
+      // Historical uploads: bucket logos, key logos/<breeder_id>-<timestamp>-<random>.png.
+      const legacy = segments[4] === 'logos' && key.length === 2 && key[0] === 'logos'
+        && new RegExp('^' + breeder.id + '-[0-9]{10,17}-[a-z0-9]+\\.(png|jpg|jpeg|webp)$', 'i').test(key[1]);
+      if (!scoped && !legacy) return null;
       const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(5000) });
       if (!response.ok || Number(response.headers.get('content-length')) > MAX_BYTES) return null;
       const chunks = []; let size = 0;

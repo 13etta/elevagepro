@@ -17,6 +17,14 @@ async function uploadPublicImage(breederId, file, folder = 'images') {
   if (!file) return null;
   const { extension } = validateUpload(file);
   if (!/^[a-f0-9-]{36}$/i.test(breederId) || !/^[a-z0-9/-]+$/i.test(folder) || folder.includes('..')) throw new Error('Emplacement de fichier invalide.');
+  if (folder === 'logos') {
+    // A small embedded image survives deploys on hosts with ephemeral filesystems.
+    // The caller stores it on the authenticated breeder, alongside the other settings.
+    const logo = await require('sharp')(file.buffer, { limitInputPixels: 25000000, pages: 1 })
+      .rotate().resize(768, 768, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+    if (logo.length > 2 * 1024 * 1024) throw Object.assign(new Error('Logo trop volumineux après optimisation.'), { status: 400 });
+    return 'data:image/png;base64,' + logo.toString('base64');
+  }
   // Unique server-controlled names; no replacement of existing breeder files.
   const relative = `images/${breederId}/${folder}/${randomUUID()}.${extension}`;
   const destination = path.join(publicRoot, relative);

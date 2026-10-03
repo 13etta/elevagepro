@@ -16,13 +16,20 @@ test('uploaded logos are scoped to the breeder, converted and present in every P
   const image = sharp({ create: { width: 160, height: 80, channels: 4, background: '#75552B' } });
   for (const [format, mimetype] of [['png','image/png'], ['jpeg','image/jpeg'], ['webp','image/webp']]) {
     breeder.logo_url = await uploads.uploadPublicImage(breeder.id, { buffer: await image.clone()[format]().toBuffer(), mimetype }, 'logos');
+    assert.match(breeder.logo_url, /^data:image\/png;base64,/);
     const logo = await loadLogo(breeder);
     assert.ok(logo);
     const metadata = await sharp(logo).metadata();
     assert.equal(metadata.format, 'png');
     assert.equal(metadata.width / metadata.height, 2);
-    assert.equal(await loadLogo({ ...breeder, id: randomUUID() }), null);
   }
+  const localName = randomUUID() + '.png';
+  const localDirectory = path.join(root, 'images', breeder.id, 'logos');
+  await fs.mkdir(localDirectory, { recursive: true });
+  await fs.writeFile(path.join(localDirectory, localName), await image.clone().png().toBuffer());
+  const localUrl = `/uploads/images/${breeder.id}/logos/${localName}`;
+  assert.ok(await loadLogo({ ...breeder, logo_url: localUrl }));
+  assert.equal(await loadLogo({ ...breeder, id: randomUUID(), logo_url: localUrl }), null);
   assert.equal(await loadLogo({ ...breeder, logo_url: '/uploads/images/' + breeder.id + '/logos/../../secret.png' }), null);
   assert.equal(await loadLogo({ ...breeder, logo_url: 'http://127.0.0.1/private' }), null);
   const logo = await loadLogo(breeder);
@@ -38,9 +45,14 @@ test('uploaded logos are scoped to the breeder, converted and present in every P
   try {
     const legacy = `https://storage.example.test/storage/v1/object/public/logos/${breeder.id}/logos/${randomUUID()}.png`;
     assert.ok(await loadLogo({ ...breeder, logo_url: legacy }));
+    const historical = `https://storage.example.test/storage/v1/object/public/logos/logos/${breeder.id}-1778824524181-dh6vuczz9ib.png`;
+    assert.ok(await loadLogo({ ...breeder, logo_url: historical }));
+    assert.ok(await loadLogo({ ...breeder, logo_url: null, logo: historical }));
+    assert.equal(await loadLogo({ ...breeder, logo_url: historical.replace(breeder.id, randomUUID()) }), null);
+    assert.equal(await loadLogo({ ...breeder, logo_url: historical.replace('-1778824524181-', '-not-a-timestamp-') }), null);
     assert.equal(await loadLogo({ ...breeder, logo_url: legacy.replace(breeder.id, randomUUID()) }), null);
     assert.equal(await loadLogo({ ...breeder, logo_url: legacy.replace('storage.example.test', 'evil.example.test') }), null);
-    assert.equal(requests, 1);
+    assert.equal(requests, 3);
   } finally {
     global.fetch = previousFetch;
     if (previousStorage === undefined) delete process.env.SUPABASE_URL;
@@ -70,6 +82,7 @@ test('uploaded logos are scoped to the breeder, converted and present in every P
   }
   const plain = await training.generate({ ...data, kind: 'quote', breeder: { ...breeder, logo_url: null } });
   assert.doesNotMatch(plain.toString('latin1'), /\/Subtype \/Image/);
-  await fs.writeFile(path.join(uploads.publicRoot, breeder.logo_url.slice('/uploads/'.length)), 'invalid image');
-  assert.equal(await loadLogo(breeder), null);
+  await fs.writeFile(path.join(localDirectory, localName), 'invalid image');
+  assert.equal(await loadLogo({ ...breeder, logo_url: localUrl }), null);
+  assert.equal(await loadLogo({ ...breeder, logo_url: 'data:image/png;base64,not-valid!' }), null);
 });

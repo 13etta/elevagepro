@@ -34,6 +34,8 @@ La TVA et les CGV doivent être renseignées selon les conditions réelles du pr
 
 ## Validation
 
+Les nouveaux logos sont normalisés en PNG (768 px maximum, proportions conservées) et enregistrés comme image intégrée dans `breeder.logo_url`. Ils restent ainsi disponibles après les redéploiements Render sans disque persistant. Le générateur accepte aussi les anciens chemins locaux et Supabase `logos/logos/<breeder_id>-<timestamp>-<random>.<extension>`, en vérifiant l’élevage et l’origine du stockage configuré. Aucun logo commun n’est imposé aux autres élevages.
+
 Le logo téléversé dans Paramètres est chargé depuis le dossier `images/<breeder_id>/logos` de l’élevage ou depuis son ancien stockage Supabase configuré. Il est centré au-dessus du titre sur la première page, dans un cadre de 4,62 cm comme le devis Word, avec conservation des proportions. Les documents de vente et de dressage utilisent le même placement. PNG, JPEG et WebP sont normalisés en PNG via Sharp, également disponible sur Render et Docker. Un fichier absent ou invalide ne bloque pas le PDF. Les références externes et les fichiers d’un autre élevage sont refusés. Les factures dressage déjà émises conservent leur instantané financier ; seul leur logo de présentation est actualisé depuis les paramètres.
 
 Tests sur PostgreSQL isolé avec PGlite : devis, modification du brouillon, accord, acompte partiel, confirmation et agenda, répétition de paiement, dépassement du solde, clôture, instantanés de facture, remboursements et avoirs séparés, références entre élevages, refus Data API. Tests HTTP authentifiés des écrans dressage et refus des mutations sans CSRF.
