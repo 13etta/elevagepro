@@ -625,6 +625,27 @@ $migration_payload_3$;
 END;
 $release_step_3$;
 
+
+DO $release_step_4$
+BEGIN
+  IF EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20261003073000_training_quote_form.sql' AND checksum <> '7c4ec90d8d4e6f3a7692f77f8ebfc88c24d53cbfd2a4db22e2477582aa58542e') THEN
+    RAISE EXCEPTION 'Migration already recorded with a different checksum: 20261003073000_training_quote_form.sql';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM app_private.schema_migrations WHERE name = '20261003073000_training_quote_form.sql') THEN
+    EXECUTE $migration_payload_4$
+ALTER TABLE training_jobs ADD COLUMN quote_date date NOT NULL DEFAULT CURRENT_DATE;
+ALTER TABLE training_jobs ADD COLUMN valid_until date;
+ALTER TABLE training_jobs ADD COLUMN details jsonb NOT NULL DEFAULT '{}';
+ALTER TABLE training_jobs ADD CONSTRAINT training_quote_validity CHECK(valid_until IS NULL OR valid_until >= quote_date);
+ALTER TABLE training_jobs ADD CONSTRAINT training_details_object CHECK(jsonb_typeof(details)='object');
+
+$migration_payload_4$;
+    INSERT INTO app_private.schema_migrations (name, checksum)
+    VALUES ('20261003073000_training_quote_form.sql', '7c4ec90d8d4e6f3a7692f77f8ebfc88c24d53cbfd2a4db22e2477582aa58542e');
+  END IF;
+END;
+$release_step_4$;
+
 COMMIT;
 
 -- Verification finale: trois migrations enregistrees, tables et colonne presentes.

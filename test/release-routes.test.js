@@ -38,6 +38,20 @@ test('authenticated business pages and export run against the migrated schema', 
   }
   assert.equal((await fetch(base+'/training',{redirect:'manual'})).status,302);
   assert.equal((await fetch(base+'/training/'+job.id+'/accept',{method:'POST',headers:{cookie,'content-type':'application/x-www-form-urlencoded'},body:'acceptance_reference=test'})).status,403);
+  const quoteForm=await fetch(base+'/training/new',{headers:{cookie}});
+  const quoteCsrf=(await quoteForm.text()).match(/name="_csrf" value="([^"]+)"/)[1];
+  const complete={...trainingInput,_csrf:quoteCsrf,next:'print',client_first_name:'Jean',client_address:'Adresse de test',client_phone:'0102030405',dog_breed:'Setter anglais',dog_chip:'250000000000000',dog_sex:'F',dog_birth_date:'2025-01-01',dog_lof:'LOF exemple',quote_date:'2026-09-01',valid_until:'2026-09-30',training_objectives:'Quête et arrêt',accommodation:'Avec pension complète',feeding_notes:'Ration communiquée',health_notes:'Précautions communiquées',included_services:'Pension et séances',payment_terms:'Solde au départ',handover_location:'Lieu convenu'};
+  const formBody=new URLSearchParams();Object.entries(complete).forEach(([k,v])=>Array.isArray(v)?v.forEach(item=>formBody.append(k,item)):formBody.set(k,v));
+  const created=await fetch(base+'/training',{method:'POST',headers:{cookie,'content-type':'application/x-www-form-urlencoded'},body:formBody,redirect:'manual'});
+  assert.equal(created.status,302);
+  const printUrl=created.headers.get('location');assert.match(printUrl,/\/training\/[a-f0-9-]+\/quote\.pdf$/);
+  const print=await fetch(base+printUrl,{headers:{cookie}});assert.equal(print.status,200);assert.match(print.headers.get('content-type'),/application\/pdf/);assert.match(print.headers.get('content-disposition'),/^inline/);
+  const printedId=printUrl.split('/')[2];
+  const storedJob=(await training.detail(user.breeder_id,printedId)).job;
+  assert.equal(storedJob.details.training_objectives,'Quête et arrêt');assert.equal(storedJob.details.dog_lof,'LOF exemple');
+  const before=(await client.query('SELECT count(*)::int AS n FROM training_jobs WHERE breeder_id=$1',[user.breeder_id])).rows[0].n;
+  assert.equal((await fetch(base+printUrl,{headers:{cookie}})).status,200);
+  assert.equal((await client.query('SELECT count(*)::int AS n FROM training_jobs WHERE breeder_id=$1',[user.breeder_id])).rows[0].n,before);
   for(const route of ['/dogs/'+dog.id,'/reproduction','/heats/new','/matings/new','/litters/new','/dashboard','/dogs','/dogs/new','/soins','/reminders','/health-tests','/heats','/matings','/pregnancies','/litters','/puppies','/sales','/sales/new','/profitability','/structure','/calendar','/settings','/settings?tab=vitrine','/billing','/account/export','/site/preview']) {
     const response = await fetch(base+route,{redirect:'manual',headers:{cookie}});
     const body = await response.text();

@@ -21,6 +21,17 @@ function fields(input) {
   const f = {};
   for (const name of ['client_name','client_address','client_email','client_phone','dog_name','dog_breed','dog_chip','service_label','tax_note','terms','notes']) f[name] = text(input[name], ['terms','notes'].includes(name) ? 12000 : name === 'client_address' || name === 'tax_note' ? 2000 : 255);
   if (!f.client_name || !f.dog_name || !f.service_label) fail('Client, chien et prestation obligatoires.');
+  if(input.next==='print' && ['client_address','client_phone','dog_breed','dog_chip','terms'].some(name=>!f[name])) fail('Complétez l’adresse, le téléphone, la race, l’identification et les conditions avant d’imprimer le devis.');
+  f.quote_date = input.quote_date ? date(input.quote_date) : new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'});
+  f.valid_until = input.valid_until ? date(input.valid_until) : null;
+  if(f.valid_until && f.valid_until < f.quote_date) fail('La validité du devis doit suivre sa date d’émission.');
+  const details={};
+  for(const name of ['client_first_name','dog_lof','veterinarian','health_notes','feeding_notes','training_objectives','accommodation','included_services','payment_terms','handover_location']) details[name]=text(input[name],name.endsWith('_notes')||name.endsWith('_services')||name==='training_objectives'||name==='payment_terms'?4000:255);
+  details.dog_sex=text(input.dog_sex,10);
+  if(details.dog_sex && !['M','F'].includes(details.dog_sex)) fail('Sexe du chien invalide.');
+  details.dog_birth_date=input.dog_birth_date?date(input.dog_birth_date):null;
+  if(details.dog_birth_date && details.dog_birth_date>f.quote_date) fail('La naissance du chien ne peut pas être future.');
+  f.details=details;
   f.start_date = date(input.start_date); f.end_date = date(input.end_date);
   if (f.end_date < f.start_date || (Date.parse(f.end_date)-Date.parse(f.start_date))/86400000 > 365) fail('Période invalide (maximum un an).');
   for (const name of ['start_time','end_time']) { f[name] = text(input[name]); if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(f[name])) fail('Horaire invalide.'); }
