@@ -1,6 +1,7 @@
 const PDFDocument = require('pdfkit');
 const templates = require('./documents/pdf.templates');
 const { safeName } = require('./documents/pdf.helpers');
+const { loadLogo } = require('./documents/logo.service');
 
 const DOCUMENT_TYPES = {
   devis: { label: 'Devis de vente', prefix: 'devis_vente', renderer: 'devis' },
@@ -43,6 +44,8 @@ exports.generateDocument = async (docType, breeder, sale, animal) => {
   const renderer = templates[template.renderer];
   if (!renderer) throw new Error('Modèle PDF introuvable');
 
+  const logo = await loadLogo(breeder);
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
@@ -61,6 +64,7 @@ exports.generateDocument = async (docType, breeder, sale, animal) => {
       doc.on('error', reject);
       doc.on('end', () => resolve(Buffer.concat(buffers)));
 
+      doc._breederLogo = logo;
       renderer(doc, breeder || {}, sale || {}, animal || {});
       doc.end();
     } catch (error) {
@@ -68,4 +72,3 @@ exports.generateDocument = async (docType, breeder, sale, animal) => {
     }
   });
 };
-

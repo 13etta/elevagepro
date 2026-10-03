@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { loadLogo } = require('./documents/logo.service');
 const {header,section,paragraph,simpleTable,signatures,addFooter,dateFr,money} = require('./documents/pdf.helpers');
 const titles={quote:'Devis de dressage',contract:'Contrat de dressage','deposit-invoice':'Facture d’acompte',invoice:'Facture de dressage',credit:'Avoir de remboursement'};
 function render(doc,data) {
@@ -37,15 +38,18 @@ function render(doc,data) {
   addFooter(doc);
 }
 async function generate(data) {
+  const logo = await loadLogo(data.breeder);
   return new Promise((resolve,reject)=>{
     const quote = data.kind === 'quote' || data.kind === 'contract';
     const options = {size:quote ? 'LETTER' : 'A4',margins:quote ? {top:47,bottom:60,left:52,right:52} : {top:50,bottom:50,left:50,right:50},bufferPages:true,info:{Title:titles[data.kind],Author:data.breeder.company_name || 'ElevagePro'}};
     const doc = new PDFDocument(options);
+    doc._breederLogo = logo;
     const chunks=[];doc.on('data',c=>chunks.push(c));doc.on('end',()=>resolve(Buffer.concat(chunks)));doc.on('error',reject);
     try {
       if (quote) {
         // A measurement pass keeps annex references correct when long notes add pages.
         const probe = new PDFDocument(options);
+        probe._breederLogo = logo;
         probe.on('data', () => {}); probe.on('error', reject);
         const layout = render(probe, data);
         probe.end();
@@ -56,4 +60,3 @@ async function generate(data) {
   });
 }
 module.exports={generate,render};
-

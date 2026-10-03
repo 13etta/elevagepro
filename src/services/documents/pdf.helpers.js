@@ -107,6 +107,7 @@ function kv(doc, label, value, x, y, width = 220) {
 }
 function header(doc, breeder, sale, options = {}) {
   docInit(doc);
+  require('./logo.service').drawLogo(doc, doc._breederLogo);
   doc._variableValues = [sale.buyer_name, sale.payment_method, dateFr(sale.sale_date),
     money(sale.price), money(sale.deposit_amount || 0),
     money(Math.max(Number(sale.price || 0) - Number(sale.deposit_amount || 0), 0))].filter(Boolean);
@@ -234,4 +235,3 @@ function simpleTable(doc, headers, rows, requestedWidths) {
 module.exports = { COLORS, PAGE, clean, money, dateFr, sexLabel, safeName, invoiceNumber,
   animalName, animalChip, animalBreed, animalSex, docInit, addFooter, addPageIfNeeded,
   header, title, line, section, paragraph, bulletList, kv, animalIdentityTable, signatures, simpleTable };
-

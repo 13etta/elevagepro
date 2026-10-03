@@ -31,7 +31,9 @@ function render(doc, data) {
       if (sourceIndex >= 0) pageReferences[sourceIndex + 1] = pageNumber;
     }
     currentTitle = title;
-    doc.font('Times-Bold').fontSize(23).fillColor(INK).text(title, LEFT, TOP, { width: WIDTH });
+    doc.y = TOP;
+    if (pageNumber === 1) require('./documents/logo.service').drawLogo(doc, doc._breederLogo);
+    doc.font('Times-Bold').fontSize(23).fillColor(INK).text(title, LEFT, doc.y, { width: WIDTH });
     if (continuation) doc.font('Times-Roman').fontSize(9).text('Suite', { width: WIDTH });
     doc.moveDown(0.45);
   }
@@ -152,4 +154,3 @@ function render(doc, data) {
 }
 
 module.exports = { render };
-

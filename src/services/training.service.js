@@ -175,7 +175,8 @@ async function documentData(breederId,id,kind,paymentId) {
     const snapshot = {job,breeder,payments,total,kind,creditPayment,issued_on:new Date().toISOString().slice(0,10)};
     if (['quote','contract'].includes(kind)) return {...snapshot,number:job.quote_number};
     const existing = (await client.query('SELECT snapshot,number FROM training_documents WHERE breeder_id=$1 AND job_id=$2 AND kind=$3 AND source_key=$4',[breederId,id,kind,sourceKey])).rows[0];
-    if (existing) return {...existing.snapshot,number:existing.number};
+    // Keep issued financial data immutable; use the current breeder logo for presentation.
+    if (existing) return {...existing.snapshot,breeder:{...existing.snapshot.breeder,id:breeder.id,logo_url:breeder.logo_url},number:existing.number};
     if (kind === 'invoice' && job.status !== 'completed') fail('Terminez la prestation avant d’émettre la facture.');
     if (kind === 'deposit-invoice' && (!total.deposits || total.deposits < job.deposit_cents || job.status === 'cancelled')) fail('L’acompte doit être entièrement encaissé avant émission de sa facture.');
     if (kind === 'credit' && !payments.some(p=>p.kind==='refund')) fail('Aucun remboursement enregistré.');
@@ -185,4 +186,3 @@ async function documentData(breederId,id,kind,paymentId) {
   });
 }
 module.exports = {cents,fields,sessionDates,create,update,accept,payment,close,detail,documentData};
-
